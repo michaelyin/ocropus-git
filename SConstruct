@@ -58,7 +58,8 @@ sources = glob("ocr-*/*.cc") + glob("ext/voronoi/*.cc") + ["version.cc"]
 exclude = r'.*/(main|test|bigtest)-.*\.cc'
 sources = [f for f in sources if not re.search(exclude,f)]
 packages = glob("ocroscript/*.pkg")
-headers = glob("ocr-*/*.h") + glob("ext/voronoi/*.h") + glob("include/*.h")
+# headers = glob("ocr-*/*.h") + glob("ext/voronoi/*.h") + glob("include/*.h")
+headers = glob("include/*.h")
 
 ################################################################
 ### command line options
