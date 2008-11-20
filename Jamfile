@@ -1,0 +1,12 @@
+echo ;
+echo "!!! ---------------- ATTENTION ----------------    !!!" ;
+echo ;
+echo "!!!  Please use SCons (www.scons.org) for building !!!" ;
+echo "!!!  Jam is no longer used                         !!!" ;
+echo ; 
+echo "Here is a quick summary of essential SCons commands: " ;
+echo "    scons             # build" ;
+echo "    scons -c          # clean" ;
+echo "    scons install     # install" ;
+echo "    scons -c install  # uninstall" ;
+echo ;

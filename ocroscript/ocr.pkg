@@ -1,0 +1,421 @@
+// -*- C++ -*-
+
+/*
+   Copyright 2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
+   or its licensors, as applicable.
+
+   You may not use this file except under the terms of the accompanying license.
+
+   Licensed under the Apache License, Version 2.0 (the "License"); you
+   may not use this file except in compliance with the License. You may
+   obtain a copy of the License at http:  www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
+   Project:
+   File:
+   Purpose:
+   Responsible: tmb
+   Reviewer:
+   Primary Repository:
+   Web Sites: www.iupr.org, www.dfki.de
+*/
+
+$#include "math.h"
+$#include "colib.h"
+$#include "iulib.h"
+$#include "ocropus.h"
+$#include "ocr-util.h"
+
+$using namespace ocropus;
+$using namespace colib;
+$using namespace iulib;
+
+module ocr {
+
+struct point {
+    int x;
+    int y;
+    point();
+    point(int x,int y);
+};
+
+
+void make_line_segmentation_black(intarray &image);
+void make_line_segmentation_white(intarray &image);
+void make_page_segmentation_black(intarray &image);
+void make_page_segmentation_white(intarray &image);
+
+struct IComponent {
+    virtual ~IComponent() {}
+    virtual const char *description() = 0;
+    virtual void set(const char *,const char *);
+    virtual void set(const char *,double);
+};
+
+struct ICleanupGray : IComponent {
+    virtual void cleanup(bytearray &out,bytearray &in) = 0;
+};
+
+ICleanupBinary *make_DeskewPageByRAST();
+ICleanupBinary *make_RemoveImageRegionsBinary();
+
+struct ICleanupBinary : IComponent {
+    virtual void cleanup(bytearray &out,bytearray &in) = 0;
+};
+
+ICleanupGray   *make_RemoveImageRegionsGray();
+
+struct ISegmentPage : IComponent {
+    virtual void segment(intarray &out,bytearray &in);
+    virtual void segment(intarray &out,bytearray &in,rectarray &obstacles);
+};
+
+ISegmentPage *make_SegmentPageByMorphTrivial();
+ISegmentPage *make_SegmentPageBy1CP();
+ISegmentPage *make_SegmentPageByRAST();
+ISegmentPage *make_SegmentPageByVORONOI();
+/* ISegmentPage *make_SegmentPageByXYCUTS(); */
+ISegmentPage *make_SegmentWords();
+
+struct ISegmentLine : IComponent {
+    virtual void charseg(intarray &out,bytearray &in) = 0;
+};
+
+ISegmentLine *make_SegmentLineByProjection();
+ISegmentLine *make_SegmentLineByCCS();
+ISegmentLine *make_ConnectedComponentSegmenter();
+ISegmentLine *make_CurvedCutSegmenter();
+ISegmentLine *make_SkelSegmenter();
+
+struct IBinarize : IComponent {
+    virtual void binarize(bytearray &out,bytearray &in) = 0;
+    virtual void binarize(bytearray &out,floatarray &in) = 0;
+};
+
+IBinarize *make_BinarizeByRange();
+IBinarize *make_BinarizeByOtsu();
+IBinarize *make_BinarizeBySauvola();
+
+struct ITextImageClassification : IComponent {
+    virtual void textImageProbabilities(intarray &out,bytearray &in) = 0;
+};
+
+ITextImageClassification *make_TextImageSegByLogReg();
+ITextImageClassification *make_TextImageSegByLeptonica();
+
+struct IGenericFst : IComponent {
+    void clear();
+    int newState();
+    void addTransition(int from,int to,int output,float cost,int input);
+    void setStart(int node);
+    void setAccept(int node,float f=0.0);
+    int special(const char *s);
+    void bestpath(nustring &result);
+    void setString(nustring &result,floatarray &costs,intarray &ids);
+    virtual int nStates();
+    virtual int getStart();
+    virtual float getAcceptCost(int node);
+    virtual void arcs(intarray &ids,
+                      intarray &targets,
+                      intarray &outputs,
+                      floatarray &costs,
+                      int from);
+    void save(const char *path);
+    void load(const char *path);
+};
+
+struct IRecognizeLine : IComponent {
+    virtual void recognizeLine(IGenericFst &result,bytearray &image);
+    virtual void startTraining(const char *type="adaptation");
+    virtual void addTrainingLine(bytearray &image,nustring &transcription);
+    virtual void addTrainingLine(intarray &segmentation,
+                                 bytearray &image_grayscale,
+                                 nustring &transcription);
+    virtual void finishTraining();
+    virtual void save(const char *stream);
+    virtual void load(const char *stream);
+    virtual ~IRecognizeLine() {}
+    virtual void recognizeLine(intarray &segmentation,IGenericFst &result,
+                               bytearray &image);
+    virtual void align(nustring &chars,intarray &result,floatarray &costs,
+                       bytearray &image,IGenericFst &transcription);
+};
+
+struct RegionExtractor {
+    RegionExtractor();
+    ~RegionExtractor();
+    void setImage(intarray &image);
+    void setImageMasked(intarray &image,int mask=0xffffff,int lo=1,int hi=999999999);
+    void setPageColumns(intarray &image);
+    void setPageParagraphs(intarray &image);
+    void setPageLines(intarray &image);
+    int length();
+    rectangle bbox(int i);
+    void bounds(int i,int *x0=0,int *y0=0,int *x1=0,int *y1=0);
+    int x0(int i);
+    int y0(int i);
+    int x1(int i);
+    int y1(int i);
+    void extract(bytearray &output,bytearray &input,int index,int margin=0);
+    void extract(intarray &output,bytearray &input,int index,int margin=0);
+    void extract(intarray &output,intarray &input,int index,int margin=0);
+    void extract(floatarray &output,floatarray &input,int index,int margin=0);
+    void extract(floatarray &output,bytearray &input,int index,int margin=0);
+    void extract(floatarray &output,intarray &input,int index,int margin=0);
+    void mask(bytearray &output,int index,int margin=0);
+    void mask(intarray &output,int index,int margin=0);
+    void mask(floatarray &output,int index,int margin=0);
+};
+
+void debug_array(bytearray &);
+void debug_array(intarray &);
+void debug_array(floatarray &);
+
+void check_line_segmentation(intarray &cseg);
+void check_page_segmentation(intarray &cseg);
+
+void sort_by_xcenter(intarray &);
+
+struct IGrouper : IComponent {
+    void setSegmentation(intarray &segmentation);
+    int length();
+    void getMask(rectangle &r,bytearray &mask,int index,int margin);
+    rectangle boundingBox(int index);
+    void extract(bytearray &out,bytearray &mask,bytearray &source,int index,int grow=0);
+    void extract(bytearray &out,bytearray &source,byte dflt,int index,int grow=0);
+    void extract(floatarray &out,bytearray &mask,floatarray &source,int index,int grow=0);
+    void extract(floatarray &out,floatarray &source,float dflt,int index,int grow=0);
+    void setClass(int index,int cls,float cost);
+    void getLattice(IGenericFst &fst);
+};
+
+IGrouper *make_SimpleGrouper();
+
+struct Pages {
+    Pages();
+    ~Pages();
+    void clear();
+    void addFile(const char *file);
+    void parseSpec(const char *spec);
+    void wantGray(bool flag);
+    void wantColor(bool flag);
+    void setAutoInvert(bool flag);
+    void setBinarizer(IBinarize *arg);
+    int length();
+    void getPage(int index);
+    bool nextPage();
+    void rewind();
+    void loadImage();
+    const char *getFileName();
+    bool hasGray();
+    bool hasColor();
+    void getBinary(bytearray &dst);
+    void getGray(bytearray &dst);
+    void getColor(intarray &dst);
+};
+
+$ void str2array(bytearray &out,const char *s) {
+$     int n = strlen(s);
+$     out.resize(n);
+$     for(int i=0;i<n;i++) out[i] = s[i];
+$ }
+$ char *array2str(bytearray &buf) {
+$     char *result = (char*)malloc(buf.length()+1);
+$     for(int i=0;i<buf.length();i++) result[i] = buf[i];
+$     result[buf.length()] = 0;
+$     return result;
+$ }
+
+void str2array(bytearray &out,const char *s);
+char *array2str(bytearray &buf);
+
+void replace_values(bytearray &a,byte,byte);
+void replace_values(intarray &a,int,int);
+void replace_values(floatarray &a,float,float);
+
+int pseg_pixel(int column,int paragraph,int line);
+int pseg_pixel(int column,int line);
+int pseg_column(int pixel);
+int pseg_paragraph(int pixel);
+int pseg_line(int pixel);
+int pseg_pline(int pixel);
+int cseg_pixel(int chr);
+void pseg_columns(intarray &a);
+void pseg_plines(intarray &a);
+
+$int hex(const char *s) { int v; sscanf(s,"%x",&v); return v; }
+int hex(const char *s);
+
+intarray *as_intarray(const char *s);
+intarray *as_intarray(bytearray &a);
+intarray *as_intarray(nustring &a);
+const char *as_string(bytearray &a);
+const char *as_string(nustring &a);
+const char *as_string(intarray &a);
+
+intarray *utf32(const char *s);
+const char *utf8(intarray &a);
+
+// void dump_charlib(const char *path, ICharacterLibrary &);
+void parse_vector(intarray &, const char *);
+
+const char *get_version_string();
+void set_version_string(const char *);
+$ const char *hardcoded_version_string();
+const char *hardcoded_version_string();
+
+
+
+
+/*void detect_headlines(RecognizedPage &, ILines &);
+void detect_paragraphs(RecognizedPage &, ILines &);*/
+
+void remove_small_components(intarray &bimage,int mw,int mh);
+void remove_marginal_components(intarray &bimage,int x0,int y0,int x1,int y1);
+void remove_small_components(bytearray &bimage,int mw,int mh);
+void remove_marginal_components(bytearray &bimage,int x0,int y0,int x1,int y1);
+void runlength_histogram(floatarray &hist, bytearray &img,rectangle r,bool white=false,bool vert=false);
+void runlength_histogram(floatarray &hist, bytearray &img,bool white=false,bool vert=false);
+int find_median_in_histogram(floatarray &);
+void make_background_white(bytearray &);
+class IClassifier {
+    virtual ~IClassifier() {}
+    virtual void set(const char *name,double value) = 0;
+    virtual int classify(floatarray &v) = 0;
+    virtual int classify(float &cost,floatarray &v) = 0;
+    virtual void discriminant(floatarray &result,floatarray &v) = 0;
+    virtual void discriminant(float &cost,floatarray &result,floatarray &v) = 0;
+    virtual void posterior(floatarray &result,floatarray &v) = 0;
+    virtual void posterior(float &cost,floatarray &result,floatarray &v) = 0;
+    virtual void add(floatarray &v,int c) = 0;
+    virtual void train() = 0;
+    virtual void save(FILE *stream) = 0;
+    virtual void load(FILE *stream) = 0;
+    void save(const char *path);
+    void load(const char *path);
+};
+
+void set_resource_path(const char *path);
+void extract_segment(bytearray &result, intarray &image, int n);
+
+
+void degrade(bytearray &image,
+             double jitter_mean = .2,
+             double jitter_sigma = .1,
+             double sensitivity_mean = .125,
+             double sensitivity_sigma = .04,
+             double threshold_mean = .4,
+             double threshold_sigma = .04);
+
+class Logger {
+    bool enabled;
+
+    /// \brief
+    /// Construct a logger with a given name
+    /// and decide whether it's enabled or not.
+    Logger(const char *name);
+
+    /// Recolor a segmentation and log it.
+    void recolor(const char *description, intarray &, float = 100.);
+
+    /// Just log the message.
+    void log(const char *message);
+
+    /// Log a boolean value.
+    void log(const char *message, bool);
+
+    /// Log an integer value.
+    void log(const char *message, int);
+
+    /// Log a double value.
+    void log(const char *message, double);
+
+    /// Log a string.
+    void log(const char *description, const char *);
+
+    /// \brief Log a grayscale image.
+    ///
+    /// If the image is not 2-dimensional,
+    /// it will be written as text.
+    void log(const char *description, bytearray &, float = 100.);
+
+    /// \brief Log a color image.
+    ///
+    /// If the image is not 2-dimensional,
+    /// it will be written as text.
+    void log(const char *description, intarray &, float = 100.);
+
+    /// \brief Log an array of floats.
+    ///
+    void log(const char *description, floatarray &);
+
+    /// Log a nuchar value.
+    void log(const char *description, nuchar);
+
+    /// Log a nustring value, decoding it to UTF-8.
+    void log(const char *description, nustring &);
+
+    /// Log a rectangle.
+    void log(const char *description, rectangle &);
+
+    // not good for Lua binding - shadows arrays
+    //void log(const char *description, void *);
+
+    /// Get a bestpath and log it.
+    void log(const char *description, IGenericFst &);
+
+    /// Increase indentation level in the log.
+    void indent();
+
+    /// Decrease indentation level in the log.
+    void dedent();
+};
+
+float edit_distance(nustring &str1,nustring &str2,
+                    float del_cost=1, float ins_cost=1, float sub_cost=1);
+
+float block_move_edit_cost(nustring &from,
+                           nustring &to,
+                           float c);
+
+float block_move_edit_distance(nustring &a,
+                               nustring &b,
+                               float c);
+
+float block_move_edit_cost_record_jumps(intarray &jumps_from,
+                                        intarray &jumps_to,
+                                        nustring &from,
+                                        nustring &to, float c);
+
+void analyze_jumps(bytearray &area_covered_by_non_jumps,
+                   intarray &from,
+                   intarray &to,
+                   int source_length);
+
+void get_text_jumped_over(nustring &result, bytearray &covered, nustring &text);
+
+float edit_cost_for_layout(intarray &jumps_from,
+                           intarray &jumps_to,
+                           nustring &from,
+                           nustring &to, float c);
+
+void rotate_90(bytearray &,bytearray &);
+void rotate_180(bytearray &,bytearray &);
+void rotate_270(bytearray &,bytearray &);
+
+}
+
+$[
+
+function import_all(module)
+    for key, value in pairs(module) do
+        _G[key] = value
+    end
+end
+
+$]

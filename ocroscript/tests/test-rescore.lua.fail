@@ -1,0 +1,43 @@
+dofile 'utest.lua'
+
+function transcript_to_fst(transcript)
+    assert(transcript)
+    local fst = ocr.make_StandardFst()
+    -- tolua.takeownership(fst)
+    local s = fst:newState()
+    fst:setStart(s)
+    for j = 0, transcript--[=[[i]]=]:length() - 1 do
+        local c = transcript--[=[[i]]=]:at(j)
+        if c:ord() == 32 then
+            -- add a loop to the current state
+            fst:addTransition(s, s, c:ord(), 0, 0)
+        else
+            -- add an arc to the next state
+            local t = fst:newState()
+            fst:addTransition(s, t, c:ord(), 0, 0)
+            s = t
+        end
+    end
+    fst:setAccept(s)
+    return fst
+end
+
+section "image"
+image = bytearray()
+iulib.read_image_gray(image,"images/line.png")
+
+section "bpnet"
+fst = ocr.make_StandardFst()
+bpnet = ocr.make_NewBpnetLineOCR("../../data/models/neural-net-file.nn")
+bpnet:recognizeLine(fst,image)
+result = nustring.nustring()
+fst:bestpath(result)
+note("bestpath: "..result:utf8())
+test_assert(result:utf8()=="This is a lot of 12 point text to test the")
+newstring = "Th1s 1s a l0t 0f i2 p01nt t3Xt t0 t3Zt tho"
+transcript_fst = transcript_to_fst(nustring.nustring(newstring))
+ocr.beam_search_and_rescore(fst, transcript_fst, 0)
+result = nustring.nustring()
+fst:bestpath(result)
+note("bestpath: "..result:utf8())
+test_assert(result:utf8():gsub(' ','')==newstring:gsub(' ',''))

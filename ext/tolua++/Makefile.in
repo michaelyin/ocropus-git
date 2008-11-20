@@ -1,0 +1,47 @@
+# Copyright 2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz 
+# or its licensors, as applicable.
+# 
+# You may not use this file except under the terms of the accompanying license.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License"); you
+# may not use this file except in compliance with the License. You may
+# obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# 
+# Project: OCRopus - the open source document analysis and OCR system
+# File: Makefile.in
+# Purpose: building tolua++ and libtolua++.a
+# Responsible: kofler
+# Reviewer: 
+# Primary Repository: http://ocropus.googlecode.com/svn/trunk/
+# Web Sites: www.iupr.org, www.dfki.de
+
+CXX=@CXX@
+RANLIB=@RANLIB@
+srcdir = @srcdir@
+
+CFLAGS+=-I$(srcdir)/../lua
+
+LUADIR = $(srcdir)/../lua
+LUALIB = $(LUADIR)/liblua.a
+
+tolua++: tolua.o toluabind.o libtolua++.a $(LUALIB)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+libtolua++.a: tolua_event.o tolua_is.o tolua_map.o tolua_push.o tolua_to.o
+	$(AR) crf $@ $^
+	$(RANLIB) $@
+
+tolua_event.c: tolua_event.h
+tolua.c: toluabind.h
+
+$(LUALIB):
+	cd $(LUADIR) && $(MAKE)
+
+clean:
+	rm -f tolua++ *.o *.a

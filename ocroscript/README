@@ -1,0 +1,4 @@
+This folder represents the heart of the lua scripting part of OCRopus.
+Here, the ocroscript interpreter is built with all OCRopus funtionality 
+and many of the top-level access is implemented in various lua scripts.
+

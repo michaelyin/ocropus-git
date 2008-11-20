@@ -1,0 +1,5 @@
+image = bytearray()
+iulib.read_image_gray(image,arg[1])
+graphics.dinit(image:dim(0),image:dim(1),true)
+graphics.dshow(image)
+graphics.dwait()

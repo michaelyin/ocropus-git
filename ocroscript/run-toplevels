@@ -1,0 +1,113 @@
+#!/bin/bash
+
+
+die() { echo FATAL "$*"; exit 255; }
+
+top=`dirname $0`
+cd $top || die "cannot cd $top" 
+test -d ./scripts || die "cannot find $top/scripts"
+test -x ./ocroscript || die "cannot execute $top/ocroscript"
+export OCROSCRIPTS=$top/scripts
+bad=0
+
+runocroscript() {
+    ./ocroscript "$@" > _out 2> _err
+}
+
+runlua() {
+    echo -n '***' $1 ''
+    test -f $1 || { echo "WARNING: $1: not found"; return; }
+    unset DISPLAY # avoids graphical debugging
+    rm -f _out _err
+    if runocroscript "$@"; then
+        echo OK
+    else
+        echo '***' $1 '' FAILED >&2
+        cat _err >&2
+        bad=$((bad + 1))
+        return 1
+    fi
+    if cat _out _err | egrep '.lua:[0-9][0-9]*:'; then
+        echo '***' $1 '' FAILED >&2
+        echo FAILED: found error message in the output >&2
+        bad=$((bad + 1))
+        return 1
+    fi
+    if cat _out _err | egrep '[uU]sage:'; then
+        echo '***' $1 '' FAILED >&2
+        echo FAILED: top-level was not used properly >&2
+        bad=$((bad + 1))
+        return 1
+    fi
+}
+
+result() {
+    diff -b $1 $2 || bad=$((bad + 1))
+}
+
+bpnet=../data/models/neural-net-file.nn
+limage=tests/images/line.png
+ltext=tests/images/line.txt
+out=_out.png
+simage=tests/images/simple.png
+stext=tests/images/simple.txt
+shocr=tests/images/simple.hocr
+shocr_bpnet=tests/images/simple.hocr-bpnet
+out=_out.png
+
+database=../data/digits_ocropus/list
+log=_log.txt
+
+runlua scripts/line-clean.lua $limage $out
+runlua scripts/sauvola.lua $simage $out
+# CK: -e tess.o is a stupid hack to check if compiled with tesseract
+if [ -e tess.o ] && runlua scripts/recognize.lua $simage; then
+    result $shocr _out
+fi
+if runlua scripts/hocr-to-text.lua $shocr; then
+    result $stext _out
+fi
+
+# test that hyphenation removal works
+# CK: -e tess.o is a stupid hack to check if compiled with tesseract
+if [ -e tess.o ] && runlua scripts/recognize.lua tests/images/hyphenation-example.png; then
+    result tests/images/hyphenation-example.hocr _out
+fi
+
+# rm -f $log
+# runlua scripts/check-train-valid-bpnet-feature.lua $database $log
+# cat $log | awk '{if($1 > 2.0) {print "RESULT FAILED"} else {print "RESULT OK"}}'
+
+# fix the following scripts
+# CK: no longer there: runlua scripts/rec-line.lua
+# CK: no longer there: runlua scripts/align-bpnet.lua $limage $ltext $out
+# IM: obsolete: runlua scripts/align-line.lua $limage $ltext $out
+# IM: obsolete: runlua scripts/align-tesseract.lua $limage $ltext $out
+# IM: obsolete: runlua scripts/rec-bpnet.lua $simage
+# if runlua scripts/recognize.lua --bpnet $simage; then
+#    result $shocr_bpnet _out
+# fi
+# IM: obsolete runlua scripts/rec-ltess.lua $simage
+#result $stext _out
+
+# FIXME align-lines-wordwise does no longer work ! (CK, 2008-11-13)
+# test alignment
+#tinyds=tests/images/tiny-dataset
+#tinydsdir=$tinyds/Volume_0000/0000
+#runlua scripts/align-lines-wordwise.lua $tinyds $bpnet
+#for i in 0001 0002 0003; do
+#    if diff $tinydsdir/$i.gt-cseg.png $tinydsdir/$i.cseg.png; then 
+#        rm $tinydsdir/$i.cseg.png
+#   else
+#        echo "FAILED: $tinydsdir/$i.cseg.png differs from GT"
+#        bad=1
+#    fi
+#done
+
+# figure out what to do with these
+# runlua scripts/align-transcription.lua
+# run ocroscript scripts/rec-tess-old.lua
+# run ocroscript scripts/segment-line.lua
+# run ocroscript scripts/train-english.lua
+
+exit $bad
