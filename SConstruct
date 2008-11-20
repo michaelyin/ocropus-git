@@ -126,9 +126,8 @@ env.Append(CPPPATH=["ext/tolua++","ext/lua"])
 env.Append(LIBPATH=["${iulib}/lib"])
 env.Append(CPPPATH=["${iulib}/include","${iulib}/include/colib","${iulib}/include/iulib"])
 env.Append(LIBS=["iulib"])
-assert conf.CheckHeader("colib.h",language="C++")
-assert conf.CheckLibWithHeader("iulib","imgio.h","C++");
-assert conf.CheckLibWithHeader("iulib","imgmisc.h","C++");
+assert conf.CheckHeader("colib/colib.h",language="C++")
+assert conf.CheckLibWithHeader("iulib","iulib/iulib.h","C++");
 
 ### tesseract
 
