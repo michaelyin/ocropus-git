@@ -33,8 +33,6 @@
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
-#include "colib/colib.h"
-#include "iulib/iulib.h"
 #include "ocropus.h"
 
 using namespace ocropus;
@@ -348,7 +346,7 @@ namespace ocropus {
             }
             if(debug) write_image_packed(debug,dimage);
             // dshow1d(cutcosts,"Y");
-            dshow(dimage,"Y");
+            //dshow(dimage,"Y");
         }
 
         void setImage(bytearray &image) {

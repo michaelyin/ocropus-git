@@ -27,7 +27,8 @@
 
 $#include "math.h"
 $#include "colib.h"
-$#include "iulib.h"
+$#include "imgio.h"
+$#include "imglib.h"
 $#include "ocropus.h"
 $#include "ocr-util.h"
 

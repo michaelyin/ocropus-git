@@ -2,11 +2,11 @@
 #define ocropus_headers_
 
 #include "colib/colib.h"
-#include "iulib/iulib.h"
+#include "iulib/imgio.h"
+#include "iulib/imglib.h"
 
 namespace ocropus {
     using namespace colib;
-    using namespace iulib;
 
     ISegmentPage *make_SegmentPageByVORONOI();
     IBinarize *make_BinarizeByOtsu();

@@ -21,8 +21,6 @@
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
-#include "colib/colib.h"
-#include "iulib/iulib.h"
 #include "ocropus.h"
 #include "lines.h"
 

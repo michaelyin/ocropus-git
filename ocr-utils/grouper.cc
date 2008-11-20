@@ -24,8 +24,6 @@
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
 #include <stdio.h>
-#include "colib/colib.h"
-#include "iulib/iulib.h"
 #include "ocropus.h"
 
 namespace ocropus {
