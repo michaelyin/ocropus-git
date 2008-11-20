@@ -14,7 +14,7 @@ ocroscript=`pwd`/ocroscript
 
 cd tests
 
-test -f $OCROPUS_DATA/models/neural-net-file.nn || {
+true || test -f $OCROPUS_DATA/models/neural-net-file.nn || {
     echo "I can't find $OCROPUS_DATA/models/neural-net-file.nn"
     exit 1
 }
