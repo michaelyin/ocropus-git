@@ -16,6 +16,8 @@ namespace fst = nlp_fst;
 #include "fstutil.h"
 #include "fstmodels.h"
 #include "fstbuilder.h"
+#else
+#warning building without HAVE_FST
 #endif
 #include "a-star.h"
 #include "beam-search.h"

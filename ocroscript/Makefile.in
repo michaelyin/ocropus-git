@@ -61,13 +61,18 @@ bin_PROGRAMS = ocroscript$(EXEEXT)
 @nofst_FALSE@am__append_1 = -DHAVE_FST
 @nofst_FALSE@am__append_2 = $(srcdir)/fst.cc
 @nofst_TRUE@am__append_3 = $(srcdir)/fst-stub.cc
-@notesseract_FALSE@am__append_4 = -I$(srcdir)/../ocr-tesseract -I@tessheaders@ -DHAVE_TESSERACT
-@notesseract_FALSE@am__append_5 = $(srcdir)/tess.cc
-@notesseract_TRUE@am__append_6 = $(srcdir)/tess-stub.cc
-@use_editline_TRUE@am__append_7 = -DLUA_USE_EDITLINE
-@use_editline_TRUE@am__append_8 = -leditline
-@use_leptonica_TRUE@am__append_9 = -DHAVE_LEPTONICA
-@use_leptonica_TRUE@am__append_10 = -llept
+
+# FIXME incorporate tesseract again somehow
+#if ! notesseract
+#    AM_CPPFLAGS += -I$(srcdir)/../ocr-tesseract -I@tessheaders@ -DHAVE_TESSERACT
+#    libocroscript_a_SOURCES +=  $(srcdir)/tess.cc
+#else
+#    libocroscript_a_SOURCES +=  $(srcdir)/tess-stub.cc
+#endif
+@use_editline_TRUE@am__append_4 = -DLUA_USE_EDITLINE
+@use_editline_TRUE@am__append_5 = -leditline
+@use_leptonica_TRUE@am__append_6 = -DHAVE_LEPTONICA
+@use_leptonica_TRUE@am__append_7 = -llept
 subdir = ocroscript
 DIST_COMMON = README $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -94,17 +99,13 @@ am__libocroscript_a_SOURCES_DIST = $(srcdir)/graphics.cc \
 	$(srcdir)/sysutil.cc $(srcdir)/image.cc \
 	$(srcdir)/imgrlecmds.cc $(srcdir)/imgbitscmds.cc \
 	$(srcdir)/ocr.cc $(srcdir)/narray.cc $(srcdir)/../version.cc \
-	$(srcdir)/fst.cc $(srcdir)/fst-stub.cc $(srcdir)/tess.cc \
-	$(srcdir)/tess-stub.cc
+	$(srcdir)/fst.cc $(srcdir)/fst-stub.cc
 @nofst_FALSE@am__objects_1 = fst.$(OBJEXT)
 @nofst_TRUE@am__objects_2 = fst-stub.$(OBJEXT)
-@notesseract_FALSE@am__objects_3 = tess.$(OBJEXT)
-@notesseract_TRUE@am__objects_4 = tess-stub.$(OBJEXT)
 am_libocroscript_a_OBJECTS = graphics.$(OBJEXT) sysutil.$(OBJEXT) \
 	image.$(OBJEXT) imgrlecmds.$(OBJEXT) imgbitscmds.$(OBJEXT) \
 	ocr.$(OBJEXT) narray.$(OBJEXT) version.$(OBJEXT) \
-	$(am__objects_1) $(am__objects_2) $(am__objects_3) \
-	$(am__objects_4)
+	$(am__objects_1) $(am__objects_2)
 libocroscript_a_OBJECTS = $(am_libocroscript_a_OBJECTS)
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
 PROGRAMS = $(bin_PROGRAMS)
@@ -239,15 +240,10 @@ TOLUALIB = $(TOLUADIR)/libtolua++.a
 TOLUA = $(TOLUADIR)/tolua++
 LUADIR = $(srcdir)/../ext/lua
 LUALIB = $(LUADIR)/liblua.a
-AM_CPPFLAGS = -I$(srcdir)/../ext/voronoi -I$(srcdir)/../imgbits \
-	-I$(srcdir)/../ocr-langmods -I$(srcdir)/../ocr-binarize \
-	-I$(srcdir)/../ocr-bpnet -I$(srcdir)/../ocr-deskew-rast \
-	-I$(srcdir)/../ocr-doc-clean -I$(srcdir)/../ocr-layout-rast \
-	-I$(srcdir)/../ocr-pageseg -I$(srcdir)/../ocr-samples \
-	-I$(srcdir)/../ocr-utils -I$(srcdir)/../ocr-leptonica \
+AM_CPPFLAGS = -I$(srcdir)/../include -I$(srcdir)/../ocr-utils \
 	-I@iulibheaders@ -I@colibheaders@ -I@colibheaders@/.. \
 	-I$(TOLUADIR) -I$(LUADIR) $(am__append_1) $(am__append_4) \
-	$(am__append_7) $(am__append_9)
+	$(am__append_6)
 
 # having /../ocroscript/ all over the place looks a bit ugly, but later we
 # will have .pkg files also in other subfolders. The check-am.py script
@@ -256,12 +252,11 @@ lib_LIBRARIES = libocroscript.a
 libocroscript_a_SOURCES = $(srcdir)/graphics.cc $(srcdir)/sysutil.cc \
 	$(srcdir)/image.cc $(srcdir)/imgrlecmds.cc \
 	$(srcdir)/imgbitscmds.cc $(srcdir)/ocr.cc $(srcdir)/narray.cc \
-	$(srcdir)/../version.cc $(am__append_2) $(am__append_3) \
-	$(am__append_5) $(am__append_6)
+	$(srcdir)/../version.cc $(am__append_2) $(am__append_3)
 ocroscript_SOURCES = $(srcdir)/../ocroscript/ocroscript.cc $(srcdir)/../ocroscript/ocrotoplevel.cc 
 ocroscript_LDADD = -ltiff -lpng -ljpeg $(LUALIB) libocroscript.a \
-	$(srcdir)/../libocropus.a $(TOLUALIB) $(am__append_8) \
-	$(am__append_10)
+	$(srcdir)/../libocropus.a $(TOLUALIB) $(am__append_5) \
+	$(am__append_7)
 
 # install scripts
 scriptsdir = ${datadir}/ocropus
@@ -377,8 +372,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocroscript.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocrotoplevel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/sysutil.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tess-stub.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/tess.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/version.Po@am__quote@
 
 .cc.o:
@@ -534,34 +527,6 @@ fst-stub.obj: $(srcdir)/fst-stub.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/fst-stub.cc' object='fst-stub.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o fst-stub.obj `if test -f '$(srcdir)/fst-stub.cc'; then $(CYGPATH_W) '$(srcdir)/fst-stub.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/fst-stub.cc'; fi`
-
-tess.o: $(srcdir)/tess.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tess.o -MD -MP -MF $(DEPDIR)/tess.Tpo -c -o tess.o `test -f '$(srcdir)/tess.cc' || echo '$(srcdir)/'`$(srcdir)/tess.cc
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/tess.Tpo $(DEPDIR)/tess.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/tess.cc' object='tess.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tess.o `test -f '$(srcdir)/tess.cc' || echo '$(srcdir)/'`$(srcdir)/tess.cc
-
-tess.obj: $(srcdir)/tess.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tess.obj -MD -MP -MF $(DEPDIR)/tess.Tpo -c -o tess.obj `if test -f '$(srcdir)/tess.cc'; then $(CYGPATH_W) '$(srcdir)/tess.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/tess.cc'; fi`
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/tess.Tpo $(DEPDIR)/tess.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/tess.cc' object='tess.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tess.obj `if test -f '$(srcdir)/tess.cc'; then $(CYGPATH_W) '$(srcdir)/tess.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/tess.cc'; fi`
-
-tess-stub.o: $(srcdir)/tess-stub.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tess-stub.o -MD -MP -MF $(DEPDIR)/tess-stub.Tpo -c -o tess-stub.o `test -f '$(srcdir)/tess-stub.cc' || echo '$(srcdir)/'`$(srcdir)/tess-stub.cc
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/tess-stub.Tpo $(DEPDIR)/tess-stub.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/tess-stub.cc' object='tess-stub.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tess-stub.o `test -f '$(srcdir)/tess-stub.cc' || echo '$(srcdir)/'`$(srcdir)/tess-stub.cc
-
-tess-stub.obj: $(srcdir)/tess-stub.cc
-@am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT tess-stub.obj -MD -MP -MF $(DEPDIR)/tess-stub.Tpo -c -o tess-stub.obj `if test -f '$(srcdir)/tess-stub.cc'; then $(CYGPATH_W) '$(srcdir)/tess-stub.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/tess-stub.cc'; fi`
-@am__fastdepCXX_TRUE@	mv -f $(DEPDIR)/tess-stub.Tpo $(DEPDIR)/tess-stub.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/tess-stub.cc' object='tess-stub.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o tess-stub.obj `if test -f '$(srcdir)/tess-stub.cc'; then $(CYGPATH_W) '$(srcdir)/tess-stub.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/tess-stub.cc'; fi`
 
 ocroscript.o: $(srcdir)/../ocroscript/ocroscript.cc
 @am__fastdepCXX_TRUE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocroscript.o -MD -MP -MF $(DEPDIR)/ocroscript.Tpo -c -o ocroscript.o `test -f '$(srcdir)/../ocroscript/ocroscript.cc' || echo '$(srcdir)/'`$(srcdir)/../ocroscript/ocroscript.cc
@@ -796,7 +761,7 @@ $(srcdir)/sysutil.cc : $(srcdir)/sysutil.pkg  $(TOLUA)
 $(srcdir)/image.cc : $(srcdir)/image.pkg  $(TOLUA)
 $(srcdir)/imgrlecmds.cc : $(srcdir)/imgrlecmds.pkg  $(TOLUA)
 $(srcdir)/imgbitscmds.cc : $(srcdir)/imgbitscmds.pkg  $(TOLUA)
-$(srcdir)/tess.cc : $(srcdir)/tess.pkg  $(TOLUA)
+# $(srcdir)/tess.cc : $(srcdir)/tess.pkg  $(TOLUA)
 $(srcdir)/ocr.cc : $(srcdir)/ocr.pkg  $(TOLUA)
 $(srcdir)/narray.cc : $(srcdir)/narray.pkg  $(TOLUA)
 $(srcdir)/fst.cc : $(srcdir)/fst.pkg  $(TOLUA)

@@ -26,12 +26,7 @@ TOLUALIB = $(TOLUADIR)/libtolua++.a
 TOLUA = $(TOLUADIR)/tolua++
 LUADIR = $(srcdir)/../ext/lua
 LUALIB = $(LUADIR)/liblua.a
-AM_CPPFLAGS =  -I$(srcdir)/../ext/voronoi -I$(srcdir)/../imgbits \
-	-I$(srcdir)/../ocr-langmods -I$(srcdir)/../ocr-binarize \
-	-I$(srcdir)/../ocr-bpnet -I$(srcdir)/../ocr-deskew-rast \
-	-I$(srcdir)/../ocr-doc-clean -I$(srcdir)/../ocr-layout-rast \
-	-I$(srcdir)/../ocr-pageseg -I$(srcdir)/../ocr-samples \
-	-I$(srcdir)/../ocr-utils -I$(srcdir)/../ocr-leptonica \
+AM_CPPFLAGS =  -I$(srcdir)/../include -I$(srcdir)/../ocr-utils \
 	-I@iulibheaders@ -I@colibheaders@ -I@colibheaders@/.. \
 	-I$(TOLUADIR) -I$(LUADIR)
 
@@ -56,12 +51,13 @@ else
     libocroscript_a_SOURCES +=  $(srcdir)/fst-stub.cc
 endif
 
-if ! notesseract
-    AM_CPPFLAGS += -I$(srcdir)/../ocr-tesseract -I@tessheaders@ -DHAVE_TESSERACT
-    libocroscript_a_SOURCES +=  $(srcdir)/tess.cc
-else
-    libocroscript_a_SOURCES +=  $(srcdir)/tess-stub.cc
-endif
+# FIXME incorporate tesseract again somehow
+#if ! notesseract
+#    AM_CPPFLAGS += -I$(srcdir)/../ocr-tesseract -I@tessheaders@ -DHAVE_TESSERACT
+#    libocroscript_a_SOURCES +=  $(srcdir)/tess.cc
+#else
+#    libocroscript_a_SOURCES +=  $(srcdir)/tess-stub.cc
+#endif
 
 if use_editline
     AM_CPPFLAGS += -DLUA_USE_EDITLINE
@@ -84,7 +80,7 @@ $(srcdir)/sysutil.cc : $(srcdir)/sysutil.pkg  $(TOLUA)
 $(srcdir)/image.cc : $(srcdir)/image.pkg  $(TOLUA)
 $(srcdir)/imgrlecmds.cc : $(srcdir)/imgrlecmds.pkg  $(TOLUA)
 $(srcdir)/imgbitscmds.cc : $(srcdir)/imgbitscmds.pkg  $(TOLUA)
-$(srcdir)/tess.cc : $(srcdir)/tess.pkg  $(TOLUA)
+# $(srcdir)/tess.cc : $(srcdir)/tess.pkg  $(TOLUA)
 $(srcdir)/ocr.cc : $(srcdir)/ocr.pkg  $(TOLUA)
 $(srcdir)/narray.cc : $(srcdir)/narray.pkg  $(TOLUA)
 $(srcdir)/fst.cc : $(srcdir)/fst.pkg  $(TOLUA)

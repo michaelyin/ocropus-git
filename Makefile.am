@@ -32,16 +32,7 @@ ocropusincludedir=$(includedir)/ocropus
 # public header files should only go into include/
 AM_CPPFLAGS = -I$(srcdir)/include \
                 -I$(srcdir)/ext/voronoi \
-		-I$(srcdir)/ocr-langmods \
-		-I$(srcdir)/ocr-lineseg \
-		-I$(srcdir)/ocr-binarize \
-		-I$(srcdir)/ocr-deskew-rast \
-		-I$(srcdir)/ocr-doc-clean \
-		-I$(srcdir)/ocr-layout-rast \
-		-I$(srcdir)/ocr-pageseg \
-		-I$(srcdir)/ocr-samples \
-		-I$(srcdir)/ocr-utils \
-		-I$(srcdir)/ocr-leptonica \
+                -I$(srcdir)/ocr-utils \
 		-I@iulibheaders@ \
 		-I@colibheaders@ \
 		-I@colibheaders@/..
@@ -51,154 +42,91 @@ lib_LIBRARIES = libocropus.a
 
 # the default files to compile into libocropus
 libocropus_a_SOURCES  =  \
-$(srcdir)/ext/voronoi/voronoi.cc \
-$(srcdir)/ext/voronoi/dinfo.cc \
-$(srcdir)/ext/voronoi/erase.cc \
-$(srcdir)/ext/voronoi/img_to_site.cc \
-$(srcdir)/ext/voronoi/usage.cc \
-$(srcdir)/ext/voronoi/draw_line.cc \
-$(srcdir)/ext/voronoi/memory.cc \
-$(srcdir)/ext/voronoi/read_image.cc \
-$(srcdir)/ext/voronoi/heap.cc \
-$(srcdir)/ext/voronoi/hash.cc \
 $(srcdir)/ext/voronoi/bit_func.cc \
-$(srcdir)/ext/voronoi/geometry.cc \
-$(srcdir)/ext/voronoi/output.cc \
-$(srcdir)/ext/voronoi/edgelist.cc \
-$(srcdir)/ext/voronoi/voronoi-pageseg.cc \
-$(srcdir)/ext/voronoi/voronoi-ocropus.cc \
-$(srcdir)/ext/voronoi/sites.cc \
 $(srcdir)/ext/voronoi/cline.cc \
+$(srcdir)/ext/voronoi/dinfo.cc \
+$(srcdir)/ext/voronoi/draw_line.cc \
+$(srcdir)/ext/voronoi/edgelist.cc \
+$(srcdir)/ext/voronoi/erase.cc \
+$(srcdir)/ext/voronoi/geometry.cc \
+$(srcdir)/ext/voronoi/hash.cc \
+$(srcdir)/ext/voronoi/heap.cc \
+$(srcdir)/ext/voronoi/img_to_site.cc \
 $(srcdir)/ext/voronoi/label_func.cc \
+$(srcdir)/ext/voronoi/main-be.cc \
+$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc \
+$(srcdir)/ext/voronoi/memory.cc \
+$(srcdir)/ext/voronoi/output.cc \
+$(srcdir)/ext/voronoi/read_image.cc \
+$(srcdir)/ext/voronoi/sites.cc \
+$(srcdir)/ext/voronoi/usage.cc \
+$(srcdir)/ext/voronoi/voronoi-ocropus.cc \
+$(srcdir)/ext/voronoi/voronoi-pageseg.cc \
+$(srcdir)/ext/voronoi/voronoi.cc \
+$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc \
+$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc \
+$(srcdir)/ocr-binarize/ocr-binarize-otsu.cc \
+$(srcdir)/ocr-binarize/ocr-binarize-range.cc \
+$(srcdir)/ocr-binarize/ocr-binarize-sauvola.cc \
 $(srcdir)/ocr-langmods/a-star.cc \
 $(srcdir)/ocr-langmods/beam-search.cc \
-$(srcdir)/ocr-langmods/a-star.cc \
+$(srcdir)/ocr-langmods/fst-em.cc \
 $(srcdir)/ocr-langmods/fst-io.cc \
 $(srcdir)/ocr-langmods/langmod-shortest-path.cc \
 $(srcdir)/ocr-langmods/lattice.cc \
-$(srcdir)/ocr-langmods/fst-em.cc \
-$(srcdir)/ocr-binarize/ocr-binarize-sauvola.cc \
-$(srcdir)/ocr-binarize/ocr-binarize-otsu.cc \
-$(srcdir)/ocr-deskew-rast/ocr-deskew-rast.cc \
-$(srcdir)/ocr-doc-clean/ocr-noisefilter.cc \
-$(srcdir)/ocr-doc-clean/ocr-doc-clean.cc \
-$(srcdir)/ocr-doc-clean/ocr-doc-clean-concomp.cc \
-$(srcdir)/ocr-doc-clean/ocr-pageframe-rast.cc \
-$(srcdir)/ocr-layout-rast/ocr-layout-rast.cc \
-$(srcdir)/ocr-layout-rast/line-info.cc \
-$(srcdir)/ocr-layout-rast/ocr-extract-gutters.cc \
-$(srcdir)/ocr-layout-rast/ocr-ctextline-rast.cc \
-$(srcdir)/ocr-layout-rast/ocr-whitespace-cover.cc \
-$(srcdir)/ocr-layout-rast/ocr-char-stats.cc \
-$(srcdir)/ocr-layout-rast/ocr-ctextline-rast-extended.cc \
-$(srcdir)/ocr-pageseg/ocr-pageseg-wcuts.cc \
-$(srcdir)/ocr-pageseg/ocr-text-image-seg.cc \
-$(srcdir)/ocr-pageseg/log-reg-data.cc \
-$(srcdir)/ocr-pageseg/ocr-pageseg-xycut.cc \
-$(srcdir)/ocr-pageseg/ocr-classify-zones.cc \
-$(srcdir)/ocr-pageseg/ocr-word-segmentation.cc \
+$(srcdir)/ocr-layout/line-info.cc \
+$(srcdir)/ocr-layout/lines.cc \
+$(srcdir)/ocr-layout/log-reg-data.cc \
+$(srcdir)/ocr-layout/ocr-char-stats.cc \
+$(srcdir)/ocr-layout/ocr-classify-zones.cc \
+$(srcdir)/ocr-layout/ocr-ctextline-rast-extended.cc \
+$(srcdir)/ocr-layout/ocr-ctextline-rast.cc \
+$(srcdir)/ocr-layout/ocr-deskew-rast.cc \
+$(srcdir)/ocr-layout/ocr-doc-clean-concomp.cc \
+$(srcdir)/ocr-layout/ocr-doc-clean.cc \
+$(srcdir)/ocr-layout/ocr-extract-gutters.cc \
+$(srcdir)/ocr-layout/ocr-layout-1cp.cc \
+$(srcdir)/ocr-layout/ocr-layout-rast.cc \
+$(srcdir)/ocr-layout/ocr-layout-smear.cc \
+$(srcdir)/ocr-layout/ocr-noisefilter.cc \
+$(srcdir)/ocr-layout/ocr-pageframe-rast.cc \
+$(srcdir)/ocr-layout/ocr-pageseg-wcuts.cc \
+$(srcdir)/ocr-layout/ocr-pageseg-xycut.cc \
+$(srcdir)/ocr-layout/ocr-segmentations.cc \
+$(srcdir)/ocr-layout/ocr-text-image-seg.cc \
+$(srcdir)/ocr-layout/ocr-whitespace-cover.cc \
+$(srcdir)/ocr-layout/ocr-word-segmentation.cc \
+$(srcdir)/ocr-layout/recognized-page.cc \
 $(srcdir)/ocr-leptonica/ocr-text-image-seg-leptonica.cc \
-$(srcdir)/ocr-samples/ocr-layout-smear.cc \
-$(srcdir)/ocr-samples/ocr-cseg-ccs.cc \
-$(srcdir)/ocr-samples/ocr-cseg-projection.cc \
-$(srcdir)/ocr-samples/kmeans.cc \
-$(srcdir)/ocr-samples/ocr-binarize-range.cc \
-$(srcdir)/ocr-samples/ocr-layout-1cp.cc \
-$(srcdir)/ocr-utils/narray-io.cc \
-$(srcdir)/ocr-utils/xml-entities.cc \
-$(srcdir)/ocr-utils/ocr-segmentations.cc \
-$(srcdir)/ocr-utils/didegrade.cc \
-$(srcdir)/ocr-lineseg/seg-skel.cc \
-$(srcdir)/ocr-utils/lines.cc \
-$(srcdir)/ocr-utils/logger.cc \
-$(srcdir)/ocr-utils/grouper.cc \
-$(srcdir)/ocr-utils/idmap.cc \
-$(srcdir)/ocr-utils/eigens.cc \
-$(srcdir)/ocr-utils/sysutil.cc \
-$(srcdir)/ocr-utils/ocr-utils.cc \
-$(srcdir)/ocr-utils/resource-path.cc \
+$(srcdir)/ocr-lineseg/ocr-cseg-ccs.cc \
+$(srcdir)/ocr-lineseg/ocr-cseg-projection.cc \
 $(srcdir)/ocr-lineseg/seg-ccs.cc \
 $(srcdir)/ocr-lineseg/seg-cuts.cc \
 $(srcdir)/ocr-lineseg/seg-eval.cc \
-$(srcdir)/ocr-utils/editdist.cc
+$(srcdir)/ocr-lineseg/seg-skel.cc \
+$(srcdir)/ocr-utils/didegrade.cc \
+$(srcdir)/ocr-utils/editdist.cc \
+$(srcdir)/ocr-utils/grouper.cc \
+$(srcdir)/ocr-utils/linesegs.cc \
+$(srcdir)/ocr-utils/logger.cc \
+$(srcdir)/ocr-utils/narray-io.cc \
+$(srcdir)/ocr-utils/ocr-utils.cc \
+$(srcdir)/ocr-utils/pagesegs.cc \
+$(srcdir)/ocr-utils/resource-path.cc \
+$(srcdir)/ocr-utils/sysutil.cc \
+$(srcdir)/ocr-utils/xml-entities.cc
 
 # the default headers to install
 ocropusinclude_HEADERS =  \
-$(srcdir)/include/ocropus.h \
-$(srcdir)/include/ocr-binarize.h \
-$(srcdir)/include/ocr-deskew-rast-public.h \
-$(srcdir)/include/ocr-doc-clean.h \
-$(srcdir)/include/ocr-langmods.h \
-$(srcdir)/include/ocr-layout-rast-public.h \
-$(srcdir)/include/ocr-leptonica.h \
-$(srcdir)/include/ocr-lineseg.h \
-$(srcdir)/include/ocr-pageseg.h \
-$(srcdir)/include/ocr-samples.h \
-$(srcdir)/include/ocr-tesseract.h \
-$(srcdir)/include/ocr-utils-public.h \
-$(srcdir)/ext/voronoi/extern.h \
-$(srcdir)/ext/voronoi/read_image.h \
-$(srcdir)/ext/voronoi/function.h \
-$(srcdir)/ext/voronoi/defs.h \
-$(srcdir)/ext/voronoi/voronoi-ocropus.h \
-$(srcdir)/ext/voronoi/const.h \
-$(srcdir)/ocr-langmods/beam-search.h \
-$(srcdir)/ocr-langmods/a-star.h \
-$(srcdir)/ocr-langmods/fst-io.h \
-$(srcdir)/ocr-langmods/langmod-shortest-path.h \
-$(srcdir)/ocr-langmods/lattice.h \
-$(srcdir)/ocr-langmods/fst-em.h \
-$(srcdir)/ocr-leptonica/ocr-text-image-seg-leptonica.h \
-$(srcdir)/ocr-binarize/ocr-binarize-sauvola.h \
-$(srcdir)/ocr-binarize/ocr-binarize-otsu.h \
-$(srcdir)/ocr-deskew-rast/ocr-deskew-rast.h \
-$(srcdir)/ocr-doc-clean/ocr-noisefilter.h \
-$(srcdir)/ocr-doc-clean/ocr-doc-clean.h \
-$(srcdir)/ocr-doc-clean/ocr-doc-clean-concomp.h \
-$(srcdir)/ocr-doc-clean/ocr-pageframe-rast.h \
-$(srcdir)/ocr-layout-rast/ocr-whitespace-cover.h \
-$(srcdir)/ocr-layout-rast/ocr-char-stats.h \
-$(srcdir)/ocr-layout-rast/ocr-layout-rast.h \
-$(srcdir)/ocr-layout-rast/line-info.h \
-$(srcdir)/ocr-layout-rast/ocr-extract-gutters.h \
-$(srcdir)/ocr-layout-rast/ocr-ctextline-rast.h \
-$(srcdir)/ocr-layout-rast/ocr-ctextline-rast-extended.h \
-$(srcdir)/ocr-pageseg/ocr-classify-zones.h \
-$(srcdir)/ocr-pageseg/ocr-pageseg-wcuts.h \
-$(srcdir)/ocr-pageseg/ocr-text-image-seg.h \
-$(srcdir)/ocr-pageseg/log-reg-data.h \
-$(srcdir)/ocr-pageseg/ocr-pageseg-xycut.h \
-$(srcdir)/ocr-pageseg/ocr-word-segmentation.h \
-$(srcdir)/ocr-samples/ocrcomponents.h \
-$(srcdir)/ocr-samples/kmeans.h \
-$(srcdir)/ocr-utils/idmap.h \
-$(srcdir)/ocr-utils/narray-io.h \
-$(srcdir)/ocr-utils/ocr-segmentations.h \
-$(srcdir)/ocr-utils/eigens.h \
-$(srcdir)/ocr-utils/sysutil.h \
-$(srcdir)/ocr-utils/logger.h \
-$(srcdir)/ocr-utils/grouper.h \
-$(srcdir)/ocr-utils/segmentation.h \
-$(srcdir)/ocr-utils/pages.h \
-$(srcdir)/ocr-utils/didegrade.h \
-$(srcdir)/ocr-utils/lines.h \
-$(srcdir)/ocr-utils/regionextractor.h \
-$(srcdir)/ocr-utils/ocr-utils.h \
-$(srcdir)/ocr-utils/resource-path.h \
-$(srcdir)/ocr-utils/queue.h \
-$(srcdir)/ocr-utils/grid.h \
-$(srcdir)/ocr-lineseg/seg-eval.h \
-$(srcdir)/ocr-utils/enumerator.h \
-$(srcdir)/ocr-utils/editdist.h \
-$(srcdir)/ocr-utils/xml-entities.h
+$(srcdir)/include/ocropus.h
 
 # folders for installing models and words
 modeldir=${datadir}/ocropus/models
 worddir=${datadir}/ocropus/words
 
 # install the data
-model_DATA = $(srcdir)/data/models/*
-word_DATA = $(srcdir)/data/words/*
+#model_DATA = $(srcdir)/data/models/*
+#word_DATA = $(srcdir)/data/words/*
 
 # handling optional open-fst part
 if ! nofst
@@ -210,8 +138,7 @@ endif
 # handling optional tesseract part
 if ! notesseract
     AM_CPPFLAGS += -I$(srcdir)/ocr-tesseract -I@tessheaders@ -DHAVE_TESSERACT
-    libocropus_a_SOURCES += $(srcdir)/ocr-tesseract/tesseract.cc $(srcdir)/ocr-tesseract/recognized-page.cc
-    ocropusinclude_HEADERS += $(srcdir)/ocr-tesseract/tesseract.h $(srcdir)/ocr-tesseract/recognized-page.h
+    libocropus_a_SOURCES += $(srcdir)/ocr-layout/tesseract.cc $(srcdir)/ocr-layout/recognized-page.cc
 endif
 
 # handling optional leptonica part
@@ -241,5 +168,3 @@ all:
 	@echo
 	@echo "Use 'make check' to run tests!"
 	@echo
-	
-

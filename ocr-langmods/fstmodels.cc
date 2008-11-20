@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Project: 
-// File: 
-// Purpose: 
+// Project:
+// File:
+// Purpose:
 // Responsible: tmb
 // Reviewer:
 // Primary Repository:
@@ -48,7 +48,7 @@ namespace ocropus {
 
     // General purpose minimization function; this uses lazy versions
     // and then finally performs the minimization.
-    
+
     static StdVectorFst *fst_minimize(autodel<StdVectorFst> &composition,bool rmeps,bool det,bool min) {
         autodel<Fst<StdArc> > epsfree;
         if(rmeps) epsfree = new RmEpsilonFst<StdArc>(*composition);
@@ -79,7 +79,7 @@ namespace ocropus {
             fst->AddArc(start,StdArc(a[i],EPSILON,0.0,start));
         }
         for(int i=minsymbol;i<used.length();i++) {
-            if(!used(i)) 
+            if(!used(i))
                 fst->AddArc(start,StdArc(i,i,0.0,start));
         }
         Verify(*fst);
@@ -105,7 +105,7 @@ namespace ocropus {
             fst->AddArc(start,StdArc(a[i],a[i],0.0,start));
         }
         for(int i=minsymbol;i<used.length();i++) {
-            if(!used(i)) 
+            if(!used(i))
                 fst->AddArc(start,StdArc(i,EPSILON,0.0,start));
         }
         Verify(*fst);
@@ -217,7 +217,7 @@ namespace ocropus {
         fst->SetFinal(current,0.0);
         return fst.move();
     }
-    
+
     // Create a statistical unigram model.
 
     struct UnigramModelImpl : UnigramModel {
