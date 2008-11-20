@@ -32,6 +32,11 @@ namespace ocropus {
     ITextImageClassification *make_TextImageSegByLeptonica();
 }
 
+#include "line-info.h"
+#include "lattice.h"
+
+// these come from ocr-utils
+
 #include "didegrade.h"
 #include "editdist.h"
 #include "enumerator.h"
@@ -39,7 +44,10 @@ namespace ocropus {
 #include "grouper.h"
 #include "logger.h"
 #include "narray-io.h"
-#include "ocr-utils.h"
+#include "segmentation.h"
+#include "docproc.h"
+#include "stringutil.h"
+#include "arraypaint.h"
 #include "pages.h"
 #include "queue.h"
 #include "pagesegs.h"

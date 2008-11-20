@@ -27,7 +27,6 @@
 #define h_line_info__
 
 #include "ocropus.h"
-#include "ocr-layout.h"
 
 namespace ocropus {
     using namespace colib;
@@ -44,26 +43,23 @@ namespace ocropus {
                                 float &xheight, float &descender_sink,
                                 float &ascender_rise, intarray &seg);
 
-#if 0
-    /// Another, more Lua-friendly interface for get_extended_line_info().
-    /// Packs all the line parameters into the struct but doesn't change
-    /// the bbox.
-    bool get_extended_line_info(TextLineExtended &result, intarray &seg);
-#endif
-
     /// Get line information of a black-and-white line.
     bool get_extended_line_info_using_ccs(float &intercept, float &slope,
                                           float &xheight, float &descender_sink,
                                           float &ascender_rise, bytearray &img);
 
+
 #if 0
+#include "ocr-layout.h"
+    /// Another, more Lua-friendly interface for get_extended_line_info().
+    /// Packs all the line parameters into the struct but doesn't change
+    /// the bbox.
+    bool get_extended_line_info(TextLineExtended &result, intarray &seg);
+
     /// Lua-friendly interface for get_extended_line_info_using_css().
     /// Analogous to get_extended_line_info().
     bool get_extended_line_info_using_ccs(TextLineExtended &result,
                                           bytearray &image);
-#endif
-
-#if 0
     void paint_line(intarray &image, TextLineExtended l);
 #endif
 

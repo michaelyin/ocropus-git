@@ -35,7 +35,7 @@ namespace ocropus {
 
     using namespace colib;
 
-    enum {DEFAULT_BEAM_WIDTH = 100};
+    // enum {DEFAULT_BEAM_WIDTH = 100};
 
     /// \brief Search for the best path through the FST.
     ///

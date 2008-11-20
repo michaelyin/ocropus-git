@@ -1,34 +1,36 @@
 // Copyright 2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
-// 
+//
 // You may not use this file except under the terms of the accompanying license.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License"); you
 // may not use this file except in compliance with the License. You may
 // obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
-// Project: 
+//
+// Project:
 // File: lattice.h
-// Purpose: 
+// Purpose:
 // Responsible: mezhirov
-// Reviewer: 
-// Primary Repository: 
+// Reviewer:
+// Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
 #ifndef h_lattice_
 #define h_lattice_
 
 #include "ocropus.h"
-#include "langmods.h"
 
 namespace ocropus {
     using namespace colib;
+    enum {DEFAULT_BEAM_WIDTH = 1000};
+    struct ReadOnlyFst;
+    void beam_search(nustring &,IGenericFst &,int beam_width);
     struct ReadOnlyFst : IGenericFst {
         int oops() { throw "this FST is read-only"; }
         virtual void clear() {oops();}
@@ -38,7 +40,7 @@ namespace ocropus {
         virtual void setAccept(int node,float cost=0.0) { oops(); }
         virtual int special(const char *s) { return oops(); }
         virtual void bestpath(nustring &result) {
-            beam_search(result, *this);
+            ocropus::beam_search(result,*this,DEFAULT_BEAM_WIDTH);
         }
     };
 
@@ -61,7 +63,7 @@ namespace ocropus {
     /// The ids are always taken from the first FST only.
     /// Additional parameters, override_start and override_finish
     /// are indices into the first FST.
-    /// 
+    ///
     /// Setting override_start to nonnegative value has the same effect
     /// as l1->getStart() returning override_start.
     ///
@@ -81,14 +83,14 @@ namespace ocropus {
     void fst_copy(IGenericFst &dst, IGenericFst &src);
 
     /// Reverse the FST's arcs, adding a new start vertex (former accept).
-    /// @param no_accept 
+    /// @param no_accept
     void fst_copy_reverse(IGenericFst &dst, IGenericFst &src,
                           bool no_accept = false);
     void fst_copy_best_arcs_only(IGenericFst &dst, IGenericFst &src);
 
     /// Insert one FST into another, mapping the start into a given vertex
     /// and connecting all accept arcs to another given vertex.
-    void fst_insert(IGenericFst &dst, 
+    void fst_insert(IGenericFst &dst,
                     IGenericFst &src,
                     int start, int accept = -1);
 

@@ -92,24 +92,6 @@ namespace ocropus {
                                intarray &model_raw,intarray &image_raw,float tolerance);
     void align_segmentation(intarray &segmentation,narray<rectangle> &bboxes);
 
-    inline void write_line_segmentation(FILE *stream,intarray &a) {
-        check_line_segmentation(a);
-        make_line_segmentation_white(a);
-        write_image_packed(stream,a,"png");
-    }
-    inline void read_line_segmentation(intarray &a,FILE *stream) {
-        read_image_packed(a,stream,"png");
-        check_line_segmentation(a);
-        make_line_segmentation_black(a);
-    }
-    inline void write_page_segmentation(FILE *stream,intarray &a) {
-        check_page_segmentation(a);
-        write_image_packed(stream,a,"png");
-    }
-    inline void read_page_segmentation(intarray &a,FILE *stream) {
-        read_image_packed(a,stream,"png");
-        check_page_segmentation(a);
-    }
 }
 
 #endif

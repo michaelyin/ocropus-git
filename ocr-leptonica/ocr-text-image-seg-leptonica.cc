@@ -1,30 +1,29 @@
 // -*- C++ -*-
 
-// Copyright 2006-2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz 
+// Copyright 2006-2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
-// 
+//
 // You may not use this file except under the terms of the accompanying license.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License"); you
 // may not use this file except in compliance with the License. You may
 // obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 // Project: OCRopus
 // File: ocr-text-image-seg-leptonica.cc
 // Purpose: Wrapper class for getting non-text mask from leptonica
 // Responsible: Faisal Shafait (faisal.shafait@dfki.de)
-// Reviewer: 
-// Primary Repository: 
+// Reviewer:
+// Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include "colib/colib.h"
-#include "ocr-utils.h"
 
 using namespace colib;
 
@@ -59,12 +58,12 @@ namespace ocropus {
         int w = in.dim(0);
         int h = in.dim(1);
         int d = 8;
-        
+
         if ((pix = pixCreate(w, h, d)) == NULL){
             fprintf(stderr,"PIX structure could not be made.\n");
             exit(1);
         }
-            
+
         unsigned int *data = pixGetData(pix);
         int wpl = pixGetWpl(pix);
         int bpl = (d * w + 7) / 8;
@@ -87,7 +86,7 @@ namespace ocropus {
         static const char *mask_sequence = "r11";
         /* Seed at 4x reduction, formed by doing a 16x reduction,
          * an opening, and finally a 4x replicative expansion. */
-        static const char *seed_sequence = "r1143 + o5.5+ x4"; 
+        static const char *seed_sequence = "r1143 + o5.5+ x4";
         /* Simple dilation */
         static const char *dilation_sequence = "d3.3";
 
@@ -112,10 +111,10 @@ namespace ocropus {
             for(int x=0; x<w; x++)
                 out(x,h-y-1) = 255*!GET_DATA_BIT(lined,x);
         }
-        
+
 
         //pixWriteStreamPnm(fopen("maske.pgm","w"),pixd);
-        
+
         pixDestroy(&pix);
         pixDestroy(&pixb);
         pixDestroy(&pixseed4);
@@ -123,11 +122,11 @@ namespace ocropus {
         pixDestroy(&pixsf4);
         pixDestroy(&pixd4);
         pixDestroy(&pixd);
-        
+
     }
 
     // Get text-image map from a binary image
-    void TextImageSegByLeptonica::textImageProbabilities(intarray &out, 
+    void TextImageSegByLeptonica::textImageProbabilities(intarray &out,
                                                          bytearray &in){
         // get a binary image
         bytearray in_binary;
@@ -157,11 +156,11 @@ namespace ocropus {
             }
         }
     }
-     
+
     ITextImageClassification *make_TextImageSegByLeptonica(){
         return new TextImageSegByLeptonica();
     }
-    
+
 }
 
 #endif
