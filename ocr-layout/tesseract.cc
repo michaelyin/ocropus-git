@@ -63,6 +63,7 @@ using namespace tesseract;
 #include "lines.h"
 
 #include "line-info.h"
+#include "ocr-segmentations.h"
 
 using namespace colib;
 using namespace iulib;

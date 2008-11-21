@@ -27,8 +27,7 @@
 #ifndef h_grid_
 #define h_grid_
 
-#include "colib/colib.h"
-#include "imgio.h"
+#include "ocropus.h"
 
 using namespace iulib;
 

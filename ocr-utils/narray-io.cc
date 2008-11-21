@@ -27,7 +27,6 @@
 #include <ctype.h>
 #include "colib/colib.h"
 #include "narray-io.h"
-#include "ocr-utils.h"
 
 using namespace colib;
 

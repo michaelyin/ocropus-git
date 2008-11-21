@@ -36,9 +36,10 @@ $#include "fst/lib/fst.h"
 $#include "fst/lib/fstlib.h"
 $#endif
 $#include "fst-util.h"
-$#include "fstutil.h"
-$#include "fstbuilder.h"
-$#include "fstmodels.h"
+/* FIXME get rid of these ../ paths */
+$#include "../ocr-langmods/fstutil.h"
+$#include "../ocr-langmods/fstbuilder.h"
+$#include "../ocr-langmods/fstmodels.h"
 
 $using namespace colib;
 $using namespace ocropus;

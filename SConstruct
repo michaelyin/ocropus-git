@@ -59,7 +59,7 @@ exclude = r'.*/(main|test|bigtest)-.*\.cc'
 sources = [f for f in sources if not re.search(exclude,f)]
 packages = glob("ocroscript/*.pkg")
 # headers = glob("ocr-*/*.h") + glob("ext/voronoi/*.h") + glob("include/*.h")
-headers = glob("include/*.h")
+headers = glob("include/*.h") + glob("ocr-utils/*.h")
 
 ################################################################
 ### command line options
@@ -193,16 +193,6 @@ conf.Finish()
 
 env.Append(CPPPATH=["ext/voronoi"])
 env.Append(CPPPATH=["include",
-                    "ocr-binarize",
-                    "ocr-deskew-rast",
-                    "ocr-doc-clean",
-                    "ocr-langmods",
-                    "ocr-layout-rast",
-                    "ocr-leptonica",
-                    "ocr-lineseg",
-                    "ocr-pageseg",
-                    "ocr-samples",
-                    "ocr-tesseract",
                     "ocr-utils"])
 
 #env.Append(CPPPATH=glob("ocr-*"))

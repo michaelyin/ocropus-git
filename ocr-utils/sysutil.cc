@@ -29,10 +29,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #endif
-#include "colib/colib.h"
-#include "imgio.h"
-#include "imglib.h"
-#include "ocr-utils.h"
+#include "ocropus.h"
 
 namespace ocropus {
 

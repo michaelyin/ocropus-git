@@ -32,13 +32,19 @@
 #include "ocropus.h"
 
 namespace ocropus {
-    void count_neighbors(colib::bytearray &result,colib::bytearray &image);
-    void find_endpoints(colib::bytearray &result,colib::bytearray &image);
-    void find_junctions(colib::bytearray &result,colib::bytearray &image);
-    void remove_singular_points(colib::bytearray &image,int d);
-    colib::ISegmentLine *make_CurvedCutSegmenter();
-    colib::ISegmentLine *make_ConnectedComponentSegmenter();
-    colib::ISegmentLine *make_SkelSegmenter();
+    /// Extract the set of pixels with the given value and return it
+    /// as a black-on-white image.
+    inline void extract_segment(bytearray &result,
+                                intarray &image,
+                                int n) {
+        makelike(result, image);
+        fill(result, 255);
+        for(int i = 0; i < image.length1d(); i++) {
+            if(image.at1d(i) == n)
+                result.at1d(i) = 0;
+        }
+    }
+
 }
 
 #endif
