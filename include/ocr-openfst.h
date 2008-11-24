@@ -81,7 +81,7 @@ namespace ocropus {
     double bestpath(colib::nustring &result, colib::floatarray &costs, colib::intarray &ids,fst::Fst<fst::StdArc> &fst,bool copy_eps=false);
     double bestpath(colib::nustring &result,fst::Fst<fst::StdArc> &fst,bool copy_eps=false);
     double bestpath2(colib::nustring &result, colib::floatarray &costs, colib::intarray &ids,fst::StdVectorFst &fst,fst::StdVectorFst &fst2,bool copy_eps=false);
-    double bestpath2(colib::nustring &result,fst::Fst<fst::StdArc>&fst,fst::Fst<fst::StdArc>&fst2,bool copy_eps=false);
+    double bestpath2(colib::nustring &result,fst::StdVectorFst &fst,fst::StdVectorFst &fst2,bool copy_eps=false);
 
     fst::StdVectorFst *as_fst(const char *s,float cost=0.0,float skip_cost=9999,float junk_cost=9999);
     fst::StdVectorFst *as_fst(colib::intarray &a,float cost=0.0,float skip_cost=9999,float junk_cost=9999);
