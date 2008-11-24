@@ -2,7 +2,7 @@ fst = {}
 
 --- Create an FST for edit distance computation.
 function fst.make_EditDistanceFst(alphabet)
-    local fst = ocr.make_StandardFst()
+    local fst = pfst.make_StandardFst()
     local main = fst:newState()
     local aux1 = fst:newState()
     local aux2 = fst:newState()
@@ -52,7 +52,7 @@ function fst.union(t, ...)
         t = {t, ...}
     end
 
-    local f = ocr.make_StandardFst()
+    local f = pfst.make_StandardFst()
     local start = f:newState()
     f:setStart(start)
 
@@ -71,7 +71,7 @@ function fst.concat(t, ...)
         t = {t, ...}
     end
 
-    local fst = ocr.make_StandardFst()
+    local fst = pfst.make_StandardFst()
     
     fst_copy(fst, t[#t])
     for i = #t - 1, 1, -1 do
@@ -88,7 +88,7 @@ function fst.line(string)
         string = nustring(string)
     end
     
-    local fst = ocr.make_StandardFst()
+    local fst = pfst.make_StandardFst()
     local s = fst:newState()
     fst:setStart(s)
     for i = 0, string:length() - 1 do

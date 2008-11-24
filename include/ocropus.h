@@ -33,7 +33,11 @@ namespace ocropus {
 }
 
 #include "line-info.h"
-#include "lattice.h"
+
+#ifdef HAVE_FST
+#include "ocr-openfst.h"
+#endif
+#include "ocr-pfst.h"
 
 // these come from ocr-utils
 

@@ -68,12 +68,12 @@ $(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc \
 $(srcdir)/ocr-binarize/ocr-binarize-otsu.cc \
 $(srcdir)/ocr-binarize/ocr-binarize-range.cc \
 $(srcdir)/ocr-binarize/ocr-binarize-sauvola.cc \
-$(srcdir)/ocr-langmods/a-star.cc \
-$(srcdir)/ocr-langmods/beam-search.cc \
-$(srcdir)/ocr-langmods/fst-em.cc \
-$(srcdir)/ocr-langmods/fst-io.cc \
-$(srcdir)/ocr-langmods/langmod-shortest-path.cc \
-$(srcdir)/ocr-langmods/lattice.cc \
+$(srcdir)/ocr-pfst/a-star.cc \
+$(srcdir)/ocr-pfst/beam-search.cc \
+$(srcdir)/ocr-pfst/fst-em.cc \
+$(srcdir)/ocr-pfst/fst-io.cc \
+$(srcdir)/ocr-pfst/langmod-shortest-path.cc \
+$(srcdir)/ocr-pfst/lattice.cc \
 $(srcdir)/ocr-layout/line-info.cc \
 $(srcdir)/ocr-layout/lines.cc \
 $(srcdir)/ocr-layout/log-reg-data.cc \
@@ -118,7 +118,8 @@ $(srcdir)/ocr-utils/xml-entities.cc
 
 # the default headers to install
 ocropusinclude_HEADERS =  \
-$(srcdir)/include/ocropus.h
+$(srcdir)/include/ocropus.h \
+$(srcdir)/include/ocr-pfst.h
 
 # folders for installing models and words
 modeldir=${datadir}/ocropus/models
@@ -131,8 +132,11 @@ worddir=${datadir}/ocropus/words
 # handling optional open-fst part
 if ! nofst
     AM_CPPFLAGS += -DHAVE_FST
-    libocropus_a_SOURCES += $(srcdir)/ocr-langmods/fstbuilder.cc  $(srcdir)/ocr-langmods/fstutil.cc  $(srcdir)/ocr-langmods/fstmodels.cc
-    ocropusinclude_HEADERS += $(srcdir)/ocr-langmods/fstutil.h $(srcdir)/ocr-langmods/fstmodels.h $(srcdir)/ocr-langmods/fstbuilder.h
+    libocropus_a_SOURCES += \
+        $(srcdir)/ocr-openfst/fstbuilder.cc \
+        $(srcdir)/ocr-openfst/fstutil.cc \
+        $(srcdir)/ocr-openfst/fstmodels.cc
+    ocropusinclude_HEADERS += $(srcdir)/include/ocr-openfst.h
 endif
 
 # handling optional tesseract part

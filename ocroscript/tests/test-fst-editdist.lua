@@ -5,7 +5,7 @@ import_all(nustring)
 
 function transcript_to_fst(transcript)
     assert(transcript)
-    local fst = ocr.make_StandardFst()
+    local fst = pfst.make_StandardFst()
     -- tolua.takeownership(fst)
     local s = fst:newState()
     fst:setStart(s)
@@ -63,7 +63,8 @@ function test_editdist(s1, s2)
     v3 = intarray()
     outputs = intarray()
     costs = floatarray()
-    a_star_in_composition(inputs, v1, v2, v3, outputs, costs, fst1, fst_ed, fst2)
+    pfst.a_star_in_composition(inputs, v1, v2, v3, outputs, costs,
+                               fst1, fst_ed, fst2)
     --[[local n = outputs:length()
     for i = 0, n - 1 do
         print(string.char(inputs:at(i)), string.char(outputs:at(i)), costs:at(i))

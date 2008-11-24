@@ -15,7 +15,7 @@ function create_model(fst)
 end
 
 fst1 = datasets.transcript_to_fst(nustring('a'))
-fst2 = make_StandardTrainableFst()
+fst2 = pfst.make_StandardTrainableFst()
 create_model(fst2)
 fst3b = datasets.transcript_to_fst(nustring('b'))
 fst3c = datasets.transcript_to_fst(nustring('c'))

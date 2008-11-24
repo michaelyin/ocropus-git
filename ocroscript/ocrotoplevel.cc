@@ -84,7 +84,8 @@ extern void luaopen_narray(lua_State *);
 extern void luaopen_nustring(lua_State *);
 extern void luaopen_image(lua_State *);
 extern void luaopen_ocr(lua_State *);
-extern void luaopen_fst(lua_State *);
+extern void luaopen_openfst(lua_State *);
+extern void luaopen_pfst(lua_State *);
 extern void luaopen_tess(lua_State *);
 extern void luaopen_graphics(lua_State *);
 extern void luaopen_imgbitscmds(lua_State *);
@@ -95,10 +96,13 @@ void ocroscript_openlibs(lua_State *L) {
     luaopen_narray(L);
     luaopen_image(L);
     luaopen_ocr(L);
-    luaopen_fst(L);
+    luaopen_pfst(L);
     luaopen_imgbitscmds(L);
     luaopen_imgrlecmds(L);
     luaopen_graphics(L);
+    #ifdef HAVE_FST
+        luaopen_openfst(L);
+    #endif
 }
 
 static const char *progname = LUA_PROGNAME;

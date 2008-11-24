@@ -40,8 +40,8 @@
 #endif
 #undef CHECK
 
-#include "ocropus.h"
-#include "langmods.h"
+#include "ocr-openfst.h"
+#include "fstutil.h"
 
 #define EPSILON 0
 

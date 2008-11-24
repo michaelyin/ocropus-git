@@ -63,7 +63,7 @@ end
 
 function datasets.transcript_to_fst(transcript)
     assert(transcript)
-    local fst = make_StandardFst()
+    local fst = pfst.make_StandardFst()
     tolua.takeownership(fst) -- FIXME
     local s = fst:newState()
     fst:setStart(s)

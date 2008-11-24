@@ -124,7 +124,7 @@ namespace {
             return 0;
         }
         virtual void bestpath(colib::nustring &result) {
-            beam_search(result, *this);
+            a_star(result, *this);
         }
         virtual void save(const char *path) {
             fst_write(path, *this);

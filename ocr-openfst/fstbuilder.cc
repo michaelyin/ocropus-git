@@ -24,8 +24,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <float.h>
-#include "ocropus.h"
-#include "langmods.h"
+#include <limits.h>
+#include "ocr-openfst.h"
 
 #ifdef GOOGLE_INTERNAL
 #include "nlp/fst/lib/fst-decl.h"
@@ -35,8 +35,6 @@
 #include "fst/lib/fstlib.h"
 #endif
 #undef CHECK
-#include "fstbuilder.h"
-#include "fstutil.h"
 
 using namespace fst;
 using namespace colib;

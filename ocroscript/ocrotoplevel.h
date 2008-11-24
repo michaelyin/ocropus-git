@@ -67,9 +67,10 @@ void luaopen_narray(lua_State *);
 void luaopen_nustring(lua_State *);
 void luaopen_image(lua_State *);
 void luaopen_ocr(lua_State *);
-void luaopen_fst(lua_State *);
+void luaopen_openfst(lua_State *);
 void luaopen_tess(lua_State *);
 void luaopen_graphics(lua_State *);
 void luaopen_lepton(lua_State *);
+void luaopen_pfst(lua_State *);
 
 #endif

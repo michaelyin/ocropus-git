@@ -228,7 +228,7 @@ namespace {
             return true;
         }
 
-        bool reconstruct_edges(intarray &inputs,
+        void reconstruct_edges(intarray &inputs,
                                intarray &outputs,
                                floatarray &costs,
                                intarray &vertices) {
@@ -260,8 +260,6 @@ namespace {
             inputs[n - 1] = 0;
             outputs[n - 1] = 0;
             costs[n - 1] = fst.getAcceptCost(vertices[n - 1]);
-            // FIXME
-            throw "missing return statement, don't know what to return here --tmb";
         }
     };
 
@@ -320,8 +318,7 @@ namespace {
             return false;
         if(!a.reconstruct_vertices(vertices))
             return false;
-        if(!a.reconstruct_edges(inputs, outputs, costs, vertices))
-            return false;
+        a.reconstruct_edges(inputs, outputs, costs, vertices);
         composition.splitIndices(vertices1, vertices2, vertices);
         return true;
     }
@@ -346,8 +343,7 @@ namespace {
             return false;
         if(!a.reconstruct_vertices(v))
             return false;
-        if(!a.reconstruct_edges(inputs, outputs, costs, v))
-            return false;
+        a.reconstruct_edges(inputs, outputs, costs, v);
         intarray t;
         for(int i = 0; i < n - 1; i++) {
             compositions[i]->splitIndices(vertices[i], t, v);
@@ -405,8 +401,7 @@ namespace ocropus {
             return false;
         if(!a.reconstruct_vertices(vertices))
             return false;
-        if(!a.reconstruct_edges(inputs, outputs, costs, vertices))
-            return false;
+        a.reconstruct_edges(inputs, outputs, costs, vertices);
         return true;
     }
 

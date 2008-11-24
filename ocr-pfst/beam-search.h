@@ -28,14 +28,12 @@
 
 
 #include "ocropus.h"
-#include "langmods.h"
+#include "lattice.h"
 
 /// \namespace ocropus
 namespace ocropus {
 
     using namespace colib;
-
-    // enum {DEFAULT_BEAM_WIDTH = 100};
 
     /// \brief Search for the best path through the FST.
     ///

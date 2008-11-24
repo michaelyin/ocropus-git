@@ -35,9 +35,6 @@ namespace fst = nlp_fst;
 #undef CHECK
 #include "ocropus.h"
 
-// FIXME
-#include "../ocr-langmods/langmods.h"
-
 fst::StdVectorFst *FstRead(const char *s) {
     return fst::StdVectorFst::Read(s);
 }

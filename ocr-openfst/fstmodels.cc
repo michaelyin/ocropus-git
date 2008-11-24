@@ -33,9 +33,8 @@
 #include "fst/lib/fst.h"
 #include "fst/lib/fstlib.h"
 #endif
-#undef CHECK
-#include "ocropus.h"
-#include "langmods.h"
+#include "ocr-openfst.h"
+#include "fstutil.h"
 
 #define EPSILON 0
 #define STAR kSigmaLabel

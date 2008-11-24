@@ -21,7 +21,7 @@ test_assert(str:at(4):ord()==111)
 
 section "StandardFst::bestpath"
 
-fst = ocr.make_StandardFst()
+fst = pfst.make_StandardFst()
 costs = floatarray(str:length()); narray.fill(costs,0.0)
 ids = intarray(str:length()); narray.fill(ids,0)
 fst:setString(str,costs,ids)

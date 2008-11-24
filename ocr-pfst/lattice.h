@@ -76,23 +76,10 @@ namespace ocropus {
                                         int override_finish = -1);
 
 
-    /// Make a readable/writable FST (independent on OpenFST)
-    /// with beam_search for bestpath().
-    IGenericFst *make_StandardFst();
-
-    void fst_copy(IGenericFst &dst, IGenericFst &src);
-
     /// Reverse the FST's arcs, adding a new start vertex (former accept).
     /// @param no_accept
     void fst_copy_reverse(IGenericFst &dst, IGenericFst &src,
                           bool no_accept = false);
-    void fst_copy_best_arcs_only(IGenericFst &dst, IGenericFst &src);
-
-    /// Insert one FST into another, mapping the start into a given vertex
-    /// and connecting all accept arcs to another given vertex.
-    void fst_insert(IGenericFst &dst,
-                    IGenericFst &src,
-                    int start, int accept = -1);
 
     void rescore_path(IGenericFst &fst,
                       intarray &inputs,
