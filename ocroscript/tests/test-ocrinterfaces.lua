@@ -35,7 +35,7 @@ if not openfst then
 else
     section "FstBuilder"
 
-    builder = make_FstBuilder()
+    builder = openfst.make_FstBuilder()
     builder:setString(str,costs,ids)
     result = nustring()
     builder:bestpath(result)
@@ -53,7 +53,7 @@ else
         test_assert(result==s)
     end
 
-    builder = make_FstBuilder()
+    builder = openfst.make_FstBuilder()
     states = {}
     for i=1,10 do states[i] = builder:newState() end
     for i=1,9 do
@@ -95,7 +95,7 @@ end
 if tesseract and openfst then
     section "TesseractRecognizeLine (with FstBuilder)"
 
-    fst_builder = make_FstBuilder()
+    fst_builder = openfst.make_FstBuilder()
     tess:recognizeLine(fst_builder,image)
     fst_builder:bestpath(result)
     note(result:utf8())

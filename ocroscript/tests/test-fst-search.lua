@@ -12,7 +12,7 @@ function print_array(a)
 end
 
 function generate_random_fst(nstates, maxspan)
-    local f = ocr.make_StandardFst()
+    local f = pfst.make_StandardFst()
     for i = 0, nstates - 1 do
         local s = f:newState()
         assert(s == i)
@@ -33,8 +33,8 @@ function generate_random_fst(nstates, maxspan)
 end
 
 function test_compare_openfst_search_with_custom_search(fst, callback)
-    local fst_builder = make_FstBuilder()
-    fst_copy(fst_builder, fst)
+    local fst_builder = openfst.make_FstBuilder()
+    pfst.fst_copy(fst_builder, fst)
     local openfst_fst = fst_builder:take()
 
     -- OpenFST's search
@@ -87,10 +87,10 @@ end
 --test_compare_openfst_search_with_beam_search(f)
 for i = 1, 1000 do
     f = generate_random_fst(math.random(20,30), math.random(1, 6))
-    test_compare_openfst_search_with_custom_search(f, function(i, v, o, c, fst)
+    --[[test_compare_openfst_search_with_custom_search(f, function(i, v, o, c, fst)
         ocr.beam_search(i, v, o, c, fst, 21)
-    end)
+    end) not testing beam search - it's currently private ]]
     test_compare_openfst_search_with_custom_search(f, function(i, v, o, c, fst)
-        ocr.a_star(i, v, o, c, fst)
+        pfst.a_star(i, v, o, c, fst)
     end)
 end

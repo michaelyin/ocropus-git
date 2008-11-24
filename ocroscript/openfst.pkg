@@ -35,20 +35,19 @@ $#else
 $#include "fst/lib/fst.h"
 $#include "fst/lib/fstlib.h"
 $#endif
-$#include "fst-util.h"
 $#include "ocr-openfst.h"
+$#include "fst-util.h"
 
 $using namespace colib;
 $using namespace ocropus;
+
+module openfst {
 
 struct FstBuilder : IGenericFst {
     fst::StdVectorFst *take();
     // FIXME add a put method
 };
 FstBuilder *make_FstBuilder(fst::StdVectorFst *fst = 0);
-
-
-module openfst {
 
 namespace fst {
 
@@ -194,4 +193,3 @@ function openfst.draw(fst)
     system("fstdraw _debug_.fst | dot -Grotate=0 -Tpng | display - & sleep 2")
 end
 $]
-
