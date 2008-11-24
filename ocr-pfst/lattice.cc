@@ -24,9 +24,6 @@
 
 #include "ocropus.h"
 #include "langmods.h"
-#ifdef HAVE_FST
-#include "fstbuilder.h"
-#endif
 
 using namespace colib;
 using namespace ocropus;
