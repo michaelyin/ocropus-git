@@ -1,3 +1,28 @@
+// -*- C++ -*-
+
+// Copyright 2006-2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
+// or its licensors, as applicable.
+//
+// You may not use this file except under the terms of the accompanying license.
+//
+// Licensed under the Apache License, Version 2.0 (the "License"); you
+// may not use this file except in compliance with the License. You may
+// obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Project: OCRopus
+// File: ocropus.h
+// Purpose: Top level header file
+// Responsible: 
+// Reviewer:
+// Primary Repository:
+// Web Sites: www.iupr.org, www.dfki.de
+
 #ifndef ocropus_headers_
 #define ocropus_headers_
 
@@ -8,30 +33,18 @@ namespace ocropus {
     using namespace colib;
     using namespace iulib;
 
-    ISegmentPage *make_SegmentPageByVORONOI();
+    IBinarize *make_BinarizeByRange();
     IBinarize *make_BinarizeByOtsu();
     IBinarize *make_BinarizeBySauvola();
-    ICleanupBinary *make_DeskewPageByRAST();
-    ICleanupBinary *make_RemoveImageRegionsBinary();
-    ICleanupGray   *make_RemoveImageRegionsGray();
-    ISegmentPage *make_SegmentPageByMorphTrivial();
-    ISegmentPage *make_SegmentPageBy1CP();
-    ISegmentPage *make_SegmentPageByRAST();
-    ISegmentPage *make_SegmentPageByVORONOI();
-/* ISegmentPage *make_SegmentPageByXYCUTS(); */
-    ISegmentPage *make_SegmentWords();
+
     ISegmentLine *make_SegmentLineByProjection();
     ISegmentLine *make_SegmentLineByCCS();
     ISegmentLine *make_ConnectedComponentSegmenter();
     ISegmentLine *make_CurvedCutSegmenter();
     ISegmentLine *make_SkelSegmenter();
-    IBinarize *make_BinarizeByRange();
-    IBinarize *make_BinarizeByOtsu();
-    IBinarize *make_BinarizeBySauvola();
-    ITextImageClassification *make_TextImageSegByLogReg();
-    ITextImageClassification *make_TextImageSegByLeptonica();
 }
 
+#include "ocr-layout.h"
 #include "line-info.h"
 #include "lattice.h"
 

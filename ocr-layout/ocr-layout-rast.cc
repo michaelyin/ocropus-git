@@ -25,7 +25,7 @@
 
 #include <time.h>
 #include "ocropus.h"
-#include "ocr-layout.h"
+#include "ocr-layout-internal.h"
 
 using namespace iulib;
 using namespace colib;

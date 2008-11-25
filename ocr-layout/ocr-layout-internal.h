@@ -1,3 +1,5 @@
+// -*- C++ -*-
+
 // Copyright 2006-2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
 //
@@ -14,22 +16,35 @@
 // limitations under the License.
 //
 // Project: OCRopus
-// File: ocr-binarize-otsu.h
-// Purpose: An implementation of Otsu's global thresholding method
-//
+// File: ocr-layout.h
+// Purpose: Internal header file containing data structures that are frquently
+//          used by different modules in layout analysis.
 // Responsible: Faisal Shafait (faisal.shafait@dfki.de)
 // Reviewer:
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de
 
+#ifndef ocr_layoutinternal_h__
+#define ocr_layoutinternal_h__
 
-#ifndef h_ocr_binarize_otsu_
-#define h_ocr_binarize_otsu_
-
-#include "ocropus.h"
-
-namespace ocropus {
-    IBinarize *make_BinarizeByOtsu();
-}
+#include "ocr-char-stats.h"
+#include "line-info.h"
+#include "ocr-ctextline-rast-extended.h"
+#include "ocr-ctextline-rast.h"
+#include "log-reg-data.h"
+#include "ocr-classify-zones.h"
+#include "ocr-deskew-rast.h"
+#include "ocr-doc-clean-concomp.h"
+#include "ocr-doc-clean.h"
+#include "ocr-extract-gutters.h"
+#include "ocr-layout-rast.h"
+#include "ocr-noisefilter.h"
+#include "ocr-pageframe-rast.h"
+#include "ocr-pageseg-wcuts.h"
+#include "ocr-pageseg-xycut.h"
+#include "ocr-segmentations.h"
+#include "ocr-text-image-seg.h"
+#include "ocr-whitespace-cover.h"
+#include "ocr-word-segmentation.h"
 
 #endif
