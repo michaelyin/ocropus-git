@@ -23,13 +23,9 @@
 
 #include <stdarg.h>
 #include <time.h>
-#include "colib/colib.h"
-#include "imgio.h"
+#include "ocropus.h"
 #include "narray-io.h"
 #include "logger.h"
-#include "imglib.h"
-#include "ocr-utils.h"
-#include "sysutil.h"
 
 using namespace colib;
 using namespace iulib;

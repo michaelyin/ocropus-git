@@ -26,8 +26,7 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
-#include "colib/colib.h"
-#include "ocr-utils.h"
+#include "ocropus.h"
 
 using namespace iulib;
 using namespace colib;

@@ -1,28 +1,27 @@
 // Copyright 2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
-// 
+//
 // You may not use this file except under the terms of the accompanying license.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License"); you
 // may not use this file except in compliance with the License. You may
 // obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
-// Project: 
+//
+// Project:
 // File: resource-path.cc
-// Purpose: 
+// Purpose:
 // Responsible: kofler
-// Reviewer: 
-// Primary Repository: 
+// Reviewer:
+// Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
 #include "resource-path.h"
-#include "ocr-utils.h"
 
 static const char *default_path = "/usr/local/share/ocropus:"
                                   "/usr/share/ocropus";
@@ -53,9 +52,9 @@ namespace ocropus {
             strcat(p, env);
         }
         original_path = p;
-        split_string(path, p, ":;"); 
+        split_string(path, p, ":;");
     }
-    
+
     FILE *open_resource(const char *relative_path) {
         if(!original_path)
             set_resource_path(NULL);
