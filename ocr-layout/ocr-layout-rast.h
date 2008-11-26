@@ -37,27 +37,34 @@ namespace ocropus {
 
     struct SegmentPageByRAST : colib::ISegmentPage {
         SegmentPageByRAST();
-        ~SegmentPageByRAST() {}
+        ~SegmentPageByRAST() {
+        }
 
         int  max_results;
+        int  gap_factor;
+        bool use_four_line_model;
 
         const char *description() {
             return "Segment page by RAST";
         }
 
         void init(const char **argv) {
-            // nothing to be done
         }
 
         void set(const char* var,double value){
             if (strcmp(var,"max_results")==0)
                 max_results = int(value);
+            else if (strcmp(var,"gap_factor")==0)
+                gap_factor = int(value);
+            else if (strcmp(var,"use_four_line_model")==0)
+                use_four_line_model = bool(value);
         }   
 
         void segment(colib::intarray &image,colib::bytearray &in_not_inverted);
         void segment(colib::intarray &image,colib::bytearray &in_not_inverted,
                      colib::rectarray &extra_obstacles);
-        void visualize(colib::intarray &result, colib::bytearray &in_not_inverted);
+        void visualize(colib::intarray &result, colib::bytearray &in_not_inverted,
+                       colib::rectarray &extra_obstacles);
         
     private:
         void segmentInternal(colib::intarray &visualization, 

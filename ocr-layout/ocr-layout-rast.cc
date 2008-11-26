@@ -39,24 +39,6 @@ namespace ocropus {
         max_results = 1000;
     }
 
-    line::line(TextLine &tl):
-        c(tl.c), m(tl.m), d(tl.d), 
-        start(tl.bbox.x0), end(tl.bbox.x1), top(tl.bbox.y0), bottom(tl.bbox.y1),
-        istart(tl.bbox.x0), iend(tl.bbox.x1), xheight(tl.xheight){
-    }
-
-    TextLine line::getTextLine(){
-        TextLine tl;
-        tl.c = c;
-        tl.m = m;
-        tl.d = d;
-        tl.xheight = (int)xheight;
-        //rectangle r((int)start, (int)top, (int)end, (int)bottom);
-        rectangle r((int)istart, (int)top, (int)iend, (int)bottom);
-        tl.bbox = r;
-        return tl;
-    }
-
     // Analyze user supplied obstacles to separate horizontal/vertical rulings
     // and image regions
     static void analyze_obstacles(rectarray &hor_rulings,
@@ -99,6 +81,9 @@ namespace ocropus {
         //float startTime = clock()/float(CLOCKS_PER_SEC);
         const int zero   = 0;
         const int yellow = 0x00ffff00;
+        max_results = 1000;
+        gap_factor = 10;
+        use_four_line_model = false;
         bytearray in;
         copy(in, in_not_inverted);
         make_page_binary_and_black(in);
@@ -154,16 +139,32 @@ namespace ocropus {
         //fprintf(stderr,"Time elapsed (gutters): %.3f \n",(clock()/float(CLOCKS_PER_SEC)) - startTime);
 
         // Extract textlines
-
-        autodel<CTextlineRAST> ctextline(make_CTextlineRAST());
         narray<TextLine> textlines;
-        ctextline->min_q     = 2.0; // Minimum acceptable quality of a textline
-        ctextline->min_count = 2;   // ---- number of characters in a textline
-        ctextline->min_length= 30;  // ---- length in pixels of a textline
-        
-        ctextline->max_results= max_results;
-        
-        ctextline->extract(textlines,obstacles,charstats);
+
+        if(use_four_line_model){
+            narray<TextLineExtended> textlines_extended;
+            autodel<CTextlineRASTExtended> ctextline(make_CTextlineRASTExtended());
+            ctextline->min_q     = 2.0; // Minimum acceptable quality of a textline
+            ctextline->min_count = 2;   // ---- number of characters in a textline
+            ctextline->min_length= 30;  // ---- length in pixels of a textline
+            
+            ctextline->max_results = max_results;
+            ctextline->min_gap = gap_factor*charstats->xheight;
+            
+            ctextline->extract(textlines_extended,obstacles,charstats);
+            for(int i=0,l=textlines_extended.length();i<l;i++)
+                textlines.push(textlines_extended[i].getTextLine());
+        }else{
+            autodel<CTextlineRAST> ctextline(make_CTextlineRAST());
+            ctextline->min_q     = 2.0; // Minimum acceptable quality of a textline
+            ctextline->min_count = 2;   // ---- number of characters in a textline
+            ctextline->min_length= 30;  // ---- length in pixels of a textline
+            
+            ctextline->max_results = max_results;
+            ctextline->min_gap = gap_factor*charstats->xheight;
+            
+            ctextline->extract(textlines,obstacles,charstats);
+        }
 
         // Separate horizontal/vertical rulings from graphics
         rectarray hor_rulings;
@@ -227,7 +228,7 @@ namespace ocropus {
         replace_values(image,zero,yellow);
         if(need_visualization) {
             visualize_layout(visualization, in_not_inverted, textlines, 
-                             obstacles, *charstats);
+                             gutters, extra_obstacles, *charstats);
         }
     }
 
@@ -248,9 +249,10 @@ namespace ocropus {
         segment(result,in_not_inverted,obstacles);
     }
 
-    void SegmentPageByRAST::visualize(intarray &result, bytearray &in_not_inverted) {
+    void SegmentPageByRAST::visualize(intarray &result, 
+                                      bytearray &in_not_inverted,
+                                      rectarray &obstacles) {
         intarray segmentation;
-        rectarray obstacles;
         segmentInternal(result, segmentation, in_not_inverted, true,obstacles);
     }
 

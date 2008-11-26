@@ -122,6 +122,7 @@ namespace ocropus {
                           bytearray &in_not_inverted,
                           narray<TextLine> &textlines,
                           rectarray &gutters, 
+                          rectarray &extra_obstacles, 
                           CharStats &charstats) {
         makelike(debug_image,in_not_inverted);
         int v0 = min(in_not_inverted);
@@ -132,26 +133,50 @@ namespace ocropus {
         narray<line> lines;
         for(int i = 0; i<textlines.length(); i++)
             lines.push(line(textlines[i]));
+
+        //Since vertical rulings has the same role as whitespace gutters, just
+        //add them to vertical separators list
+        rectarray vert_separators;
+        for(int i=0,l=extra_obstacles.length(); i<l; i++){
+            vert_separators.push(extra_obstacles[i]);
+        }
+        for(int i=0,l=gutters.length(); i<l; i++){
+            vert_separators.push(gutters[i]);
+        }
+
         if(lines.length() > 1){
-            for(int i=0; i<gutters.length(); i++){
-                paint_box(debug_image,gutters[i],0x00ffff00);
-                paint_box_border(debug_image,gutters[i],0x0000ff00);
-                
-            }
             for(int i=0,l=lines.length();i<l;i++){
                 paint_line(debug_image,lines[i]);
             }
-            if(gutters.length()){
-                extend_lines(lines, gutters, charstats.img_width);
+            if(vert_separators.length()){
+                sort_boxes_by_x0(vert_separators);
+                extend_lines(lines, vert_separators, charstats.img_width);
             }
+
             paint_reading_order(debug_image,lines);
         }
+
+        for(int i=0; i<gutters.length(); i++){
+            paint_box(debug_image,gutters[i],0x00ffff00);
+            paint_box_border(debug_image,gutters[i],0x0000ff00);
+        }
+            
+        for(int i=0, l=extra_obstacles.length(); i<l; i++)
+            paint_box(debug_image,extra_obstacles[i],0x00ff0000);
     }
     
-    void visualize_segmentation_by_RAST(colib::intarray &result, 
-                                        colib::bytearray &in_not_inverted) {
+    void visualize_segmentation_by_RAST(intarray &result, 
+                                        bytearray &in_not_inverted) {
         SegmentPageByRAST s;
-        s.visualize(result, in_not_inverted);
+        rectarray obstacles;
+        s.visualize(result, in_not_inverted, obstacles);
+    }
+
+    void visualize_segmentation_by_RAST(intarray &result, 
+                                        bytearray &in_not_inverted,
+                                        rectarray &extra_obstacles) {
+        SegmentPageByRAST s;
+        s.visualize(result, in_not_inverted, extra_obstacles);
     }
 
 }

@@ -37,10 +37,9 @@ namespace ocropus {
                           colib::bytearray &in_not_inverted,
                           colib::narray<TextLine> &textlines,
                           colib::rectarray &gutters, 
+                          colib::rectarray &extra_obstacles, 
                           CharStats &charstats);
 
-    void visualize_segmentation_by_RAST(colib::intarray &result, 
-                                        colib::bytearray &in_not_inverted);
 }
 
 #endif

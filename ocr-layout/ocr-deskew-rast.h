@@ -33,9 +33,6 @@ namespace ocropus {
 
     using namespace colib;
 
-    // Get skew angle of the page using RAST
-    double estimate_skew_by_rast(bytearray &in);
-
     struct DeskewPageByRAST : ICleanupBinary, ICleanupGray {
         ~DeskewPageByRAST() {
         }
@@ -52,9 +49,6 @@ namespace ocropus {
         double getSkewAngle(rectarray &bboxes);
         void cleanup(bytearray &image, bytearray &in);
     };
-
-    ICleanupBinary *make_DeskewPageByRAST();
-    ICleanupGray *make_DeskewGrayPageByRAST();
 
 }
 #endif

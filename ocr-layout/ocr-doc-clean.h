@@ -29,9 +29,4 @@
 #include "ocropus.h"
 #include "ocr-layout.h"
 
-namespace ocropus {
-    using namespace colib;
-    ICleanupBinary *make_DocClean();
-};
-
 #endif

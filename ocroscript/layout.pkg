@@ -33,16 +33,36 @@ $using namespace iulib;
 
 module layout {
 
-ICleanupBinary *make_DeskewPageByRAST();
-ICleanupBinary *make_RemoveImageRegionsBinary();
+    ICleanupBinary *make_DocClean();
 
-ICleanupGray   *make_RemoveImageRegionsGray();
-ICleanupGray *make_DeskewGrayPageByRAST();
+    ICleanupBinary *make_DeskewPageByRAST();
+    ICleanupGray *make_DeskewGrayPageByRAST();
 
-// Global functions to operate on text/image probability map
-void remove_masked_region(bytearray &out,bytearray &mask,bytearray &in);
-void remove_rectangular_region(bytearray &out,rectarray &boxes,bytearray &in);
-void get_nontext_mask(bytearray &out,intarray &in);
-void get_nontext_boxes(rectarray &nontext_boxes,intarray &text_img_map);
+    double estimate_skew_by_rast(bytearray &in);
+
+    ICleanupBinary *make_RemoveImageRegionsBinary();
+    ICleanupGray   *make_RemoveImageRegionsGray();
+
+    ITextImageClassification *make_TextImageSegByLogReg();
+    ITextImageClassification *make_TextImageSegByLeptonica();
+
+    // Global functions to operate on text/image probability map
+    void remove_masked_region(bytearray &out,bytearray &mask,bytearray &in);
+    void remove_rectangular_region(bytearray &out,rectarray &boxes,bytearray &in);
+    void get_nontext_mask(bytearray &out,intarray &in);
+    void get_nontext_boxes(rectarray &nontext_boxes,intarray &text_img_map);
+
+    ISegmentPage *make_SegmentPageByMorphTrivial();
+    ISegmentPage *make_SegmentPageBy1CP();
+    ISegmentPage *make_SegmentPageByRAST();
+    ISegmentPage *make_SegmentPageByVORONOI();
+    ISegmentPage *make_SegmentPageByXYCUTS();
+    ISegmentPage *make_SegmentWords();
+
+    void visualize_segmentation_by_RAST(intarray &result, 
+                                        bytearray &in_not_inverted);
+    void visualize_segmentation_by_RAST(intarray &result, 
+                                        bytearray &in_not_inverted,
+                                        rectarray &extra_obstacles);
 
 }

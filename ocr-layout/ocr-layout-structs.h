@@ -85,8 +85,71 @@ namespace ocropus {
         float xheight;
 
         line() {}
-        line(TextLine &tl);
-        TextLine getTextLine();
+        line(TextLine &tl):
+        c(tl.c), m(tl.m), d(tl.d), 
+        start(tl.bbox.x0), end(tl.bbox.x1), top(tl.bbox.y0), bottom(tl.bbox.y1),
+        istart(tl.bbox.x0), iend(tl.bbox.x1), xheight(tl.xheight) {}
+
+        TextLine getTextLine(){
+            TextLine tl;
+            tl.c = c;
+            tl.m = m;
+            tl.d = d;
+            tl.xheight = (int)xheight;
+            //rectangle r((int)start, (int)top, (int)end, (int)bottom);
+            rectangle r((int)istart, (int)top, (int)iend, (int)bottom);
+            tl.bbox = r;
+            return tl;
+        }
+    };
+
+    /////////////////////////////////////////////////////////////////////
+    ///
+    /// \struct TextLineParam4line
+    /// Purpose: Textline parameters
+    ///
+    //////////////////////////////////////////////////////////////////////
+
+    struct TextLineParam4line {
+        float c,m,d; // c is y-intercept, m is slope, d is the line of descenders
+        float a,x;   // a is ascender height, x is the x-height
+        void print(FILE *stream=stdout){
+            fprintf(stream,"%.3f %f %.2f\n",c,m,d);
+        }
+    };
+
+    /////////////////////////////////////////////////////////////////////
+    ///
+    /// \struct TextLineExtended
+    /// Purpose: Textline bounding box and it attributes
+    ///
+    //////////////////////////////////////////////////////////////////////
+
+    struct TextLineExtended : TextLineParam4line{
+        TextLineExtended(){
+        }
+        TextLineExtended(TextLineParam4line &tl){
+            c = tl.c;
+            m = tl.m;
+            d = tl.d;
+            a = tl.a;
+            x = tl.x;
+        }
+        colib::rectangle  bbox;
+        void print(FILE *stream=stdout){
+            fprintf(stream,"%d %d %d %d ",bbox.x0,bbox.y0,bbox.x1,bbox.y1);
+            fprintf(stream,"%.3f %f %.2f %.2f %.2f\n",c,m,d,a,x);
+        }
+        TextLine getTextLine(){
+            TextLine tl;
+            tl.c = c;
+            tl.m = m;
+            tl.d = d;
+            tl.xheight = (int)x;
+            tl.bbox = bbox;
+            return tl;
+        }
+
     };
 
 }

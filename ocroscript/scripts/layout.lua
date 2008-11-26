@@ -2,6 +2,11 @@ import_all(iulib)
 import_all(ocr)
 import_all(layout)
 
+if #arg < 3 then
+    print("usage: ... input.png out1.png out2.png")
+    os.exit(1)
+end
+
 image = bytearray()
 timap = intarray()
 obstacles = rectarray()
@@ -16,7 +21,14 @@ read_image_gray(image,arg[1])
 textimageseg:textImageProbabilities(timap,image)
 write_image_packed("tiseg.png",timap)
 get_nontext_boxes(obstacles,timap)
----[[
+
+visualize_segmentation_by_RAST(result1,image)
+visualize_segmentation_by_RAST(result2,image,obstacles)
+write_image_packed(arg[2],result1)
+write_image_packed(arg[3],result2)
+
+
+--[[
 --segmenter:segment(result1,image)
 --check_page_segmentation(result1)
 --simple_recolor(result1)

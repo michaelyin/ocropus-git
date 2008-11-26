@@ -48,9 +48,7 @@ namespace ocropus {
                                           float &xheight, float &descender_sink,
                                           float &ascender_rise, bytearray &img);
 
-
 #if 0
-#include "ocr-layout.h"
     /// Another, more Lua-friendly interface for get_extended_line_info().
     /// Packs all the line parameters into the struct but doesn't change
     /// the bbox.
