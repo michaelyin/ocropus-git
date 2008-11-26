@@ -37,8 +37,7 @@ namespace ocropus {
 
     struct SegmentPageByRAST : colib::ISegmentPage {
         SegmentPageByRAST();
-        ~SegmentPageByRAST() {
-        }
+        ~SegmentPageByRAST() {}
 
         int  max_results;
         int  gap_factor;
@@ -52,10 +51,14 @@ namespace ocropus {
         }
 
         void set(const char* var,double value){
-            if (strcmp(var,"max_results")==0)
+            if (strcmp(var,"max_results")==0){
+                CHECK_ARG(value>=1.0 && value<=5000);
                 max_results = int(value);
-            else if (strcmp(var,"gap_factor")==0)
+            }
+            else if (strcmp(var,"gap_factor")==0){
+                CHECK_ARG(value>=1.0 && value<=5000);
                 gap_factor = int(value);
+            }
             else if (strcmp(var,"use_four_line_model")==0)
                 use_four_line_model = bool(value);
         }   

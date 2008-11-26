@@ -37,6 +37,8 @@ namespace ocropus {
 
     SegmentPageByRAST::SegmentPageByRAST(){
         max_results = 1000;
+        gap_factor = 10;
+        use_four_line_model = false;
     }
 
     // Analyze user supplied obstacles to separate horizontal/vertical rulings
@@ -81,9 +83,6 @@ namespace ocropus {
         //float startTime = clock()/float(CLOCKS_PER_SEC);
         const int zero   = 0;
         const int yellow = 0x00ffff00;
-        max_results = 1000;
-        gap_factor = 10;
-        use_four_line_model = false;
         bytearray in;
         copy(in, in_not_inverted);
         make_page_binary_and_black(in);
