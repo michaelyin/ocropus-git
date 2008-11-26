@@ -28,7 +28,6 @@
 #define h_ocrctextlinerastextended__
 
 #include "ocropus.h"
-#include "ocr-layout.h"
 #include "colib/iarith.h"
 
 namespace ocropus {

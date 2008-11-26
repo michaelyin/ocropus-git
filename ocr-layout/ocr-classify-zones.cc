@@ -627,8 +627,6 @@ namespace ocropus {
         // CONNECTED COMPONENTS
         bytearray in;
         copy(in, image);
-        binarize_simple(in);
-        optional_check_background_is_lighter(in);
         invert(in);
     
         // Do connected component analysis

@@ -89,6 +89,7 @@ extern void luaopen_tess(lua_State *);
 extern void luaopen_graphics(lua_State *);
 extern void luaopen_imgbitscmds(lua_State *);
 extern void luaopen_imgrlecmds(lua_State *);
+extern void luaopen_layout(lua_State *);
 
 void ocroscript_openlibs(lua_State *L) {
     luaopen_sysutil(L);
@@ -99,6 +100,7 @@ void ocroscript_openlibs(lua_State *L) {
     luaopen_imgbitscmds(L);
     luaopen_imgrlecmds(L);
     luaopen_graphics(L);
+    luaopen_layout(L);
 }
 
 static const char *progname = LUA_PROGNAME;

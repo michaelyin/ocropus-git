@@ -57,18 +57,13 @@ struct IComponent {
     virtual void set(const char *,double);
 };
 
-struct ICleanupGray : IComponent {
-    virtual void cleanup(bytearray &out,bytearray &in) = 0;
-};
-
-ICleanupBinary *make_DeskewPageByRAST();
-ICleanupBinary *make_RemoveImageRegionsBinary();
-
 struct ICleanupBinary : IComponent {
     virtual void cleanup(bytearray &out,bytearray &in) = 0;
 };
 
-ICleanupGray   *make_RemoveImageRegionsGray();
+struct ICleanupGray : IComponent {
+    virtual void cleanup(bytearray &out,bytearray &in) = 0;
+};
 
 struct ISegmentPage : IComponent {
     virtual void segment(intarray &out,bytearray &in);

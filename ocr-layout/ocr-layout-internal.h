@@ -27,24 +27,35 @@
 #ifndef ocr_layoutinternal_h__
 #define ocr_layoutinternal_h__
 
+#include "ocr-layout-structs.h"
 #include "ocr-char-stats.h"
-#include "line-info.h"
+#include "ocr-whitespace-cover.h"
+#include "ocr-extract-gutters.h"
 #include "ocr-ctextline-rast-extended.h"
 #include "ocr-ctextline-rast.h"
-#include "log-reg-data.h"
-#include "ocr-classify-zones.h"
-#include "ocr-deskew-rast.h"
-#include "ocr-doc-clean-concomp.h"
-#include "ocr-doc-clean.h"
-#include "ocr-extract-gutters.h"
+#include "ocr-color-encode-layout.h"
+#include "ocr-detect-columns.h"
+#include "ocr-detect-paragraphs.h"
+#include "ocr-reading-order.h"
+#include "ocr-visualize-layout-rast.h"
 #include "ocr-layout-rast.h"
+#include "line-info.h"
+
+#include "ocr-deskew-rast.h"
+
 #include "ocr-noisefilter.h"
+#include "ocr-doc-clean.h"
+#include "ocr-doc-clean-concomp.h"
 #include "ocr-pageframe-rast.h"
+
 #include "ocr-pageseg-wcuts.h"
 #include "ocr-pageseg-xycut.h"
-#include "ocr-segmentations.h"
-#include "ocr-text-image-seg.h"
-#include "ocr-whitespace-cover.h"
 #include "ocr-word-segmentation.h"
+
+#include "ocr-segmentations.h"
+
+#include "log-reg-data.h"
+#include "ocr-classify-zones.h"
+#include "ocr-text-image-seg.h"
 
 #endif
