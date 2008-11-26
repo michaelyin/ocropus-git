@@ -27,8 +27,7 @@
 #define ocropus_headers_
 
 #include "colib/colib.h"
-#include "iulib/imgio.h"
-#include "iulib/imglib.h"
+#include "iulib/iulib.h"
 
 namespace ocropus {
     using namespace colib;
