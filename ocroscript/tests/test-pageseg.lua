@@ -1,4 +1,5 @@
 import_all(graphics)
+import_all(layout)
 -- check whether the defined segmenters give the same answer on the test.png image
 
 -- dinit(1000,1000)

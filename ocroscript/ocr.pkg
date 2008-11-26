@@ -58,30 +58,18 @@ struct IComponent {
     virtual void set(const char *,double);
 };
 
-struct ICleanupGray : IComponent {
-    virtual void cleanup(bytearray &out,bytearray &in) = 0;
-};
-
-ICleanupBinary *make_DeskewPageByRAST();
-ICleanupBinary *make_RemoveImageRegionsBinary();
-
 struct ICleanupBinary : IComponent {
     virtual void cleanup(bytearray &out,bytearray &in) = 0;
 };
 
-ICleanupGray   *make_RemoveImageRegionsGray();
+struct ICleanupGray : IComponent {
+    virtual void cleanup(bytearray &out,bytearray &in) = 0;
+};
 
 struct ISegmentPage : IComponent {
     virtual void segment(intarray &out,bytearray &in);
     virtual void segment(intarray &out,bytearray &in,rectarray &obstacles);
 };
-
-ISegmentPage *make_SegmentPageByMorphTrivial();
-ISegmentPage *make_SegmentPageBy1CP();
-ISegmentPage *make_SegmentPageByRAST();
-ISegmentPage *make_SegmentPageByVORONOI();
-/* ISegmentPage *make_SegmentPageByXYCUTS(); */
-ISegmentPage *make_SegmentWords();
 
 struct ISegmentLine : IComponent {
     virtual void charseg(intarray &out,bytearray &in) = 0;
@@ -105,9 +93,6 @@ IBinarize *make_BinarizeBySauvola();
 struct ITextImageClassification : IComponent {
     virtual void textImageProbabilities(intarray &out,bytearray &in) = 0;
 };
-
-ITextImageClassification *make_TextImageSegByLogReg();
-ITextImageClassification *make_TextImageSegByLeptonica();
 
 struct IGenericFst : IComponent {
     void clear();

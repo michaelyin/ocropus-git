@@ -28,7 +28,7 @@
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include "ocropus.h"
-#include "ocr-layout.h"
+#include "ocr-layout-internal.h"
 
 using namespace iulib;
 using namespace colib;

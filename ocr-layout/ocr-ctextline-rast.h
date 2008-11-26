@@ -28,25 +28,8 @@
 #define h_ocrctextlinerast__
 
 #include "ocropus.h"
-#include "ocr-layout.h"
 
 namespace ocropus {
-
-
-
-    /////////////////////////////////////////////////////////////////////
-    ///
-    /// \struct TextLineParam
-    /// Purpose: Textline parameters
-    ///
-    //////////////////////////////////////////////////////////////////////
-    
-    struct TextLineParam {
-        float c,m,d; // c is y-intercept, m is slope, d is the line of descenders
-        void print(FILE *stream=stdout){
-            fprintf(stream,"%.3f %f %.2f\n",c,m,d);
-        }
-    };
 
     /////////////////////////////////////////////////////////////////////
     ///
@@ -143,29 +126,6 @@ namespace ocropus {
     };
     CTextlineRASTBasic *make_CTextlineRASTBasic();
     
-    /////////////////////////////////////////////////////////////////////
-    ///
-    /// \struct TextLine
-    /// Purpose: Textline bounding box and it attributes
-    ///
-    //////////////////////////////////////////////////////////////////////
-    
-    struct TextLine : TextLineParam{
-        TextLine(){
-        }
-        TextLine(TextLineParam &tl){
-            c = tl.c;
-            m = tl.m;
-            d = tl.d;
-        }
-        int   xheight;
-        colib::rectangle  bbox;
-        void print(FILE *stream=stdout){
-            fprintf(stream,"%d %d %d %d ",bbox.x0,bbox.y0,bbox.x1,bbox.y1);
-            fprintf(stream,"%.3f %f %.2f %d\n",c,m,d,xheight);
-        }
-    };
-
     /////////////////////////////////////////////////////////////////////
     ///
     /// \struct CTextlineRAST

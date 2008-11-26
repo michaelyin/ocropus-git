@@ -65,7 +65,6 @@ namespace ocropus {
         void segment(colib::intarray &image,colib::bytearray &in);
     };
 
-    colib::ISegmentPage *make_SegmentPageByXYCUTS();
     colib::ISegmentPage *make_SegmentPageByXYCUTS(unsigned int itnx,
                                                   unsigned int itny,
                                                   unsigned int itcx,

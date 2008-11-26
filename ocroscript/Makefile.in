@@ -102,11 +102,12 @@ am__libocroscript_a_SOURCES_DIST = $(srcdir)/graphics.cc \
 	$(srcdir)/sysutil.cc $(srcdir)/image.cc \
 	$(srcdir)/imgrlecmds.cc $(srcdir)/imgbitscmds.cc \
 	$(srcdir)/ocr.cc $(srcdir)/narray.cc $(srcdir)/pfst.cc \
-	$(srcdir)/../version.cc $(srcdir)/openfst.cc
+	$(srcdir)/layout.cc $(srcdir)/../version.cc \
+	$(srcdir)/openfst.cc
 @nofst_FALSE@am__objects_1 = openfst.$(OBJEXT)
 am_libocroscript_a_OBJECTS = graphics.$(OBJEXT) sysutil.$(OBJEXT) \
 	image.$(OBJEXT) imgrlecmds.$(OBJEXT) imgbitscmds.$(OBJEXT) \
-	ocr.$(OBJEXT) narray.$(OBJEXT) pfst.$(OBJEXT) \
+	ocr.$(OBJEXT) narray.$(OBJEXT) pfst.$(OBJEXT) layout.$(OBJEXT) \
 	version.$(OBJEXT) $(am__objects_1)
 libocroscript_a_OBJECTS = $(am_libocroscript_a_OBJECTS)
 binPROGRAMS_INSTALL = $(INSTALL_PROGRAM)
@@ -262,7 +263,8 @@ lib_LIBRARIES = libocroscript.a
 libocroscript_a_SOURCES = $(srcdir)/graphics.cc $(srcdir)/sysutil.cc \
 	$(srcdir)/image.cc $(srcdir)/imgrlecmds.cc \
 	$(srcdir)/imgbitscmds.cc $(srcdir)/ocr.cc $(srcdir)/narray.cc \
-	$(srcdir)/pfst.cc $(srcdir)/../version.cc $(am__append_2)
+	$(srcdir)/pfst.cc $(srcdir)/layout.cc $(srcdir)/../version.cc \
+	$(am__append_2)
 ocroscript_SOURCES = $(srcdir)/../ocroscript/ocroscript.cc $(srcdir)/../ocroscript/ocrotoplevel.cc 
 ocroscript_LDADD = -ltiff -lpng -ljpeg $(LUALIB) libocroscript.a \
 	$(srcdir)/../libocropus.a $(TOLUALIB) $(am__append_4) \
@@ -375,6 +377,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/image.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/imgbitscmds.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/imgrlecmds.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/layout.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/narray.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocroscript.Po@am__quote@
@@ -509,6 +512,20 @@ pfst.obj: $(srcdir)/pfst.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/pfst.cc' object='pfst.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o pfst.obj `if test -f '$(srcdir)/pfst.cc'; then $(CYGPATH_W) '$(srcdir)/pfst.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/pfst.cc'; fi`
+
+layout.o: $(srcdir)/layout.cc
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT layout.o -MD -MP -MF "$(DEPDIR)/layout.Tpo" -c -o layout.o `test -f '$(srcdir)/layout.cc' || echo '$(srcdir)/'`$(srcdir)/layout.cc; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/layout.Tpo" "$(DEPDIR)/layout.Po"; else rm -f "$(DEPDIR)/layout.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/layout.cc' object='layout.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o layout.o `test -f '$(srcdir)/layout.cc' || echo '$(srcdir)/'`$(srcdir)/layout.cc
+
+layout.obj: $(srcdir)/layout.cc
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT layout.obj -MD -MP -MF "$(DEPDIR)/layout.Tpo" -c -o layout.obj `if test -f '$(srcdir)/layout.cc'; then $(CYGPATH_W) '$(srcdir)/layout.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/layout.cc'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/layout.Tpo" "$(DEPDIR)/layout.Po"; else rm -f "$(DEPDIR)/layout.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/layout.cc' object='layout.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o layout.obj `if test -f '$(srcdir)/layout.cc'; then $(CYGPATH_W) '$(srcdir)/layout.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/layout.cc'; fi`
 
 version.o: $(srcdir)/../version.cc
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT version.o -MD -MP -MF "$(DEPDIR)/version.Tpo" -c -o version.o `test -f '$(srcdir)/../version.cc' || echo '$(srcdir)/'`$(srcdir)/../version.cc; \
@@ -766,6 +783,7 @@ $(srcdir)/imgbitscmds.cc : $(srcdir)/imgbitscmds.pkg  $(TOLUA)
 # $(srcdir)/tess.cc : $(srcdir)/tess.pkg  $(TOLUA)
 $(srcdir)/ocr.cc : $(srcdir)/ocr.pkg  $(TOLUA)
 $(srcdir)/pfst.cc : $(srcdir)/pfst.pkg  $(TOLUA)
+$(srcdir)/layout.cc : $(srcdir)/layout.pkg  $(TOLUA)
 $(srcdir)/narray.cc : $(srcdir)/narray.pkg  $(TOLUA)
 $(srcdir)/fst.cc : $(srcdir)/fst.pkg  $(TOLUA)
 $(srcdir)/leptonica.cc : $(srcdir)/leptonica.pkg  $(TOLUA)

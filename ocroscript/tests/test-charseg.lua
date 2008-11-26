@@ -1,5 +1,6 @@
 import_all(graphics)
 import_all(ocr)
+import_all(layout)
 dofile("utest.lua")
 
 -- dinit(800,800)

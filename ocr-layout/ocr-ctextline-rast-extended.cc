@@ -24,7 +24,7 @@
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include "ocropus.h"
-#include "ocr-layout.h"
+#include "ocr-layout-internal.h"
 
 using namespace ocropus;
 using namespace colib;
@@ -131,17 +131,17 @@ namespace ocropus {
                 interval q3 = line.influence(line.lsq,abs(b.y1-(y+x)),line.epsilon);
                 interval q4 = 0.95*line.influence(line.lsq,abs(b.y1-(y+x+a)),line.epsilon);
                 q_xline = max(q3,q4);
-                // Match only those boxes that match both xline/ascender-line
-                // and baseline/descender-line
-                // interval minq = min(q_baseline,q_xline);
-                // if(minq.hi > 0.0)
-                //    q = q_baseline + q_xline;
-                // else
-                //    q = 0;
-
-                // Match boxes that match either xline/ascender-line or
-                // baseline/descender-line
+                // Matching only those boxes that match both xline/ascender-line
+                // and baseline/descender-line works better on complete pages,
+                // but has poor performance on single lines. So if max_results
+                // is set to 1, it is an indication that we are operating on
+                // single lines. In that case match boxes that match either
+                // xline/ascender-line or baseline/descender-line.
+                interval minq = min(q_baseline,q_xline);
                 q = q_baseline + q_xline;
+                
+                if(minq.hi<=0.0 && line.max_results>1)
+                    q = 0;
 
                 if(q2.hi>0.0)
                     descender_present = true;

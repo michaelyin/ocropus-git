@@ -35,7 +35,7 @@ AM_CPPFLAGS =  -I$(srcdir)/../include -I$(srcdir)/../ocr-utils \
 # checks paths from top-level, that's the reason for the long versions.
 
 lib_LIBRARIES = libocroscript.a
-libocroscript_a_SOURCES =  $(srcdir)/graphics.cc  $(srcdir)/sysutil.cc  $(srcdir)/image.cc  $(srcdir)/imgrlecmds.cc $(srcdir)/imgbitscmds.cc  $(srcdir)/ocr.cc  $(srcdir)/narray.cc $(srcdir)/pfst.cc $(srcdir)/../version.cc
+libocroscript_a_SOURCES =  $(srcdir)/graphics.cc  $(srcdir)/sysutil.cc  $(srcdir)/image.cc  $(srcdir)/imgrlecmds.cc $(srcdir)/imgbitscmds.cc  $(srcdir)/ocr.cc  $(srcdir)/narray.cc $(srcdir)/pfst.cc $(srcdir)/layout.cc $(srcdir)/../version.cc
 
 bin_PROGRAMS = ocroscript
 ocroscript_SOURCES = $(srcdir)/../ocroscript/ocroscript.cc $(srcdir)/../ocroscript/ocrotoplevel.cc 
@@ -81,6 +81,7 @@ $(srcdir)/imgbitscmds.cc : $(srcdir)/imgbitscmds.pkg  $(TOLUA)
 # $(srcdir)/tess.cc : $(srcdir)/tess.pkg  $(TOLUA)
 $(srcdir)/ocr.cc : $(srcdir)/ocr.pkg  $(TOLUA)
 $(srcdir)/pfst.cc : $(srcdir)/pfst.pkg  $(TOLUA)
+$(srcdir)/layout.cc : $(srcdir)/layout.pkg  $(TOLUA)
 $(srcdir)/narray.cc : $(srcdir)/narray.pkg  $(TOLUA)
 $(srcdir)/fst.cc : $(srcdir)/fst.pkg  $(TOLUA)
 $(srcdir)/leptonica.cc : $(srcdir)/leptonica.pkg  $(TOLUA)

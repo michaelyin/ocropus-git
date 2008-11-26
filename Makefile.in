@@ -117,8 +117,6 @@ am__libocropus_a_SOURCES_DIST = $(srcdir)/ext/voronoi/bit_func.cc \
 	$(srcdir)/ext/voronoi/hash.cc $(srcdir)/ext/voronoi/heap.cc \
 	$(srcdir)/ext/voronoi/img_to_site.cc \
 	$(srcdir)/ext/voronoi/label_func.cc \
-	$(srcdir)/ext/voronoi/main-be.cc \
-	$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc \
 	$(srcdir)/ext/voronoi/memory.cc \
 	$(srcdir)/ext/voronoi/output.cc \
 	$(srcdir)/ext/voronoi/read_image.cc \
@@ -126,8 +124,6 @@ am__libocropus_a_SOURCES_DIST = $(srcdir)/ext/voronoi/bit_func.cc \
 	$(srcdir)/ext/voronoi/voronoi-ocropus.cc \
 	$(srcdir)/ext/voronoi/voronoi-pageseg.cc \
 	$(srcdir)/ext/voronoi/voronoi.cc \
-	$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc \
-	$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc \
 	$(srcdir)/ocr-binarize/ocr-binarize-otsu.cc \
 	$(srcdir)/ocr-binarize/ocr-binarize-range.cc \
 	$(srcdir)/ocr-binarize/ocr-binarize-sauvola.cc \
@@ -140,9 +136,12 @@ am__libocropus_a_SOURCES_DIST = $(srcdir)/ext/voronoi/bit_func.cc \
 	$(srcdir)/ocr-layout/log-reg-data.cc \
 	$(srcdir)/ocr-layout/ocr-char-stats.cc \
 	$(srcdir)/ocr-layout/ocr-classify-zones.cc \
+	$(srcdir)/ocr-layout/ocr-color-encode-layout.cc \
 	$(srcdir)/ocr-layout/ocr-ctextline-rast-extended.cc \
 	$(srcdir)/ocr-layout/ocr-ctextline-rast.cc \
 	$(srcdir)/ocr-layout/ocr-deskew-rast.cc \
+	$(srcdir)/ocr-layout/ocr-detect-columns.cc \
+	$(srcdir)/ocr-layout/ocr-detect-paragraphs.cc \
 	$(srcdir)/ocr-layout/ocr-doc-clean-concomp.cc \
 	$(srcdir)/ocr-layout/ocr-doc-clean.cc \
 	$(srcdir)/ocr-layout/ocr-extract-gutters.cc \
@@ -153,8 +152,10 @@ am__libocropus_a_SOURCES_DIST = $(srcdir)/ext/voronoi/bit_func.cc \
 	$(srcdir)/ocr-layout/ocr-pageframe-rast.cc \
 	$(srcdir)/ocr-layout/ocr-pageseg-wcuts.cc \
 	$(srcdir)/ocr-layout/ocr-pageseg-xycut.cc \
+	$(srcdir)/ocr-layout/ocr-reading-order.cc \
 	$(srcdir)/ocr-layout/ocr-segmentations.cc \
 	$(srcdir)/ocr-layout/ocr-text-image-seg.cc \
+	$(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc \
 	$(srcdir)/ocr-layout/ocr-whitespace-cover.cc \
 	$(srcdir)/ocr-layout/ocr-word-segmentation.cc \
 	$(srcdir)/ocr-layout/recognized-page.cc \
@@ -186,26 +187,27 @@ am_libocropus_a_OBJECTS = bit_func.$(OBJEXT) cline.$(OBJEXT) \
 	dinfo.$(OBJEXT) draw_line.$(OBJEXT) edgelist.$(OBJEXT) \
 	erase.$(OBJEXT) geometry.$(OBJEXT) hash.$(OBJEXT) \
 	heap.$(OBJEXT) img_to_site.$(OBJEXT) label_func.$(OBJEXT) \
-	main-be.$(OBJEXT) main-voronoi-ocropus.$(OBJEXT) \
 	memory.$(OBJEXT) output.$(OBJEXT) read_image.$(OBJEXT) \
 	sites.$(OBJEXT) usage.$(OBJEXT) voronoi-ocropus.$(OBJEXT) \
 	voronoi-pageseg.$(OBJEXT) voronoi.$(OBJEXT) \
-	main-ocr-binarize-otsu.$(OBJEXT) \
-	main-ocr-binarize-sauvola.$(OBJEXT) \
 	ocr-binarize-otsu.$(OBJEXT) ocr-binarize-range.$(OBJEXT) \
 	ocr-binarize-sauvola.$(OBJEXT) a-star.$(OBJEXT) \
 	beam-search.$(OBJEXT) fst-em.$(OBJEXT) fst-io.$(OBJEXT) \
 	langmod-shortest-path.$(OBJEXT) lattice.$(OBJEXT) \
 	line-info.$(OBJEXT) lines.$(OBJEXT) log-reg-data.$(OBJEXT) \
 	ocr-char-stats.$(OBJEXT) ocr-classify-zones.$(OBJEXT) \
+	ocr-color-encode-layout.$(OBJEXT) \
 	ocr-ctextline-rast-extended.$(OBJEXT) \
 	ocr-ctextline-rast.$(OBJEXT) ocr-deskew-rast.$(OBJEXT) \
+	ocr-detect-columns.$(OBJEXT) ocr-detect-paragraphs.$(OBJEXT) \
 	ocr-doc-clean-concomp.$(OBJEXT) ocr-doc-clean.$(OBJEXT) \
 	ocr-extract-gutters.$(OBJEXT) ocr-layout-1cp.$(OBJEXT) \
 	ocr-layout-rast.$(OBJEXT) ocr-layout-smear.$(OBJEXT) \
 	ocr-noisefilter.$(OBJEXT) ocr-pageframe-rast.$(OBJEXT) \
 	ocr-pageseg-wcuts.$(OBJEXT) ocr-pageseg-xycut.$(OBJEXT) \
-	ocr-segmentations.$(OBJEXT) ocr-text-image-seg.$(OBJEXT) \
+	ocr-reading-order.$(OBJEXT) ocr-segmentations.$(OBJEXT) \
+	ocr-text-image-seg.$(OBJEXT) \
+	ocr-visualize-layout-rast.$(OBJEXT) \
 	ocr-whitespace-cover.$(OBJEXT) ocr-word-segmentation.$(OBJEXT) \
 	recognized-page.$(OBJEXT) \
 	ocr-text-image-seg-leptonica.$(OBJEXT) ocr-cseg-ccs.$(OBJEXT) \
@@ -234,7 +236,8 @@ RECURSIVE_TARGETS = all-recursive check-recursive dvi-recursive \
 	pdf-recursive ps-recursive uninstall-info-recursive \
 	uninstall-recursive
 am__ocropusinclude_HEADERS_DIST = $(srcdir)/include/ocropus.h \
-	$(srcdir)/include/ocr-pfst.h $(srcdir)/include/ocr-openfst.h \
+	$(srcdir)/include/ocr-pfst.h $(srcdir)/include/ocr-layout.h \
+	$(srcdir)/include/ocr-openfst.h \
 	$(srcdir)/ocr-leptonica/ocr-text-image-seg-leptonica.h
 ocropusincludeHEADERS_INSTALL = $(INSTALL_HEADER)
 HEADERS = $(ocropusinclude_HEADERS)
@@ -390,8 +393,6 @@ libocropus_a_SOURCES = $(srcdir)/ext/voronoi/bit_func.cc \
 	$(srcdir)/ext/voronoi/hash.cc $(srcdir)/ext/voronoi/heap.cc \
 	$(srcdir)/ext/voronoi/img_to_site.cc \
 	$(srcdir)/ext/voronoi/label_func.cc \
-	$(srcdir)/ext/voronoi/main-be.cc \
-	$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc \
 	$(srcdir)/ext/voronoi/memory.cc \
 	$(srcdir)/ext/voronoi/output.cc \
 	$(srcdir)/ext/voronoi/read_image.cc \
@@ -399,8 +400,6 @@ libocropus_a_SOURCES = $(srcdir)/ext/voronoi/bit_func.cc \
 	$(srcdir)/ext/voronoi/voronoi-ocropus.cc \
 	$(srcdir)/ext/voronoi/voronoi-pageseg.cc \
 	$(srcdir)/ext/voronoi/voronoi.cc \
-	$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc \
-	$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc \
 	$(srcdir)/ocr-binarize/ocr-binarize-otsu.cc \
 	$(srcdir)/ocr-binarize/ocr-binarize-range.cc \
 	$(srcdir)/ocr-binarize/ocr-binarize-sauvola.cc \
@@ -413,9 +412,12 @@ libocropus_a_SOURCES = $(srcdir)/ext/voronoi/bit_func.cc \
 	$(srcdir)/ocr-layout/log-reg-data.cc \
 	$(srcdir)/ocr-layout/ocr-char-stats.cc \
 	$(srcdir)/ocr-layout/ocr-classify-zones.cc \
+	$(srcdir)/ocr-layout/ocr-color-encode-layout.cc \
 	$(srcdir)/ocr-layout/ocr-ctextline-rast-extended.cc \
 	$(srcdir)/ocr-layout/ocr-ctextline-rast.cc \
 	$(srcdir)/ocr-layout/ocr-deskew-rast.cc \
+	$(srcdir)/ocr-layout/ocr-detect-columns.cc \
+	$(srcdir)/ocr-layout/ocr-detect-paragraphs.cc \
 	$(srcdir)/ocr-layout/ocr-doc-clean-concomp.cc \
 	$(srcdir)/ocr-layout/ocr-doc-clean.cc \
 	$(srcdir)/ocr-layout/ocr-extract-gutters.cc \
@@ -426,8 +428,10 @@ libocropus_a_SOURCES = $(srcdir)/ext/voronoi/bit_func.cc \
 	$(srcdir)/ocr-layout/ocr-pageframe-rast.cc \
 	$(srcdir)/ocr-layout/ocr-pageseg-wcuts.cc \
 	$(srcdir)/ocr-layout/ocr-pageseg-xycut.cc \
+	$(srcdir)/ocr-layout/ocr-reading-order.cc \
 	$(srcdir)/ocr-layout/ocr-segmentations.cc \
 	$(srcdir)/ocr-layout/ocr-text-image-seg.cc \
+	$(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc \
 	$(srcdir)/ocr-layout/ocr-whitespace-cover.cc \
 	$(srcdir)/ocr-layout/ocr-word-segmentation.cc \
 	$(srcdir)/ocr-layout/recognized-page.cc \
@@ -451,7 +455,8 @@ libocropus_a_SOURCES = $(srcdir)/ext/voronoi/bit_func.cc \
 
 # the default headers to install
 ocropusinclude_HEADERS = $(srcdir)/include/ocropus.h \
-	$(srcdir)/include/ocr-pfst.h $(am__append_3) $(am__append_7)
+	$(srcdir)/include/ocr-pfst.h $(srcdir)/include/ocr-layout.h \
+	$(am__append_3) $(am__append_7)
 
 # folders for installing models and words
 modeldir = ${datadir}/ocropus/models
@@ -565,10 +570,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/linesegs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log-reg-data.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/logger.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main-be.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main-ocr-binarize-otsu.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main-ocr-binarize-sauvola.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main-voronoi-ocropus.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/memory.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/narray-io.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-binarize-otsu.Po@am__quote@
@@ -576,11 +577,14 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-binarize-sauvola.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-char-stats.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-classify-zones.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-color-encode-layout.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-cseg-ccs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-cseg-projection.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-ctextline-rast-extended.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-ctextline-rast.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-deskew-rast.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-detect-columns.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-detect-paragraphs.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-doc-clean-concomp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-doc-clean.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-extract-gutters.Po@am__quote@
@@ -591,10 +595,12 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-pageframe-rast.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-pageseg-wcuts.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-pageseg-xycut.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-reading-order.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-segmentations.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-text-image-seg-leptonica.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-text-image-seg.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-utils.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-visualize-layout-rast.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-whitespace-cover.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ocr-word-segmentation.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/output.Po@am__quote@
@@ -783,34 +789,6 @@ label_func.obj: $(srcdir)/ext/voronoi/label_func.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o label_func.obj `if test -f '$(srcdir)/ext/voronoi/label_func.cc'; then $(CYGPATH_W) '$(srcdir)/ext/voronoi/label_func.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ext/voronoi/label_func.cc'; fi`
 
-main-be.o: $(srcdir)/ext/voronoi/main-be.cc
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT main-be.o -MD -MP -MF "$(DEPDIR)/main-be.Tpo" -c -o main-be.o `test -f '$(srcdir)/ext/voronoi/main-be.cc' || echo '$(srcdir)/'`$(srcdir)/ext/voronoi/main-be.cc; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/main-be.Tpo" "$(DEPDIR)/main-be.Po"; else rm -f "$(DEPDIR)/main-be.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ext/voronoi/main-be.cc' object='main-be.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o main-be.o `test -f '$(srcdir)/ext/voronoi/main-be.cc' || echo '$(srcdir)/'`$(srcdir)/ext/voronoi/main-be.cc
-
-main-be.obj: $(srcdir)/ext/voronoi/main-be.cc
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT main-be.obj -MD -MP -MF "$(DEPDIR)/main-be.Tpo" -c -o main-be.obj `if test -f '$(srcdir)/ext/voronoi/main-be.cc'; then $(CYGPATH_W) '$(srcdir)/ext/voronoi/main-be.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ext/voronoi/main-be.cc'; fi`; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/main-be.Tpo" "$(DEPDIR)/main-be.Po"; else rm -f "$(DEPDIR)/main-be.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ext/voronoi/main-be.cc' object='main-be.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o main-be.obj `if test -f '$(srcdir)/ext/voronoi/main-be.cc'; then $(CYGPATH_W) '$(srcdir)/ext/voronoi/main-be.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ext/voronoi/main-be.cc'; fi`
-
-main-voronoi-ocropus.o: $(srcdir)/ext/voronoi/main-voronoi-ocropus.cc
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT main-voronoi-ocropus.o -MD -MP -MF "$(DEPDIR)/main-voronoi-ocropus.Tpo" -c -o main-voronoi-ocropus.o `test -f '$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc' || echo '$(srcdir)/'`$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/main-voronoi-ocropus.Tpo" "$(DEPDIR)/main-voronoi-ocropus.Po"; else rm -f "$(DEPDIR)/main-voronoi-ocropus.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc' object='main-voronoi-ocropus.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o main-voronoi-ocropus.o `test -f '$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc' || echo '$(srcdir)/'`$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc
-
-main-voronoi-ocropus.obj: $(srcdir)/ext/voronoi/main-voronoi-ocropus.cc
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT main-voronoi-ocropus.obj -MD -MP -MF "$(DEPDIR)/main-voronoi-ocropus.Tpo" -c -o main-voronoi-ocropus.obj `if test -f '$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc'; then $(CYGPATH_W) '$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc'; fi`; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/main-voronoi-ocropus.Tpo" "$(DEPDIR)/main-voronoi-ocropus.Po"; else rm -f "$(DEPDIR)/main-voronoi-ocropus.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc' object='main-voronoi-ocropus.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o main-voronoi-ocropus.obj `if test -f '$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc'; then $(CYGPATH_W) '$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc'; fi`
-
 memory.o: $(srcdir)/ext/voronoi/memory.cc
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT memory.o -MD -MP -MF "$(DEPDIR)/memory.Tpo" -c -o memory.o `test -f '$(srcdir)/ext/voronoi/memory.cc' || echo '$(srcdir)/'`$(srcdir)/ext/voronoi/memory.cc; \
 @am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/memory.Tpo" "$(DEPDIR)/memory.Po"; else rm -f "$(DEPDIR)/memory.Tpo"; exit 1; fi
@@ -922,34 +900,6 @@ voronoi.obj: $(srcdir)/ext/voronoi/voronoi.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ext/voronoi/voronoi.cc' object='voronoi.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o voronoi.obj `if test -f '$(srcdir)/ext/voronoi/voronoi.cc'; then $(CYGPATH_W) '$(srcdir)/ext/voronoi/voronoi.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ext/voronoi/voronoi.cc'; fi`
-
-main-ocr-binarize-otsu.o: $(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT main-ocr-binarize-otsu.o -MD -MP -MF "$(DEPDIR)/main-ocr-binarize-otsu.Tpo" -c -o main-ocr-binarize-otsu.o `test -f '$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/main-ocr-binarize-otsu.Tpo" "$(DEPDIR)/main-ocr-binarize-otsu.Po"; else rm -f "$(DEPDIR)/main-ocr-binarize-otsu.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc' object='main-ocr-binarize-otsu.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o main-ocr-binarize-otsu.o `test -f '$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc
-
-main-ocr-binarize-otsu.obj: $(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT main-ocr-binarize-otsu.obj -MD -MP -MF "$(DEPDIR)/main-ocr-binarize-otsu.Tpo" -c -o main-ocr-binarize-otsu.obj `if test -f '$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc'; fi`; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/main-ocr-binarize-otsu.Tpo" "$(DEPDIR)/main-ocr-binarize-otsu.Po"; else rm -f "$(DEPDIR)/main-ocr-binarize-otsu.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc' object='main-ocr-binarize-otsu.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o main-ocr-binarize-otsu.obj `if test -f '$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc'; fi`
-
-main-ocr-binarize-sauvola.o: $(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT main-ocr-binarize-sauvola.o -MD -MP -MF "$(DEPDIR)/main-ocr-binarize-sauvola.Tpo" -c -o main-ocr-binarize-sauvola.o `test -f '$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/main-ocr-binarize-sauvola.Tpo" "$(DEPDIR)/main-ocr-binarize-sauvola.Po"; else rm -f "$(DEPDIR)/main-ocr-binarize-sauvola.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc' object='main-ocr-binarize-sauvola.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o main-ocr-binarize-sauvola.o `test -f '$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc
-
-main-ocr-binarize-sauvola.obj: $(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc
-@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT main-ocr-binarize-sauvola.obj -MD -MP -MF "$(DEPDIR)/main-ocr-binarize-sauvola.Tpo" -c -o main-ocr-binarize-sauvola.obj `if test -f '$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc'; fi`; \
-@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/main-ocr-binarize-sauvola.Tpo" "$(DEPDIR)/main-ocr-binarize-sauvola.Po"; else rm -f "$(DEPDIR)/main-ocr-binarize-sauvola.Tpo"; exit 1; fi
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc' object='main-ocr-binarize-sauvola.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o main-ocr-binarize-sauvola.obj `if test -f '$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc'; fi`
 
 ocr-binarize-otsu.o: $(srcdir)/ocr-binarize/ocr-binarize-otsu.cc
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocr-binarize-otsu.o -MD -MP -MF "$(DEPDIR)/ocr-binarize-otsu.Tpo" -c -o ocr-binarize-otsu.o `test -f '$(srcdir)/ocr-binarize/ocr-binarize-otsu.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-binarize/ocr-binarize-otsu.cc; \
@@ -1147,6 +1097,20 @@ ocr-classify-zones.obj: $(srcdir)/ocr-layout/ocr-classify-zones.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ocr-classify-zones.obj `if test -f '$(srcdir)/ocr-layout/ocr-classify-zones.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-layout/ocr-classify-zones.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-layout/ocr-classify-zones.cc'; fi`
 
+ocr-color-encode-layout.o: $(srcdir)/ocr-layout/ocr-color-encode-layout.cc
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocr-color-encode-layout.o -MD -MP -MF "$(DEPDIR)/ocr-color-encode-layout.Tpo" -c -o ocr-color-encode-layout.o `test -f '$(srcdir)/ocr-layout/ocr-color-encode-layout.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-layout/ocr-color-encode-layout.cc; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/ocr-color-encode-layout.Tpo" "$(DEPDIR)/ocr-color-encode-layout.Po"; else rm -f "$(DEPDIR)/ocr-color-encode-layout.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-layout/ocr-color-encode-layout.cc' object='ocr-color-encode-layout.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ocr-color-encode-layout.o `test -f '$(srcdir)/ocr-layout/ocr-color-encode-layout.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-layout/ocr-color-encode-layout.cc
+
+ocr-color-encode-layout.obj: $(srcdir)/ocr-layout/ocr-color-encode-layout.cc
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocr-color-encode-layout.obj -MD -MP -MF "$(DEPDIR)/ocr-color-encode-layout.Tpo" -c -o ocr-color-encode-layout.obj `if test -f '$(srcdir)/ocr-layout/ocr-color-encode-layout.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-layout/ocr-color-encode-layout.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-layout/ocr-color-encode-layout.cc'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/ocr-color-encode-layout.Tpo" "$(DEPDIR)/ocr-color-encode-layout.Po"; else rm -f "$(DEPDIR)/ocr-color-encode-layout.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-layout/ocr-color-encode-layout.cc' object='ocr-color-encode-layout.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ocr-color-encode-layout.obj `if test -f '$(srcdir)/ocr-layout/ocr-color-encode-layout.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-layout/ocr-color-encode-layout.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-layout/ocr-color-encode-layout.cc'; fi`
+
 ocr-ctextline-rast-extended.o: $(srcdir)/ocr-layout/ocr-ctextline-rast-extended.cc
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocr-ctextline-rast-extended.o -MD -MP -MF "$(DEPDIR)/ocr-ctextline-rast-extended.Tpo" -c -o ocr-ctextline-rast-extended.o `test -f '$(srcdir)/ocr-layout/ocr-ctextline-rast-extended.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-layout/ocr-ctextline-rast-extended.cc; \
 @am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/ocr-ctextline-rast-extended.Tpo" "$(DEPDIR)/ocr-ctextline-rast-extended.Po"; else rm -f "$(DEPDIR)/ocr-ctextline-rast-extended.Tpo"; exit 1; fi
@@ -1188,6 +1152,34 @@ ocr-deskew-rast.obj: $(srcdir)/ocr-layout/ocr-deskew-rast.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-layout/ocr-deskew-rast.cc' object='ocr-deskew-rast.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ocr-deskew-rast.obj `if test -f '$(srcdir)/ocr-layout/ocr-deskew-rast.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-layout/ocr-deskew-rast.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-layout/ocr-deskew-rast.cc'; fi`
+
+ocr-detect-columns.o: $(srcdir)/ocr-layout/ocr-detect-columns.cc
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocr-detect-columns.o -MD -MP -MF "$(DEPDIR)/ocr-detect-columns.Tpo" -c -o ocr-detect-columns.o `test -f '$(srcdir)/ocr-layout/ocr-detect-columns.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-layout/ocr-detect-columns.cc; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/ocr-detect-columns.Tpo" "$(DEPDIR)/ocr-detect-columns.Po"; else rm -f "$(DEPDIR)/ocr-detect-columns.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-layout/ocr-detect-columns.cc' object='ocr-detect-columns.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ocr-detect-columns.o `test -f '$(srcdir)/ocr-layout/ocr-detect-columns.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-layout/ocr-detect-columns.cc
+
+ocr-detect-columns.obj: $(srcdir)/ocr-layout/ocr-detect-columns.cc
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocr-detect-columns.obj -MD -MP -MF "$(DEPDIR)/ocr-detect-columns.Tpo" -c -o ocr-detect-columns.obj `if test -f '$(srcdir)/ocr-layout/ocr-detect-columns.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-layout/ocr-detect-columns.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-layout/ocr-detect-columns.cc'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/ocr-detect-columns.Tpo" "$(DEPDIR)/ocr-detect-columns.Po"; else rm -f "$(DEPDIR)/ocr-detect-columns.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-layout/ocr-detect-columns.cc' object='ocr-detect-columns.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ocr-detect-columns.obj `if test -f '$(srcdir)/ocr-layout/ocr-detect-columns.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-layout/ocr-detect-columns.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-layout/ocr-detect-columns.cc'; fi`
+
+ocr-detect-paragraphs.o: $(srcdir)/ocr-layout/ocr-detect-paragraphs.cc
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocr-detect-paragraphs.o -MD -MP -MF "$(DEPDIR)/ocr-detect-paragraphs.Tpo" -c -o ocr-detect-paragraphs.o `test -f '$(srcdir)/ocr-layout/ocr-detect-paragraphs.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-layout/ocr-detect-paragraphs.cc; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/ocr-detect-paragraphs.Tpo" "$(DEPDIR)/ocr-detect-paragraphs.Po"; else rm -f "$(DEPDIR)/ocr-detect-paragraphs.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-layout/ocr-detect-paragraphs.cc' object='ocr-detect-paragraphs.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ocr-detect-paragraphs.o `test -f '$(srcdir)/ocr-layout/ocr-detect-paragraphs.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-layout/ocr-detect-paragraphs.cc
+
+ocr-detect-paragraphs.obj: $(srcdir)/ocr-layout/ocr-detect-paragraphs.cc
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocr-detect-paragraphs.obj -MD -MP -MF "$(DEPDIR)/ocr-detect-paragraphs.Tpo" -c -o ocr-detect-paragraphs.obj `if test -f '$(srcdir)/ocr-layout/ocr-detect-paragraphs.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-layout/ocr-detect-paragraphs.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-layout/ocr-detect-paragraphs.cc'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/ocr-detect-paragraphs.Tpo" "$(DEPDIR)/ocr-detect-paragraphs.Po"; else rm -f "$(DEPDIR)/ocr-detect-paragraphs.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-layout/ocr-detect-paragraphs.cc' object='ocr-detect-paragraphs.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ocr-detect-paragraphs.obj `if test -f '$(srcdir)/ocr-layout/ocr-detect-paragraphs.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-layout/ocr-detect-paragraphs.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-layout/ocr-detect-paragraphs.cc'; fi`
 
 ocr-doc-clean-concomp.o: $(srcdir)/ocr-layout/ocr-doc-clean-concomp.cc
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocr-doc-clean-concomp.o -MD -MP -MF "$(DEPDIR)/ocr-doc-clean-concomp.Tpo" -c -o ocr-doc-clean-concomp.o `test -f '$(srcdir)/ocr-layout/ocr-doc-clean-concomp.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-layout/ocr-doc-clean-concomp.cc; \
@@ -1329,6 +1321,20 @@ ocr-pageseg-xycut.obj: $(srcdir)/ocr-layout/ocr-pageseg-xycut.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ocr-pageseg-xycut.obj `if test -f '$(srcdir)/ocr-layout/ocr-pageseg-xycut.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-layout/ocr-pageseg-xycut.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-layout/ocr-pageseg-xycut.cc'; fi`
 
+ocr-reading-order.o: $(srcdir)/ocr-layout/ocr-reading-order.cc
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocr-reading-order.o -MD -MP -MF "$(DEPDIR)/ocr-reading-order.Tpo" -c -o ocr-reading-order.o `test -f '$(srcdir)/ocr-layout/ocr-reading-order.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-layout/ocr-reading-order.cc; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/ocr-reading-order.Tpo" "$(DEPDIR)/ocr-reading-order.Po"; else rm -f "$(DEPDIR)/ocr-reading-order.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-layout/ocr-reading-order.cc' object='ocr-reading-order.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ocr-reading-order.o `test -f '$(srcdir)/ocr-layout/ocr-reading-order.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-layout/ocr-reading-order.cc
+
+ocr-reading-order.obj: $(srcdir)/ocr-layout/ocr-reading-order.cc
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocr-reading-order.obj -MD -MP -MF "$(DEPDIR)/ocr-reading-order.Tpo" -c -o ocr-reading-order.obj `if test -f '$(srcdir)/ocr-layout/ocr-reading-order.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-layout/ocr-reading-order.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-layout/ocr-reading-order.cc'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/ocr-reading-order.Tpo" "$(DEPDIR)/ocr-reading-order.Po"; else rm -f "$(DEPDIR)/ocr-reading-order.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-layout/ocr-reading-order.cc' object='ocr-reading-order.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ocr-reading-order.obj `if test -f '$(srcdir)/ocr-layout/ocr-reading-order.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-layout/ocr-reading-order.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-layout/ocr-reading-order.cc'; fi`
+
 ocr-segmentations.o: $(srcdir)/ocr-layout/ocr-segmentations.cc
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocr-segmentations.o -MD -MP -MF "$(DEPDIR)/ocr-segmentations.Tpo" -c -o ocr-segmentations.o `test -f '$(srcdir)/ocr-layout/ocr-segmentations.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-layout/ocr-segmentations.cc; \
 @am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/ocr-segmentations.Tpo" "$(DEPDIR)/ocr-segmentations.Po"; else rm -f "$(DEPDIR)/ocr-segmentations.Tpo"; exit 1; fi
@@ -1356,6 +1362,20 @@ ocr-text-image-seg.obj: $(srcdir)/ocr-layout/ocr-text-image-seg.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-layout/ocr-text-image-seg.cc' object='ocr-text-image-seg.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ocr-text-image-seg.obj `if test -f '$(srcdir)/ocr-layout/ocr-text-image-seg.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-layout/ocr-text-image-seg.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-layout/ocr-text-image-seg.cc'; fi`
+
+ocr-visualize-layout-rast.o: $(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocr-visualize-layout-rast.o -MD -MP -MF "$(DEPDIR)/ocr-visualize-layout-rast.Tpo" -c -o ocr-visualize-layout-rast.o `test -f '$(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/ocr-visualize-layout-rast.Tpo" "$(DEPDIR)/ocr-visualize-layout-rast.Po"; else rm -f "$(DEPDIR)/ocr-visualize-layout-rast.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc' object='ocr-visualize-layout-rast.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ocr-visualize-layout-rast.o `test -f '$(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc
+
+ocr-visualize-layout-rast.obj: $(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocr-visualize-layout-rast.obj -MD -MP -MF "$(DEPDIR)/ocr-visualize-layout-rast.Tpo" -c -o ocr-visualize-layout-rast.obj `if test -f '$(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/ocr-visualize-layout-rast.Tpo" "$(DEPDIR)/ocr-visualize-layout-rast.Po"; else rm -f "$(DEPDIR)/ocr-visualize-layout-rast.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='$(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc' object='ocr-visualize-layout-rast.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ocr-visualize-layout-rast.obj `if test -f '$(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc'; then $(CYGPATH_W) '$(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc'; else $(CYGPATH_W) '$(srcdir)/$(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc'; fi`
 
 ocr-whitespace-cover.o: $(srcdir)/ocr-layout/ocr-whitespace-cover.cc
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT ocr-whitespace-cover.o -MD -MP -MF "$(DEPDIR)/ocr-whitespace-cover.Tpo" -c -o ocr-whitespace-cover.o `test -f '$(srcdir)/ocr-layout/ocr-whitespace-cover.cc' || echo '$(srcdir)/'`$(srcdir)/ocr-layout/ocr-whitespace-cover.cc; \
