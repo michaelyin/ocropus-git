@@ -53,8 +53,6 @@ $(srcdir)/ext/voronoi/hash.cc \
 $(srcdir)/ext/voronoi/heap.cc \
 $(srcdir)/ext/voronoi/img_to_site.cc \
 $(srcdir)/ext/voronoi/label_func.cc \
-$(srcdir)/ext/voronoi/main-be.cc \
-$(srcdir)/ext/voronoi/main-voronoi-ocropus.cc \
 $(srcdir)/ext/voronoi/memory.cc \
 $(srcdir)/ext/voronoi/output.cc \
 $(srcdir)/ext/voronoi/read_image.cc \
@@ -63,8 +61,6 @@ $(srcdir)/ext/voronoi/usage.cc \
 $(srcdir)/ext/voronoi/voronoi-ocropus.cc \
 $(srcdir)/ext/voronoi/voronoi-pageseg.cc \
 $(srcdir)/ext/voronoi/voronoi.cc \
-$(srcdir)/ocr-binarize/main-ocr-binarize-otsu.cc \
-$(srcdir)/ocr-binarize/main-ocr-binarize-sauvola.cc \
 $(srcdir)/ocr-binarize/ocr-binarize-otsu.cc \
 $(srcdir)/ocr-binarize/ocr-binarize-range.cc \
 $(srcdir)/ocr-binarize/ocr-binarize-sauvola.cc \
@@ -79,9 +75,12 @@ $(srcdir)/ocr-layout/lines.cc \
 $(srcdir)/ocr-layout/log-reg-data.cc \
 $(srcdir)/ocr-layout/ocr-char-stats.cc \
 $(srcdir)/ocr-layout/ocr-classify-zones.cc \
+$(srcdir)/ocr-layout/ocr-color-encode-layout.cc \
 $(srcdir)/ocr-layout/ocr-ctextline-rast-extended.cc \
 $(srcdir)/ocr-layout/ocr-ctextline-rast.cc \
 $(srcdir)/ocr-layout/ocr-deskew-rast.cc \
+$(srcdir)/ocr-layout/ocr-detect-columns.cc \
+$(srcdir)/ocr-layout/ocr-detect-paragraphs.cc \
 $(srcdir)/ocr-layout/ocr-doc-clean-concomp.cc \
 $(srcdir)/ocr-layout/ocr-doc-clean.cc \
 $(srcdir)/ocr-layout/ocr-extract-gutters.cc \
@@ -92,8 +91,10 @@ $(srcdir)/ocr-layout/ocr-noisefilter.cc \
 $(srcdir)/ocr-layout/ocr-pageframe-rast.cc \
 $(srcdir)/ocr-layout/ocr-pageseg-wcuts.cc \
 $(srcdir)/ocr-layout/ocr-pageseg-xycut.cc \
+$(srcdir)/ocr-layout/ocr-reading-order.cc \
 $(srcdir)/ocr-layout/ocr-segmentations.cc \
 $(srcdir)/ocr-layout/ocr-text-image-seg.cc \
+$(srcdir)/ocr-layout/ocr-visualize-layout-rast.cc \
 $(srcdir)/ocr-layout/ocr-whitespace-cover.cc \
 $(srcdir)/ocr-layout/ocr-word-segmentation.cc \
 $(srcdir)/ocr-layout/recognized-page.cc \
@@ -119,7 +120,8 @@ $(srcdir)/ocr-utils/xml-entities.cc
 # the default headers to install
 ocropusinclude_HEADERS =  \
 $(srcdir)/include/ocropus.h \
-$(srcdir)/include/ocr-pfst.h
+$(srcdir)/include/ocr-pfst.h \
+$(srcdir)/include/ocr-layout.h
 
 # folders for installing models and words
 modeldir=${datadir}/ocropus/models

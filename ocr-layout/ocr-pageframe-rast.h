@@ -139,8 +139,6 @@ namespace ocropus {
         void pushResult(CState &result);
     };
 
-    colib::ICleanupBinary *make_PageFrameRAST();
-
 }
 
 #endif

@@ -24,7 +24,7 @@
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include "ocropus.h"
-#include "ocr-layout.h"
+#include "ocr-layout-internal.h"
 
 using namespace ocropus;
 using namespace colib;
@@ -104,6 +104,8 @@ namespace ocropus {
         interval m = params[1];
         interval d = params[2];
 
+        bool descender_present=false;
+
         for(int i = 0;i<candidates.length();i++) {
             int bi = candidates[i];
             if(line.used[bi]) continue;
@@ -117,6 +119,8 @@ namespace ocropus {
                 interval q1 = line.influence(line.lsq,abs(b.y0-y),line.epsilon);
                 interval q2 = 0.75*line.influence(line.lsq,abs(b.y0-(y-d)),line.epsilon);
                 q = max(q1,q2);
+                if(q2.hi>0.0)
+                    descender_present = true;
             }
 
             // if it didn't match, see whether it's contained somewhere within the line
@@ -142,6 +146,9 @@ namespace ocropus {
             quality = 0;
         }
 
+        // If no descenders are present, set the distance to zero
+        if(!descender_present)
+            params[2] = 0.0;
         priority = quality.hi;
         generation = line.generation;
     }

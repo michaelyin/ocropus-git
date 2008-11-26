@@ -28,27 +28,11 @@
 #define h_ocrctextlinerastextended__
 
 #include "ocropus.h"
-#include "ocr-layout.h"
 #include "colib/iarith.h"
 
 namespace ocropus {
     using namespace colib;
 
-
-    /////////////////////////////////////////////////////////////////////
-    ///
-    /// \struct TextLineParam4line
-    /// Purpose: Textline parameters
-    ///
-    //////////////////////////////////////////////////////////////////////
-
-    struct TextLineParam4line {
-        float c,m,d; // c is y-intercept, m is slope, d is the line of descenders
-        float a,x;   // a is ascender height, x is the x-height
-        void print(FILE *stream=stdout){
-            fprintf(stream,"%.3f %f %.2f\n",c,m,d);
-        }
-    };
 
     /////////////////////////////////////////////////////////////////////
     ///
@@ -152,30 +136,6 @@ namespace ocropus {
                              colib::autodel<CharStats>    &charstats);
     };
     CTextlineRAST4line *make_CTextlineRAST4line();
-
-    /////////////////////////////////////////////////////////////////////
-    ///
-    /// \struct TextLineExtended
-    /// Purpose: Textline bounding box and it attributes
-    ///
-    //////////////////////////////////////////////////////////////////////
-
-    struct TextLineExtended : TextLineParam4line{
-        TextLineExtended(){
-        }
-        TextLineExtended(TextLineParam4line &tl){
-            c = tl.c;
-            m = tl.m;
-            d = tl.d;
-            a = tl.a;
-            x = tl.x;
-        }
-        colib::rectangle  bbox;
-        void print(FILE *stream=stdout){
-            fprintf(stream,"%d %d %d %d ",bbox.x0,bbox.y0,bbox.x1,bbox.y1);
-            fprintf(stream,"%.3f %f %.2f %.2f %.2f\n",c,m,d,a,x);
-        }
-    };
 
     /////////////////////////////////////////////////////////////////////
     ///

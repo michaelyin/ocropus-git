@@ -28,7 +28,7 @@
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include "ocropus.h"
-#include "ocr-layout.h"
+#include "ocr-layout-internal.h"
 #include "log-reg-data.h"
 
 using namespace ocropus;
@@ -627,8 +627,6 @@ namespace ocropus {
         // CONNECTED COMPONENTS
         bytearray in;
         copy(in, image);
-        binarize_simple(in);
-        optional_check_background_is_lighter(in);
         invert(in);
     
         // Do connected component analysis

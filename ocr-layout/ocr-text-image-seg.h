@@ -43,24 +43,6 @@ namespace ocropus {
     const int ruling_color   = 0x0001fc01;
     const int noise_color    = 0x00ffff00;
 
-    // Remove a masked region from an input image
-    void remove_masked_region(colib::bytearray &out,
-                              colib::bytearray &mask,
-                              colib::bytearray &in);
-
-    // Remove rectangular regions from an input image
-    void remove_rectangular_region(colib::bytearray &out,
-                                   colib::rectarray &boxes,
-                                   colib::bytearray &in);
-
-    // get a binary mask image for non-text regions from a text/image
-    // probability map
-    void get_nontext_mask(colib::bytearray &out, colib::intarray &in);
-
-    // get non-text rectangles from a text/image probability map
-    void get_nontext_boxes(colib::rectarray &nontext_boxes,
-                           colib::intarray &text_img_map);
-
     struct TextImageSegByLogReg : colib::ITextImageClassification {
         ~TextImageSegByLogReg() {}
 

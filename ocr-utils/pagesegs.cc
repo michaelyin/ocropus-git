@@ -20,7 +20,7 @@ namespace ocropus {
             int paragraph = 0xff & (pixel >> 8);
             int line = 0xff & pixel;
             CHECK_ARG((column > 0 && column < 32) || column == 254 || column == 255);
-            CHECK_ARG((paragraph >= 0 && paragraph < 64) || (paragraph >=251 && paragraph <= 255));
+            CHECK_ARG((paragraph >= 0 && paragraph < 64) || (paragraph >=250 && paragraph <= 255));
             if (column < 32) {
                 if(!used(line)) nused++;
                 used(line) = true;
