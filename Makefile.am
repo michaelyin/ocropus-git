@@ -84,6 +84,7 @@ $(srcdir)/ocr-layout/ocr-detect-paragraphs.cc \
 $(srcdir)/ocr-layout/ocr-doc-clean-concomp.cc \
 $(srcdir)/ocr-layout/ocr-doc-clean.cc \
 $(srcdir)/ocr-layout/ocr-extract-gutters.cc \
+$(srcdir)/ocr-layout/ocr-extract-rulings.cc \
 $(srcdir)/ocr-layout/ocr-layout-1cp.cc \
 $(srcdir)/ocr-layout/ocr-layout-rast.cc \
 $(srcdir)/ocr-layout/ocr-layout-smear.cc \

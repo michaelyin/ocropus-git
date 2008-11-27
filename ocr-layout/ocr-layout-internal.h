@@ -31,6 +31,7 @@
 #include "ocr-char-stats.h"
 #include "ocr-whitespace-cover.h"
 #include "ocr-extract-gutters.h"
+#include "ocr-extract-rulings.h"
 #include "ocr-ctextline-rast-extended.h"
 #include "ocr-ctextline-rast.h"
 #include "ocr-color-encode-layout.h"

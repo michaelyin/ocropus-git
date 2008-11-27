@@ -41,30 +41,6 @@ namespace ocropus {
         use_four_line_model = false;
     }
 
-    // Analyze user supplied obstacles to separate horizontal/vertical rulings
-    // and image regions
-    static void analyze_obstacles(rectarray &hor_rulings,
-                                  rectarray &vert_rulings,
-                                  rectarray &images,
-                                  rectarray &obstacles,
-                                  int xheight){
-
-        int hor_ruling_maxheight = 2*xheight;
-        int vert_ruling_maxwidth = 2*xheight;
-        for(int i=0, l=obstacles.length(); i<l; i++){
-            int width = obstacles[i].width();
-            int height = obstacles[i].height();
-            if(width<vert_ruling_maxwidth && height<hor_ruling_maxheight)
-                images.push(obstacles[i]);
-            else if(width<vert_ruling_maxwidth && height>hor_ruling_maxheight)
-                vert_rulings.push(obstacles[i]);
-            else if(width>vert_ruling_maxwidth && height<hor_ruling_maxheight)
-                hor_rulings.push(obstacles[i]);
-            else
-                images.push(obstacles[i]);
-        }
-    }
-
 
     // FIXME refactor this
     // make the arguments instance variables
@@ -128,13 +104,25 @@ namespace ocropus {
             }
         }
 
+        // Separate horizontal/vertical rulings from graphics
+        rectarray hor_rulings;
+        rectarray vert_rulings;
+        rectarray graphics;
+        autodel<ExtractRulings> rulings(make_ExtractRulings());
+        rulings->analyzeObstacles(hor_rulings,vert_rulings,graphics,
+                                  extra_obstacles,charstats->xheight);
+        rulings->analyzeObstacles(hor_rulings,vert_rulings,graphics,
+                                  charstats->large_boxes,charstats->xheight);
+        
         // add whitespace gutters and the user-supplied obstacles to a list of
         // obstacles
-        rectarray obstacles;
+        rectarray textline_obstacles;
         for(int i=0;i<gutters.length();i++)
-            obstacles.push(gutters[i]);
+            textline_obstacles.push(gutters[i]);
         for(int i=0;i<extra_obstacles.length();i++)
-            obstacles.push(extra_obstacles[i]);
+            textline_obstacles.push(extra_obstacles[i]);
+        for(int i=0;i<vert_rulings.length();i++)
+            textline_obstacles.push(vert_rulings[i]);
         //fprintf(stderr,"Time elapsed (gutters): %.3f \n",(clock()/float(CLOCKS_PER_SEC)) - startTime);
 
         // Extract textlines
@@ -150,7 +138,7 @@ namespace ocropus {
             ctextline->max_results = max_results;
             ctextline->min_gap = gap_factor*charstats->xheight;
             
-            ctextline->extract(textlines_extended,obstacles,charstats);
+            ctextline->extract(textlines_extended,textline_obstacles,charstats);
             for(int i=0,l=textlines_extended.length();i<l;i++)
                 textlines.push(textlines_extended[i].getTextLine());
         }else{
@@ -162,16 +150,9 @@ namespace ocropus {
             ctextline->max_results = max_results;
             ctextline->min_gap = gap_factor*charstats->xheight;
             
-            ctextline->extract(textlines,obstacles,charstats);
+            ctextline->extract(textlines,textline_obstacles,charstats);
         }
 
-        // Separate horizontal/vertical rulings from graphics
-        rectarray hor_rulings;
-        rectarray vert_rulings;
-        rectarray graphics;
-        analyze_obstacles(hor_rulings,vert_rulings,graphics,
-                          extra_obstacles,charstats->xheight);
-        
 
         // Sort textlines in reading order
         autodel<ReadingOrderByTopologicalSort> 
@@ -227,7 +208,7 @@ namespace ocropus {
         replace_values(image,zero,yellow);
         if(need_visualization) {
             visualize_layout(visualization, in_not_inverted, textlines, 
-                             gutters, extra_obstacles, *charstats);
+                             vert_separators, extra_obstacles, *charstats);
         }
     }
 
