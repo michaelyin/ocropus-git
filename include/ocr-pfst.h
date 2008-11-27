@@ -1,32 +1,32 @@
 // Copyright 2007-2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
-// 
+//
 // You may not use this file except under the terms of the accompanying license.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License"); you
 // may not use this file except in compliance with the License. You may
 // obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 // Project: ocr-pfst
 // File: ocr-pfst.h
 // Purpose: PFST public API
 // Responsible: mezhirov
-// Reviewer: 
-// Primary Repository: 
+// Reviewer:
+// Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
-#ifndef h_ocr_pfst_ 
+#ifndef h_ocr_pfst_
 #define h_ocr_pfst_
 
 /// \file ocr-pfst.h
 
-#include "colib.h"
+#include "colib/colib.h"
 
 namespace ocropus {
     using namespace colib;
@@ -38,14 +38,14 @@ namespace ocropus {
     IGenericFst *make_StandardFst();
 
     /// \brief Copy one FST to another.
-    /// 
+    ///
     /// \param[out]     dst     The destination. Will be cleared before copying.
     /// \param[in]      src     The FST to copy.
     void fst_copy(IGenericFst &dst, IGenericFst &src);
 
     /// \brief Copy one FST to another, preserving only lowest-cost arcs.
     /// This is useful for visualization.
-    /// 
+    ///
     /// \param[out]     dst     The destination. Will be cleared before copying.
     /// \param[in]      src     The FST to copy.
     void fst_copy_best_arcs_only(IGenericFst &dst, IGenericFst &src);
@@ -75,7 +75,7 @@ namespace ocropus {
     ///
     /// Technically, the best path always exists,
     /// but its cost might be over 1e37.
-    /// So if your graph is disconnected, 
+    /// So if your graph is disconnected,
     /// the beam search will go somewhere
     /// and take the extreme accept cost from there.
     ///
@@ -124,7 +124,7 @@ namespace ocropus {
                                floatarray &costs,
                                IGenericFst &fst1,
                                IGenericFst &fst2);
-    
+
     // TODO: document return value
     /// \brief Search for the best path through the composition of 3 FSTs
     ///        using A* algorithm.
