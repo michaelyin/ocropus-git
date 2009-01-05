@@ -18,7 +18,7 @@
 // Project: OCRopus
 // File: ocropus.h
 // Purpose: Top level header file
-// Responsible: 
+// Responsible:
 // Reviewer:
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de
@@ -72,6 +72,8 @@ namespace ocropus {
 #include "segmentation.h"
 #include "sysutil.h"
 #include "xml-entities.h"
+#include "ocropus.h"
+#include "tesseract.h"
 
 #ifndef CHECK
 #define CHECK(X) CHECK_ARG(X)
