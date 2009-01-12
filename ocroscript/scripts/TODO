@@ -1,0 +1,3 @@
+-- move lib.util into C++ code
+-- move lib.align into top level script (some code duplication is OK)
+-- move lib.editdist into C++ code

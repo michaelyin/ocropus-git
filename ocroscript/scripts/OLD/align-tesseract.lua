@@ -1,6 +1,11 @@
 -- -*- lua -*-
 -- Tesseract-based alignment of a text line with ground truth.
 
+import_all(iulib)
+import_all(ocr)
+import_all(graphics)
+import_all(layout)
+
 dinit(800,800)
 
 segmenter = make_SegmentPageByRAST()
