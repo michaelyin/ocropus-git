@@ -45,6 +45,7 @@ namespace ocropus {
 
 #include "ocr-layout.h"
 #include "line-info.h"
+#include "ocr-tesseract.h"
 
 #ifdef HAVE_FST
 #include "ocr-openfst.h"
@@ -72,8 +73,6 @@ namespace ocropus {
 #include "segmentation.h"
 #include "sysutil.h"
 #include "xml-entities.h"
-#include "ocropus.h"
-#include "tesseract.h"
 
 #ifndef CHECK
 #define CHECK(X) CHECK_ARG(X)

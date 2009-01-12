@@ -58,12 +58,7 @@ using namespace tesseract;
 #undef max
 
 // IUPR includes
-#include "tesseract.h"
 #include "ocropus.h"
-#include "lines.h"
-
-#include "line-info.h"
-#include "ocr-segmentations.h"
 
 using namespace colib;
 using namespace iulib;
@@ -198,7 +193,52 @@ static struct sigaction SIGSEGV_old;
 #endif
     }
 
+    static void set_line_number(intarray &a, int lnum) {
+        lnum <<= 12;
+        for(int i = 0; i < a.length1d(); i++) {
+            if (a.at1d(i) && a.at1d(i) != 0xFFFFFF)
+                a.at1d(i) = (a.at1d(i) & 0xFFF) | lnum;
+        }
+    }
 
+    static int pick_threshold(intarray &segmentation, bytearray &image, int k) {
+        int min = 255;//, max = 0;
+        int n = segmentation.length1d();
+        for(int i = 0; i < n; i++) {
+            if(segmentation.at1d(i) == k) {
+                int pixel = image.at1d(i);
+                if(pixel < min) min = pixel;
+                //if(pixel > max) max = pixel;
+            }
+        }
+        if(min > 128)
+            return min;
+        else
+            return 128;
+    }
+
+    static void binarize_in_segmentation(intarray &segmentation, bytearray &gray_image) {
+        CHECK_ARG(samedims(segmentation, gray_image));
+        // should be passed a valid segmentation
+        check_line_segmentation(segmentation);
+        int n = segmentation.length1d();
+        intarray thresholds(1);
+        for(int i = 0; i < n; i++) {
+            int c = segmentation.at1d(i);
+            if(c == 0 || c == 0xFFFFFF)
+                continue;
+            c &= 0xFFF; // clear the line number
+            while(c >= thresholds.length()) {
+                thresholds.push(pick_threshold(segmentation,
+                                               gray_image,
+                                               thresholds.length()));
+            }
+            if(gray_image.at1d(i) > thresholds[c])
+                 segmentation.at1d(i) = 0xFFFFFF;
+        }
+        // should return a valid segmentation
+        check_line_segmentation(segmentation);
+    }
 
 
     ROW *tessy_make_ocrrow(float baseline, float xheight, float descender, float ascender) {

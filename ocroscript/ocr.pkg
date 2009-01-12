@@ -220,6 +220,7 @@ $ }
 void str2array(bytearray &out,const char *s);
 char *array2str(bytearray &buf);
 
+void crop(bytearray &a, rectangle);
 void replace_values(bytearray &a,byte,byte);
 void replace_values(intarray &a,int,int);
 void replace_values(floatarray &a,float,float);
@@ -261,6 +262,7 @@ const char *hardcoded_version_string();
 /*void detect_headlines(RecognizedPage &, ILines &);
 void detect_paragraphs(RecognizedPage &, ILines &);*/
 
+void remove_neighbour_line_components(bytearray &line);
 void remove_small_components(intarray &bimage,int mw,int mh);
 void remove_marginal_components(intarray &bimage,int x0,int y0,int x1,int y1);
 void remove_small_components(bytearray &bimage,int mw,int mh);

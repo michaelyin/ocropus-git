@@ -22,7 +22,7 @@
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include "lines.h"
-#include "tesseract.h"
+#include "ocropus.h"
 
 using namespace colib;
 
