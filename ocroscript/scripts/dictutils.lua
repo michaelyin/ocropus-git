@@ -70,5 +70,6 @@ end
 --read the dictionary given with ocropus
 --please check is it is the right path
 function read_english_dict(t)
-    read_dict(t,"../data/words/en-us")  -- only works if script called from ../ocroscript
+    read_dict(t,ocrodata.."words/en-us")  -- only works if script called from ../ocroscript
 end
+

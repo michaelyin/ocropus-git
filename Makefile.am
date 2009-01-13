@@ -37,11 +37,11 @@ libocropus_a_SOURCES =  $(srcdir)/ocr-binarize/ocr-binarize-range.cc $(srcdir)/o
 
 # folders for installing models and words
 #modeldir=${datadir}/ocropus/models
-#worddir=${datadir}/ocropus/words
+worddir=${datadir}/ocropus/words
 
 # install the data
 #model_DATA = $(srcdir)/data/models/*
-#word_DATA = $(srcdir)/data/words/*
+word_DATA = $(srcdir)/data/words/*
 
 
 if ! nofst

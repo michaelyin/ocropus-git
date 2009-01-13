@@ -131,7 +131,7 @@ function try_thresholds_on_lines(pages,max_lines_to_compute,max_lines_to_use,pat
                 binarizer:set("w",scores[1][2])
                 binarizer:set("k",scores[1][3])
                 binarizer:binarize(page_binarized,page_gray)
-                iulib.write_image_gray(path_out.."/"..path.filename(pages:getFileName()),page_binarized)
+                iulib.write_image_gray(path_out.."/"..path.basename(pages:getFileName()),page_binarized)
             end
         else
             print(pages:getFileName().." no line in the page")   -- it can happen, first extraction may fail or just a blank page

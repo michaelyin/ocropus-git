@@ -87,8 +87,7 @@ function path.dirname(p)
     return p:match("^.*[/\\]") or '.'
 end
 
--- FIXME rename to basename --IM 
-function path.filename(p)
+function path.basename(p)
     return p:gsub("^.*[/\\]","")
 end
 

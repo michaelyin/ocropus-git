@@ -43,13 +43,13 @@ function estimate_one_orientation_with_tess(page_image,orientation,maxlines)
         list_trans_scores[i] = {"",-1}                                          -- initialize scores
     end
 
-    local regions = RegionExtractor:new()                                             -- prepare regions
+    local regions = RegionExtractor:new()                                       -- prepare regions
 
     segmenter:segment(page_segmentation,page_image_rot)                         -- segment
     regions:setPageLines(page_segmentation)                                     -- create regions
     logger:log("region length",regions:length())                                -- log
 
-    if regions:length() > 1 then                                               -- it can happen for blank pages
+    if regions:length() > 1 then                                                -- it can happen for blank pages
         local tesseract_recognizer = make_TesseractRecognizeLine()              -- recognition by Tesseract
         local bb_len = {}
         for i = 1,regions:length()-1 do                                         -- get the bounding boxes
@@ -142,7 +142,7 @@ function estimate_all_orientations(pages,max_lines_to_compute,max_lines_to_use,m
         if (path_out ~= nil) then
             local page_image_rot = bytearray:new()
             rotate(page_image_rot,page_image,scores[1][2])
-            iulib.write_image_gray(path_out.."/"..path.filename(pages:getFileName()),page_image_rot)
+            iulib.write_image_gray(path_out.."/"..path.basename(pages:getFileName()),page_image_rot)
             page_image_rot:delete()
         end
     end
@@ -160,11 +160,14 @@ function main()
         print '                        English dictionary of OCROpus is read'
         print '     --tessdict=...   - Tesseract dictionary, "eng" by default'
         print '     --maxcom=...     - maximum number of lines to extract with RAST. Set to 4 by default'
-        print '     --maxuse=...     - maximum number of lines to use when estimating the orientation. Set to 4 by default'
+        print '     --maxuse=...     - maximum number of lines to use when estimating the orientation.'
+        print '                        Set to 4 by default'
         print '     --start=...      - start at this position in the basenames'
         print '     --finish=...     - stop working at this position in the basenames'
-        print '     --mode=...       - decision mode: max or mean, max by default. Max mode will catch easier multiple orientation'
-        print '                        but might miss the main orientation. Mean mode will miss multiple orientation but will be more'
+        print '     --mode=...       - decision mode: max or mean, max by default. Max mode will'
+        print '                        catch easier multiple orientations'
+        print '                        but might miss the main orientation. Mean mode will'
+        print '                        miss multiple orientation but will be more'
         print '                        robust to detect the main orientation'
         print '     --pathout=...    - folder to output the final binarizations'
 
