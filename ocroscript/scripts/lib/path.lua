@@ -87,6 +87,11 @@ function path.dirname(p)
     return p:match("^.*[/\\]") or '.'
 end
 
+-- FIXME rename to basename --IM 
+function path.filename(p)
+    return p:gsub("^.*[/\\]","")
+end
+
 
 --- Search for a file in the given path.
 --- @param p            The path to search in, might be a table or a string

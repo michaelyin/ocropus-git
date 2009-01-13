@@ -90,6 +90,7 @@ extern void luaopen_tess(lua_State *);
 extern void luaopen_graphics(lua_State *);
 extern void luaopen_imgbitscmds(lua_State *);
 extern void luaopen_imgrlecmds(lua_State *);
+extern void luaopen_tesseract(lua_State *);
 extern void luaopen_layout(lua_State *);
 
 void ocroscript_openlibs(lua_State *L) {
@@ -101,9 +102,12 @@ void ocroscript_openlibs(lua_State *L) {
     luaopen_imgbitscmds(L);
     luaopen_imgrlecmds(L);
     luaopen_graphics(L);
-    #ifdef HAVE_FST
-        luaopen_openfst(L);
-    #endif
+#ifdef HAVE_FST
+    luaopen_openfst(L);
+#endif
+#ifdef HAVE_LIBTESSERACT_FULL
+    luaopen_tesseract(L);
+#endif
     luaopen_layout(L);
 }
 
