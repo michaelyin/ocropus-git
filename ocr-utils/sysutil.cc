@@ -16,7 +16,7 @@
 // limitations under the License.
 //
 // Project:
-// File: ocr-utils.cc
+// File: sysutil.cc
 // Purpose: miscelaneous routines
 // Responsible: mezhirov
 // Reviewer:

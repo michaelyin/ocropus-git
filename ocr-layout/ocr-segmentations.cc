@@ -16,7 +16,7 @@
 // limitations under the License.
 //
 // Project:
-// File: ocr-utils.cc
+// File: ocr-segmentations.cc
 // Purpose: miscelaneous routines
 // Responsible: mezhirov
 // Reviewer:

@@ -16,7 +16,7 @@
 // limitations under the License.
 //
 // Project:
-// File: ocr-utils.h
+// File: docproc.h
 // Purpose: miscelaneous routines
 // Responsible: mezhirov
 // Reviewer:
@@ -24,8 +24,8 @@
 // Web Sites: www.iupr.org, www.dfki.de
 
 
-#ifndef h_utils_
-#define h_utils_
+#ifndef docproc_h_
+#define docproc_h_
 
 #include "ocropus.h"
 

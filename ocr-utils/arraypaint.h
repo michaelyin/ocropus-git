@@ -1,3 +1,6 @@
+#ifndef arraypaint_h_
+#define arraypaint_h_
+
 namespace ocropus {
     // FIXME implement these using function templates
     // FIXME create a bunch of narray drawing functions in iulib/utils
@@ -26,3 +29,5 @@ namespace ocropus {
     void paint_rectangles(intarray &image,rectarray &rectangles);
 
 }
+
+#endif

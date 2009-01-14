@@ -16,14 +16,14 @@
 // limitations under the License.
 //
 // Project:
-// File: ocr-utils.h
+// File: ocr-segmentations.h
 // Purpose: miscelaneous routines
 // Responsible: mezhirov
 // Reviewer:
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de
 
-/// \file ocr-utils.h
+/// \file ocr-segmentations.h
 /// \brief Miscelaneous routines
 
 #ifndef h_ocr_segmentations_

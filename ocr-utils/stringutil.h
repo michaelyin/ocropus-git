@@ -1,3 +1,6 @@
+#ifndef stringutil_h_
+#define stringutil_h_
+
 namespace ocropus {
 
     const char *get_version_string();
@@ -10,3 +13,4 @@ namespace ocropus {
 
 }
 
+#endif
