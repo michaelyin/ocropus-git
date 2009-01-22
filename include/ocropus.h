@@ -40,6 +40,7 @@ namespace ocropus {
     ISegmentLine *make_SegmentLineByCCS();
     ISegmentLine *make_ConnectedComponentSegmenter();
     ISegmentLine *make_CurvedCutSegmenter();
+    ISegmentLine *make_CurvedCutWithCcSegmenter();
     ISegmentLine *make_SkelSegmenter();
 }
 

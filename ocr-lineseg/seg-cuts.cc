@@ -41,6 +41,14 @@ using namespace colib;
 
 namespace {
     Logger log_main("lineseg.seg-cuts");
+    
+    void combine_segmentations(intarray &dst, intarray &src) {
+        CHECK_ARG(samedims(dst, src));
+        int n = max(dst) + 1;
+        for(int i = 0; i < dst.length1d(); i++)
+            dst.at1d(i) += src.at1d(i) * n;
+        renumber_labels(dst, 1);
+    }
 
     void local_min(floatarray &result,floatarray &data,int r) {
         int n = data.length();
@@ -536,7 +544,6 @@ namespace ocropus {
                         if(segmentation(x,y)) segmentation(x,y)++;
                 }
             }
-            label_components(segmentation);
             extract_subimage(result_segmentation,segmentation,PADDING,PADDING,
                              segmentation.dim(0)-PADDING,segmentation.dim(1)-PADDING);
 
@@ -551,7 +558,31 @@ namespace ocropus {
         }
     };
 
+    
+
     ISegmentLine *make_CurvedCutSegmenter() {
         return new CurvedCutSegmenterToISegmentLineAdapter();
+    }
+
+    struct CurvedCutSegmenterToISegmentLineAdapterWithCc:
+            CurvedCutSegmenterToISegmentLineAdapter {
+        virtual void charseg(intarray &result_segmentation,bytearray &orig_image) {
+            bytearray image;
+            copy(image, orig_image);
+            optional_check_background_is_lighter(image);
+            binarize_simple(image);
+            invert(image);
+            
+            intarray ccseg;
+            copy(ccseg, image);
+            label_components(ccseg);
+            
+            CurvedCutSegmenterToISegmentLineAdapter::charseg(result_segmentation, orig_image);
+            combine_segmentations(result_segmentation, ccseg);
+        }
+    };
+
+    ISegmentLine *make_CurvedCutWithCcSegmenter() {
+        return new CurvedCutSegmenterToISegmentLineAdapterWithCc();
     }
 }
