@@ -744,7 +744,7 @@ static struct sigaction SIGSEGV_old;
 
         TesseractRecognizeLine() {
             tess = new TesseractWrapper(0);
-            lineseg = make_CurvedCutSegmenter();
+            lineseg = make_CurvedCutWithCcSegmenter();
             lineseg->set("min_thresh", 300);
             training = false;
         }
