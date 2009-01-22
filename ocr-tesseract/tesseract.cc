@@ -735,6 +735,7 @@ static struct sigaction SIGSEGV_old;
 
     struct TesseractRecognizeLine : IRecognizeLine {
         autodel<TesseractWrapper> tess;
+        autodel<ISegmentLine> lineseg;
         bool training;
 
         const char *description() {
@@ -743,6 +744,8 @@ static struct sigaction SIGSEGV_old;
 
         TesseractRecognizeLine() {
             tess = new TesseractWrapper(0);
+            lineseg = make_CurvedCutSegmenter();
+            lineseg->set("min_thresh", 300);
             training = false;
         }
 
@@ -760,6 +763,7 @@ static struct sigaction SIGSEGV_old;
             rectarray bboxes;
             tess->recognize_gray(text, costs, bboxes, image);
             fill_lattice(result, text);
+
             makelike(segmentation, image);
             color_boxes(segmentation, bboxes);
             // crude binarization (FIXME?) ...
@@ -772,6 +776,16 @@ static struct sigaction SIGSEGV_old;
                     segmentation.at1d(i) = 0;
             }
         }
+        
+        virtual void align(nustring &chars,intarray &segmentation,floatarray &costs,bytearray &image,IGenericFst &transcription) {
+            rectarray bboxes;
+            tess->recognize_gray(chars, costs, bboxes, image);
+
+            intarray overseg;
+            lineseg->charseg(overseg, image);
+            ocr_bboxes_to_charseg(segmentation, bboxes, overseg);
+        }
+
     };
 
 
