@@ -245,7 +245,7 @@ namespace {
                 floatarray out_costs;
                 fst.arcs(out_ins, out_targets, out_outs, out_costs, source);
 
-                costs[i] = g[target] - g[source] + 1e-5; // to ensure catching it
+                costs[i] = 1e38;
 
                 // find the best arc
                 for(int j = 0; j < out_targets.length(); j++) {
