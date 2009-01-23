@@ -88,6 +88,9 @@ namespace ocropus {
     void visualize_segmentation_by_RAST(intarray &result, 
                                         bytearray &in_not_inverted,
                                         rectarray &extra_obstacles);
+    void ocr_bboxes_to_charseg(intarray &cseg,
+                               rectarray &bboxes,
+                               intarray &segmentation);
 
 }
 #endif

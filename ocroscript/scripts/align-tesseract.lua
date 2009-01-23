@@ -1,0 +1,53 @@
+-- -*- lua -*-
+-- Tesseract-based alignment of a text line with ground truth.
+
+import_all(iulib)
+import_all(ocr)
+import_all(graphics)
+import_all(layout)
+
+dinit(800,800)
+
+segmenter = make_SegmentPageByRAST()
+page_image = bytearray()
+page_segmentation = intarray()
+line_segmenter = make_CurvedCutSegmenter()
+line_segmentation = intarray()
+line_image = bytearray()
+line_text = nustring()
+line_boxes = rectarray()
+line_costs = floatarray()
+
+function tesseract_alignment(segmentation,image)
+   if not tesseract_recognizer then
+      tesseract_recognizer = make_TesseractRecognizeLine("")
+   end
+   local result = nustring()
+   local costs = floatarray()
+   local bboxes = rectarray()
+   local cseg = intarray()
+   tesseract_recognizer:align(result,cseg,costs,image)
+   return cseg
+end
+
+
+pages = Pages()
+pages:parseSpec(arg[1])
+
+while pages:nextPage() do
+   pages:getBinary(page_image)
+   segmenter:segment(page_segmentation,page_image)
+   dshow(page_image,"a")
+   dshowr(page_segmentation,"b")
+   regions = RegionExtractor()
+   regions:setPageLines(page_segmentation)
+   for i = 1,regions:length()-1 do
+      regions:extract(line_image,page_image,i,1)
+      dshow(line_image,"Yyy")
+      line_segmenter:charseg(line_segmentation,line_image)
+      dshowr(line_segmentation,"YyY")
+      aligned = tesseract_alignment(line_segmentation,line_image)
+      dshowr(aligned,"YYy")
+      dwait()
+   end
+end
