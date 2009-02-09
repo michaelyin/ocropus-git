@@ -57,6 +57,16 @@ namespace ocropus {
 
         virtual rectangle boundingBox(int i) = 0;
 
+        virtual int start(int index) = 0;
+
+        // return the last segment
+
+        virtual int end(int index) = 0;
+
+        // return a list of all segments
+
+        virtual void getSegments(intarray &result,int index) = 0;
+
         // Extract images corresponding to group i from the source.
 
         virtual void extract(bytearray &out,bytearray &mask,

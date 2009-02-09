@@ -193,6 +193,24 @@ namespace ocropus {
             return boxes[index];
         }
 
+        // return the starting segment
+
+        virtual int start(int index) {
+            return min(segments(index));
+        }
+
+        // return the last segment
+
+        virtual int end(int index) {
+            return max(segments(index));
+        }
+
+        // return a list of all segments
+
+        virtual void getSegments(intarray &result,int index) {
+            result.copy(segments(index));
+        }
+
         // Return the segmentation-derived mask for the character.
         // This may optionally be grown by some pixels.
 
