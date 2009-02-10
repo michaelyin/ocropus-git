@@ -78,6 +78,17 @@ namespace ocropus {
         virtual void extract(floatarray &out,floatarray &source,
                              float dflt,int i,int grow=0) = 0;
 
+        // slice extraction
+
+        virtual void extractSliced(bytearray &out,bytearray &mask,
+                                   bytearray &source,int index,int grow=0) = 0;
+        virtual void extractSliced(bytearray &out,bytearray &source,
+                                   byte dflt,int index,int grow=0) = 0;
+        virtual void extractSliced(floatarray &out,bytearray &mask,
+                                   floatarray &source,int index,int grow=0) = 0;
+        virtual void extractSliced(floatarray &out,floatarray &source,
+                                   float dflt,int index,int grow=0) = 0;
+
         // Set the cost for classifying group i as class cls.
 
         virtual void setClass(int i,int cls,float cost) = 0;

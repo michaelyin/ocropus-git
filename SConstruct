@@ -80,8 +80,8 @@ opts.Add(PathOption('leptonica', 'The installation root of leptonica', "/usr/loc
 opts.Add(BoolOption('openfst', 'Set to build with openFST', "yes"))
 
 ### optional build steps
-opts.Add(BoolOption('test', "Run some tests after the build", "yes"))
-opts.Add(BoolOption('style', 'Check style', "yes"))
+opts.Add(BoolOption('test', "Run some tests after the build", "no"))
+opts.Add(BoolOption('style', 'Check style', "no"))
 
 env = Environment(options=opts, CXXFLAGS="${opt} ${warn}")
 Help(opts.GenerateHelpText(env))

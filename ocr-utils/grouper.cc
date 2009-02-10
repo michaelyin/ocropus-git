@@ -283,6 +283,61 @@ namespace ocropus {
             extractWithBackground(out,source,dflt,index,grow);
         }
 
+        // Extract the masked character from the source image/source
+        // feature map.
+
+        template <class T>
+        void extractSlicedMasked(narray<T> &out,bytearray &mask,narray<T> &source,int index,int grow=0) {
+            ASSERT(samedims(labels,source));
+            rectangle r;
+            getMask(r,mask,index,grow);
+            int x = r.x0, y = r.y0, w = r.width(), h = r.height();
+            out.resize(w,source.dim(1));
+            fill(out,0);
+            for(int i=0;i<w;i++) {
+                for(int j=0;j<h;j++) {
+                    if(mask(i,j))
+                        out(i,j+y) = source(i+x,j+y);
+                }
+            }
+        }
+
+        // Extract the character by bounding rectangle (no masking).
+
+        template <class T>
+        void extractSlicedWithBackground(narray<T> &out,narray<T> &source,T dflt,int index,int grow=0) {
+            ASSERT(samedims(labels,source));
+            bytearray mask;
+            rectangle r;
+            getMask(r,mask,index,grow);
+            int x = r.x0, y = r.y0, w = r.width(), h = r.height();
+            out.resize(w,source.dim(1));
+            fill(out,dflt);
+            for(int i=0;i<w;i++) {
+                for(int j=0;j<h;j++) {
+                    if(mask(i,j))
+                        out(i,j+y) = source(i+x,j+y);
+                }
+            }
+        }
+
+        // slice extraction
+
+        void extractSliced(bytearray &out,bytearray &mask,bytearray &source,int index,int grow=0) {
+            extractSlicedMasked(out,mask,source,index,grow);
+        }
+        void extractSliced(bytearray &out,bytearray &source,byte dflt,int index,int grow=0) {
+            extractSlicedWithBackground(out,source,dflt,index,grow);
+        }
+        void extractSliced(floatarray &out,bytearray &mask,floatarray &source,int index,int grow=0) {
+            extractSlicedMasked(out,mask,source,index,grow);
+        }
+        void extractSliced(floatarray &out,floatarray &source,float dflt,int index,int grow=0) {
+            extractSlicedWithBackground(out,source,dflt,index,grow);
+        }
+
+        // ???
+
         void maybeInit() {
             if(classifications.length1d()==0) {
                 classifications.resize(boxes.length(),256); // FIXME
