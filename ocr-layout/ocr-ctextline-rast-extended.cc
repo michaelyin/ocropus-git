@@ -139,7 +139,7 @@ namespace ocropus {
                 // xline/ascender-line or baseline/descender-line.
                 interval minq = min(q_baseline,q_xline);
                 q = q_baseline + q_xline;
-                
+
                 if(minq.hi<=0.0 && line.max_results>1)
                     q = 0;
 
