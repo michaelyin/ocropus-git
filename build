@@ -28,10 +28,5 @@ then
     exit
 fi
 
-<<<<<<< local
 echo "# please run make now"
 # make
-=======
-echo "# running make"
-make -j 4
->>>>>>> other
