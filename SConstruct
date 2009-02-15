@@ -77,7 +77,7 @@ opts.Add(PathOption('tesseract', 'The installation root of tesseract', "/usr/loc
 opts.Add(PathOption('leptonica', 'The installation root of leptonica', "/usr/local"))
 
 ### configuration options
-opts.Add(BoolOption('openfst', 'Set to build with openFST', "yes"))
+opts.Add(BoolOption('openfst', 'Set to build with openFST', "no"))
 
 ### optional build steps
 opts.Add(BoolOption('test', "Run some tests after the build", "no"))
