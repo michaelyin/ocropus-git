@@ -83,6 +83,8 @@ ocropusincludedir=$(includedir)/ocropus
 AM_CPPFLAGS = -I$(srcdir)/include -I$(srcdir)/ocr-utils \
 -I@iulibheaders@ -I@colibheaders@ -I@tessheaders@
 
+AM_CXXFLAGS = $(CXXFLAGS) -Wall -Wno-sign-compare -Wno-write-strings -Wno-deprecated
+
 lib_LIBRARIES = libocropus.a
 """
 
@@ -133,7 +135,7 @@ print "endif"
 
 print
 print
-print "include_HEADERS = ",
+print "ocropusinclude_HEADERS = ",
 for h in glob.glob("include/*.h"):
     print "$(srcdir)/" + h,
 for h in glob.glob("ocr-utils/*.h"):
