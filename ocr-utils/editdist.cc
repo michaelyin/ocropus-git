@@ -37,18 +37,12 @@ namespace {
         for (int i = from_incl; i < upto_excl; i++)
             array[i] = item;
     }
-}
 
-
-namespace ocropus {
-    float edit_distance(nustring &str1, nustring &str2, float del_cost, float ins_cost, float sub_cost) {
+    void fill_edit_distance_table(floatarray &d, nustring &str1, nustring &str2, float del_cost, float ins_cost, float sub_cost) {
         int m = str1.length();
         int n = str2.length();
-        floatarray temp_del_ins_sub;
-        temp_del_ins_sub.resize(3);
-        floatarray d;
+        floatarray temp_del_ins_sub(3);
         d.resize(m+1,n+1);
-        //fill(d,0.0);
         for(int i=0;i<=m;i++)
                 d(i,0)=i;
         for(int j=0;j<=n;j++)
@@ -57,11 +51,64 @@ namespace ocropus {
             for(int j=1;j<=n;j++) {
                 temp_del_ins_sub(0) = d(i-1,j) + del_cost;
                 temp_del_ins_sub(1) = d(i,j-1) + ins_cost;
-                temp_del_ins_sub(2) = d(i-1,j-1) + ((str1(i-1).ord()==str2(j-1).ord()) ? 0. : sub_cost);
-                d(i,j)=min(temp_del_ins_sub);
+                temp_del_ins_sub(2) = d(i-1,j-1) + (str1(i-1) == str2(j-1) ? 0. : sub_cost);
+                d(i,j) = min(temp_del_ins_sub);
             }
         }
-        return d(m,n);
+    }
+
+}
+
+
+
+
+namespace ocropus {
+
+    float edit_distance(nustring &str1, nustring &str2, float del_cost, float ins_cost, float sub_cost) {
+        floatarray d;
+        fill_edit_distance_table(d, str1, str2, del_cost, ins_cost, sub_cost);
+        return d(str1.length(), str2.length());
+    }
+
+    float edit_distance(intarray &confusion,
+                        nustring &str1,
+                        nustring &str2,
+                        float del_cost,
+                        float ins_cost,
+                        float sub_cost) {
+        floatarray d;
+        fill_edit_distance_table(d, str1, str2, del_cost, ins_cost, sub_cost);
+
+        /// backtrack the journey until we touch a border
+        int i = str1.length();
+        int j = str2.length();
+        while(i && j) {
+            floatarray temp_del_ins_sub(3);
+            temp_del_ins_sub(0) = d(i-1,j) + del_cost;
+            temp_del_ins_sub(1) = d(i,j-1) + ins_cost;
+            temp_del_ins_sub(2) = d(i-1,j-1) + (str1[i-1] == str2[j-1] ? 0. : sub_cost);
+            switch(argmin(temp_del_ins_sub)) {
+                case 0:
+                    i--;
+                    confusion(str1[i].ord(), 0)++;
+                break;
+                case 1:
+                    j--;
+                    confusion(0, str2[j].ord())++;
+                break;
+                case 2:
+                    i--; j--;
+                    confusion(str1[i].ord(), str2[j].ord())++;
+            }
+        }
+
+        /// we've touched the border, now we have just one way to go
+        while(i--)
+            confusion(str1[i].ord(), 0)++;
+        while(j--)
+            confusion(0, str2[j].ord())++;
+
+        return d(str1.length(), str2.length());
     }
 
     float block_move_edit_cost(nustring &from, nustring &to, float c) {

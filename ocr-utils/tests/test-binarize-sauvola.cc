@@ -21,17 +21,15 @@
 // Primary Repository: 
 // Web Sites: 
 
-#include "colib.h"
-#include "imgio.h"
-#include "ocr-binarize-sauvola.h"
+#include "ocropus.h"
 
+using namespace colib;
 using namespace ocropus;
 
 int main() {
     autodel<IBinarize> binarizer(make_BinarizeBySauvola());
     bytearray image;
-    read_image_gray(image, "blob.png");
-    binarizer->init();
+    read_image_gray(image, "ocroscript/tests/images/blob600.png");
     binarizer->description();
     bytearray out;
     floatarray in;
@@ -44,4 +42,5 @@ int main() {
     binarizer->binarize(out, in);
     in.resize(0,0);
     binarizer->binarize(out, in);
+    return 0;
 }

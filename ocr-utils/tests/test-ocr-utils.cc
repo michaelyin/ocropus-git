@@ -24,8 +24,9 @@
 // Web Sites: 
 
 
-#include "ocr-utils.h"
+#include "ocropus.h"
 
+using namespace colib;
 using namespace ocropus;
 
 void test_invert() {

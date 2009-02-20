@@ -29,6 +29,16 @@
 namespace ocropus {
     float edit_distance(colib::nustring &str1, colib::nustring &str2, float del_cost=1, float ins_cost=1, float sub_cost=1);
 
+    /// A variant of edit_distance() with a confusion matrix.
+    /// The confusion matrix should be pre-initialized.
+    float edit_distance(colib::intarray &confusion,
+                        colib::nustring &str1,
+                        colib::nustring &str2,
+                        float del_cost=1,
+                        float ins_cost=1,
+                        float sub_cost=1);
+
+
     /// Asymmetric edit cost with block movement.
     /// \param[in] from     The string where editing starts.
     /// \param[in] to       The string where editing finishes.
