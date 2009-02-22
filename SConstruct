@@ -64,7 +64,7 @@ headers = glob("include/*.h") + glob("ocr-utils/*.h")
 ################################################################
 
 opts = Options('custom.py')
-opts.Add('opt', 'Compiler flags for optimization/debugging', "-g -O")
+opts.Add('opt', 'Compiler flags for optimization/debugging', "-O3")
 opts.Add('warn', 'Compiler flags for warnings',
          "-Wall -Wno-sign-compare -Wno-write-strings"+
          " -D__warn_unused_result__=__far__"+
@@ -76,13 +76,13 @@ opts.Add(PathOption('tesseract', 'The installation root of tesseract', "/usr/loc
 opts.Add(PathOption('leptonica', 'The installation root of leptonica', "/usr/local"))
 
 ### configuration options
-opts.Add(BoolOption('openfst', 'Set to build with openFST', "no"))
+opts.Add(BoolOption('openfst', 'Set to build with openFST', "yes"))
 
 ### optional build steps
 opts.Add(BoolOption('test', "Run some tests after the build", "no"))
 opts.Add(BoolOption('style', 'Check style', "no"))
 
-env = Environment(options=opts, CXXFLAGS="${opt} ${warn}")
+env = Environment(options=opts, CXXFLAGS="-g ${opt} ${warn}")
 Help(opts.GenerateHelpText(env))
 conf = Configure(env)
 
