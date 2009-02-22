@@ -345,6 +345,139 @@ int main_evaluate(int argc,char **argv) {
     return 0;
 }
 
+int main_evalconf(int argc,char **argv) {
+    if(argc!=2) throw "usage: ... dir";
+    strbuf s;
+    s.format("%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
+    Glob files(s);
+    float total = 0.0, tchars = 0, pchars = 0, lines = 0;
+    intarray confusion(256,256); // FIXME
+    confusion = 0;
+    for(int index=0;index<files.length();index++) {
+        if(index%1000==0)
+            debugf("info","%s (%d/%d)\n",files(index),index,files.length());
+
+        strbuf base;
+        base = files(index);
+        base.truncate(-7);
+
+        char buf[100000];
+        try {
+            fgets(buf,sizeof buf,stdio(files(index),"r"));
+        } catch(const char *error) {
+            continue;
+        }
+        strbuf truth;
+        truth = buf;
+
+        strbuf s; s = base; s += ".txt";
+        try {
+            fgets(buf,sizeof buf,stdio(s.ptr(),"r"));
+        } catch(const char *error) {
+            continue;
+        }
+        strbuf predicted;
+        predicted = buf;
+
+        cleanup_for_eval(truth);
+        cleanup_for_eval(predicted);
+        nustring ntruth,npredicted;
+        nustring_convert(ntruth,truth);
+        nustring_convert(npredicted,predicted);
+        float dist = edit_distance(confusion,ntruth,npredicted,1,1,1);
+
+        total += dist;
+        tchars += truth.length();
+        pchars += predicted.length();
+        lines++;
+
+        debugf("transcript",
+               "%g\t%s\t%s\t%s\n",
+               dist,
+               files(index),
+               truth.ptr(),
+               predicted.ptr());
+    }
+    intarray list(65536,3); // FIXME
+    int row = 0;
+    for(int i=0;i<confusion.dim(0);i++) {
+        for(int j=0;j<confusion.dim(1);j++) {
+            if(confusion(i,j)==0) continue;
+            if(i==j) continue;
+            list(row,0) = confusion(i,j);
+            list(row,1) = i;
+            list(row,2) = j;
+            row++;
+        }
+    }
+    intarray perm;
+    rowsort(perm,list);
+    for(int k=0;k<perm.length();k++) {
+        int index = perm(k);
+        int count = list(index,0);
+        int i = list(index,1);
+        int j = list(index,2);
+        if(count==0) continue;
+        printf("%6d   %3d %3d   %c %c\n",
+            count,i,j,
+            i==0?'_':(i>32&&i<128)?i:'?',
+            j==0?'_':(j>32&&j<128)?j:'?');
+    }
+    return 0;
+}
+
+int main_findconf(int argc,char **argv) {
+    if(argc!=4) throw "usage: ... dir from to";
+    int from,to;
+    if(sscanf(argv[2],"%d",&from)<1) {
+        char c;
+        sscanf(argv[2],"%c",&c);
+        from = c;
+    }
+    if(sscanf(argv[3],"%d",&to)<1) {
+        char c;
+        sscanf(argv[3],"%c",&c);
+        to = c;
+    }
+    strbuf s;
+    s.format("%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
+    Glob files(s);
+    intarray confusion(256,256);
+    for(int index=0;index<files.length();index++) {
+        strbuf base;
+        base = files(index);
+        base.truncate(-7);
+        char buf[100000];
+        try {
+            fgets(buf,sizeof buf,stdio(files(index),"r"));
+        } catch(const char *error) {
+            continue;
+        }
+        strbuf truth;
+        truth = buf;
+
+        strbuf s; s = base; s += ".txt";
+        try {
+            fgets(buf,sizeof buf,stdio(s.ptr(),"r"));
+        } catch(const char *error) {
+            continue;
+        }
+        strbuf predicted;
+        predicted = buf;
+
+        cleanup_for_eval(truth);
+        cleanup_for_eval(predicted);
+        nustring ntruth,npredicted;
+        nustring_convert(ntruth,truth);
+        nustring_convert(npredicted,predicted);
+        confusion = 0;
+        edit_distance(confusion,ntruth,npredicted,1,1,1);
+        if(confusion(from,to)>0) {
+            printf("%s.png\n",base.ptr());
+        }
+    }
+    return 0;
+}
 int main_evalfiles(int argc,char **argv) {
     if(argc!=3) throw "usage: ... file1 file2";
     char buf[1000000];
@@ -390,6 +523,10 @@ void usage(const char *program) {
       "find the best interpretation of the fsts in dir/... with a language model");
     D("evaluate dir",
       "evaluate the quality of the OCR output in dir/...");
+    D("evalconf dir",
+      "evaluate the quality of the OCR output in dir/... and outputs confusion matrix");
+    D("findconf dir from to",
+      "finds instances of confusion of from to to (according to edit distance)");
     D("buildhtml dir",
       "creates an HTML representation of the OCR output in dir/...");
     D("cleanhtml dir",
@@ -400,12 +537,14 @@ void usage(const char *program) {
 int main(int argc,char **argv) {
     try {
         if(argc<2) usage(argv[0]);
-        if(!strcmp(argv[1],"evaluate1")) return main_evalfiles(argc-1,argv+1);
         if(!strcmp(argv[1],"book2lines")) return main_pages2lines(argc-1,argv+1);
         if(!strcmp(argv[1],"book2pages")) return main_book2pages(argc-1,argv+1);
         if(!strcmp(argv[1],"pages2images")) return main_pages2images(argc-1,argv+1);
         if(!strcmp(argv[1],"pages2lines")) return main_pages2lines(argc-1,argv+1);
         if(!strcmp(argv[1],"evaluate")) return main_evaluate(argc-1,argv+1);
+        if(!strcmp(argv[1],"evalconf")) return main_evalconf(argc-1,argv+1);
+        if(!strcmp(argv[1],"findconf")) return main_findconf(argc-1,argv+1);
+        if(!strcmp(argv[1],"evaluate1")) return main_evalfiles(argc-1,argv+1);
         if(!strcmp(argv[1],"buildhtml")) return main_buildhtml(argc-1,argv+1);
         if(!strcmp(argv[1],"cleanhtml")) return main_buildhtml(argc-1,argv+1);
         if(!strcmp(argv[1],"tesslines")) return main_tesslines(argc-1,argv+1);
