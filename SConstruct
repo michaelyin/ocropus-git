@@ -203,18 +203,18 @@ for cmd in glob("commands/*.cc"):
 ### unit tests
 ################################################################
 
-if 0:
-    test_builder = Builder(action='$SOURCE && touch $TARGET',
-                      suffix = '.passed',
-                  src_suffix = '')
 
+if env["test"]:
+    test_builder = Builder(action='$SOURCE && touch $TARGET',
+        suffix = '.passed',
+        src_suffix = '')
     env.Append(BUILDERS={'Test':test_builder})
-    if env["test"]:
-        #test = env.Test("ocroscript/run-tests")
-        #env.Depends(test,'ocroscript/ocroscript')
-        #env.Depends(test,glob.glob('ocroscript/scripts/*'))
-        #env.Test("ocroscript/run-toplevels")
-        pass
+    for cmd in Glob("*/test-*.cc")+Glob("*/test*/test-*.cc"):
+        cmd = str(cmd)
+        env.Program(cmd)
+        print cmd
+        cmd = re.sub('.cc$','',cmd)
+        env.Test(cmd)
 
 ################################################################
 ### style checking

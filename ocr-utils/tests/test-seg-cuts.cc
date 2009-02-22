@@ -30,6 +30,7 @@
 #include "imgio.h"
 #include "ocr-utils.h"
 
+using namespace colib;
 using namespace ocropus;
 
 int main() {
@@ -37,7 +38,6 @@ int main() {
     char in_path[1000];
     autodel<ISegmentLine> segline(make_CurvedCutSegmenter());
     segline->description();
-    segline->init(NULL);
     while(fscanf(filelist, "%999s", in_path) == 1) {
         bytearray image;
         intarray seg;
@@ -47,6 +47,6 @@ int main() {
         check_line_segmentation(seg);
         char out_path[1100];
         sprintf(out_path, "%s.cseg.png", in_path);
-        write_png_rgb(stdio(out_path, "wb"), seg);
+        write_png_packed(stdio(out_path, "wb"), seg);
     }
 }
