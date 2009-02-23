@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 // Project:
-// File: fst-io.cc
+// File: ofst-io.cc
 // Purpose: OpenFST-compatible I/O
 // Responsible: mezhirov
 // Reviewer:

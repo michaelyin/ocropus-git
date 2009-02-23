@@ -124,18 +124,10 @@ namespace {
             a_star(result, *this);
         }
         virtual void save(const char *path) {
-#ifdef HAVE_FST
             fst_write(path, *this);
-#else
-            throw "unimplemented";
-#endif
         }
         virtual void load(const char *path) {
-#ifdef HAVE_FST
             fst_read(*this, path);
-#else
-            throw "unimplemented";
-#endif
         }
     };
 
