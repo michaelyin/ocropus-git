@@ -161,6 +161,7 @@ namespace ocropus {
 
     // Convert a string to an fst.
     
+#if 0
     StdVectorFst *as_fst(intarray &a,float cost,float skip_cost,float junk_cost) {
         autodel<StdVectorFst> fst;
         fst = new StdVectorFst();
@@ -181,6 +182,7 @@ namespace ocropus {
         Verify(*fst);
         return fst.move();
     }
+#endif
 
     // Convert a string to an fst.
     

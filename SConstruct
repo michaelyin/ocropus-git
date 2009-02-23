@@ -119,7 +119,7 @@ assert conf.CheckLib('pthread')
 if env["openfst"]:
     env.Append(LIBS=["fst"])
     env.Append(CPPDEFINES=['HAVE_FST'])
-    assert conf.CheckLibWithHeader('fst', 'fst/lib/fst.h', 'C++')
+    assert conf.CheckLibWithHeader('fst', 'fst/fst.h', 'C++')
 else:
     sources = [s for s in sources if not "/fst" in s]
 
