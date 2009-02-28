@@ -500,6 +500,35 @@ int main_evalfiles(int argc,char **argv) {
     return 0;
 }
 
+int main_fsts2bestpaths(int argc,char **argv) {
+    if(argc!=2) throw "usage: ... dir";
+    strbuf s;
+    s.format("%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst",argv[1]);
+    Glob files(s);
+    for(int index=0;index<files.length();index++) {
+        if(index%1000==0)
+            debugf("info","%s (%d/%d)\n",files(index),index,files.length());
+        autodel<IGenericFst> fst(make_StandardFst());
+        fst->load(files(index));
+        nustring str;
+        try {
+            fst->bestpath(str);
+            strbuf output;
+            nustring_convert(output,str);
+            debugf("transcript","%s\t%s\n",files(index),output.ptr());
+            strbuf base;
+            base = files(index);
+            base.truncate(-4);
+            base += ".txt";
+            fprintf(stdio(base,"w"),"%s",output.ptr());
+        } catch(const char *error) {
+            fprintf(stderr,"ERROR in bestpath: %s\n",error);
+            if(abort_on_error) abort();
+        }
+    }
+    return 0;
+}
+
 int main_buildhtml(int argc,char **argv) {
     throw Unimplemented();
 }
@@ -541,6 +570,7 @@ int main(int argc,char **argv) {
         if(!strcmp(argv[1],"book2pages")) return main_book2pages(argc-1,argv+1);
         if(!strcmp(argv[1],"pages2images")) return main_pages2images(argc-1,argv+1);
         if(!strcmp(argv[1],"pages2lines")) return main_pages2lines(argc-1,argv+1);
+        if(!strcmp(argv[1],"fsts2bestpaths")) return main_fsts2bestpaths(argc-1,argv+1);
         if(!strcmp(argv[1],"evaluate")) return main_evaluate(argc-1,argv+1);
         if(!strcmp(argv[1],"evalconf")) return main_evalconf(argc-1,argv+1);
         if(!strcmp(argv[1],"findconf")) return main_findconf(argc-1,argv+1);
