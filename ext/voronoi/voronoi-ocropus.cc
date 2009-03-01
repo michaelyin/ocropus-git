@@ -24,9 +24,9 @@
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de
 
-#include "colib.h"
-#include "imgio.h"
-#include "imglib.h"
+#include "colib/colib.h"
+#include "iulib/imgio.h"
+#include "iulib/imglib.h"
 #include "voronoi-ocropus.h"
 #include "defs.h"
 #include "function.h"

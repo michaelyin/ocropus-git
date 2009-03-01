@@ -214,25 +214,25 @@ namespace ocropus {
     /// Component registry.
 
     typedef IComponent *(*component_constructor)();
-    bool component_register_fun(const char *name,component_constructor f);
+    void component_register_fun(const char *name,component_constructor f,bool replace=false);
 
     template <class T>
     inline IComponent *iconstructor() {
         return new T();
     }
     template <class T>
-    inline bool component_register(const char *name) {
+    inline void component_register(const char *name,bool replace=false) {
         component_constructor f = &iconstructor<T>;
-        return component_register_fun(name,f);
+        component_register_fun(name,f,replace);
     }
     template <class T,class S>
     inline IComponent *iconstructor2() {
         return new T(new S());
     }
     template <class T,class S>
-    inline bool component_register2(const char *name) {
+    inline void component_register2(const char *name,bool replace=false) {
         component_constructor f = &iconstructor2<T,S>;
-        return component_register_fun(name,f);
+        component_register_fun(name,f,replace);
     }
     component_constructor component_lookup(const char *name);
     IComponent *component_construct(const char *name);

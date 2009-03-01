@@ -14,10 +14,10 @@ namespace ocropus {
 
     strhash<component_constructor> constructors;
 
-    bool component_register_fun(const char *name,component_constructor f) {
-        bool result = !constructors.find(name);
+    void component_register_fun(const char *name,component_constructor f,bool replace) {
+        if(constructors.find(name) && !replace)
+            throwf("%s: already registered as a component",name);
         constructors(name) = f;
-        return result;
     }
 
     component_constructor component_lookup(const char *name) {

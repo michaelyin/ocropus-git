@@ -30,8 +30,8 @@
 #include <math.h>
 #include <ctype.h>
 #include "colib/colib.h"
-#include "imgio.h"
-#include "imglib.h"
+#include "iulib/imgio.h"
+#include "iulib/imglib.h"
 #include "segmentation.h"
 #include "imgio.h"
 

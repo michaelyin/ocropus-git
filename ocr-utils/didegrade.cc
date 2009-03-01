@@ -22,8 +22,8 @@
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
 
+#include "iulib/imglib.h"
 #include "didegrade.h"
-#include "imglib.h"
 #include "logger.h"
 
 using namespace colib;

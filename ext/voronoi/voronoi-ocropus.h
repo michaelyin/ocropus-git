@@ -26,7 +26,7 @@
 #ifndef h_voronoi_ocropus__
 #define h_voronoi_ocropus__
 
-#include "colib.h"
+#include "colib/colib.h"
 #include "ocropus.h"
 
 namespace ocropus {

@@ -24,8 +24,8 @@
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include "colib/colib.h"
-#include "imgio.h"
-#include "imglib.h"
+#include "iulib/imgio.h"
+#include "iulib/imglib.h"
 #include "ocropus.h"
 
 using namespace ocropus;
