@@ -229,10 +229,10 @@ namespace {
 
 namespace ocropus {
 
-    void beam_search(colib::intarray &ids,
-                     colib::intarray &vertices,
-                     colib::intarray &outputs,
-                     colib::floatarray &costs,
+    void beam_search(intarray &ids,
+                     intarray &vertices,
+                     intarray &outputs,
+                     floatarray &costs,
                      IGenericFst &fst,
                      int beam_width,
                      int override_start,
@@ -271,7 +271,7 @@ namespace ocropus {
     }
 
     void beam_search(nustring &result,
-                     colib::IGenericFst &fst,
+                     IGenericFst &fst,
                      int beam_width) {
         intarray ids;
         intarray vertices;
@@ -286,13 +286,13 @@ namespace ocropus {
 
     // FIXME this needs to do the search without an explicit composition --tmb
 
-    void beam_search_in_composition(colib::intarray &inputs,
-                                    colib::intarray &vertices1,
-                                    colib::intarray &vertices2,
-                                    colib::intarray &outputs,
-                                    colib::floatarray &costs,
-                                    colib::IGenericFst &fst1,
-                                    colib::IGenericFst &fst2,
+    void beam_search_in_composition(intarray &inputs,
+                                    intarray &vertices1,
+                                    intarray &vertices2,
+                                    intarray &outputs,
+                                    floatarray &costs,
+                                    IGenericFst &fst1,
+                                    IGenericFst &fst2,
                                     int beam_width,
                                     int override_start,
                                     int override_finish) {
@@ -312,10 +312,10 @@ namespace ocropus {
         composition->move2();
     }
 
-    void beam_search_in_composition(colib::intarray &outputs,
-                                    colib::floatarray &costs,
-                                    colib::IGenericFst &fst1,
-                                    colib::IGenericFst &fst2,
+    void beam_search_in_composition(intarray &outputs,
+                                    floatarray &costs,
+                                    IGenericFst &fst1,
+                                    IGenericFst &fst2,
                                     int beam_width,
                                     int override_start,
                                     int override_finish) {
@@ -323,9 +323,9 @@ namespace ocropus {
         beam_search_in_composition(inputs,vertices1,vertices2,outputs,costs,fst1,fst2,
                                    beam_width,override_start,override_finish);
     }
-    void beam_search_in_composition(colib::intarray &outputs,
-                                    colib::IGenericFst &fst1,
-                                    colib::IGenericFst &fst2,
+    void beam_search_in_composition(intarray &outputs,
+                                    IGenericFst &fst1,
+                                    IGenericFst &fst2,
                                     int beam_width,
                                     int override_start,
                                     int override_finish) {
@@ -335,9 +335,9 @@ namespace ocropus {
                                    beam_width,override_start,override_finish);
     }
 
-    void beam_search_in_composition(colib::nustring &result,
-                                    colib::IGenericFst &fst1,
-                                    colib::IGenericFst &fst2,
+    void beam_search_in_composition(nustring &result,
+                                    IGenericFst &fst1,
+                                    IGenericFst &fst2,
                                     int beam_width,
                                     int override_start,
                                     int override_finish) {

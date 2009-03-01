@@ -37,7 +37,7 @@ namespace ocropus {
 
     enum {HORIZONTAL_CUT, VERTICAL_CUT};
 
-    struct SegmentPageByXYCUTS : colib::ISegmentPage {
+    struct SegmentPageByXYCUTS : ISegmentPage {
     private:
         unsigned int tnx; // noise threshold on projection on x-axis
         unsigned int tny; // noise threshold on projection on y-axis
@@ -65,10 +65,10 @@ namespace ocropus {
         void segment(colib::intarray &image,colib::bytearray &in);
     };
 
-    colib::ISegmentPage *make_SegmentPageByXYCUTS(unsigned int itnx,
-                                                  unsigned int itny,
-                                                  unsigned int itcx,
-                                                  unsigned int itcy);
+    ISegmentPage *make_SegmentPageByXYCUTS(unsigned int itnx,
+                                           unsigned int itny,
+                                           unsigned int itcx,
+                                           unsigned int itcy);
 
 }
 

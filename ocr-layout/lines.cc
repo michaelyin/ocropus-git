@@ -173,35 +173,35 @@ namespace {
             return region_extractor.boxes[index + 1];
         }
 
-        virtual void setBinarizer(colib::IBinarize *ptr) {
+        virtual void setBinarizer(IBinarize *ptr) {
             binarizer = ptr;
         }
 
-        virtual void setDeskewer(colib::ICleanupGray *ptr) {
+        virtual void setDeskewer(ICleanupGray *ptr) {
             deskewer = ptr;
         }
 
-        virtual void addCleanupGray(colib::ICleanupGray *ptr) {
+        virtual void addCleanupGray(ICleanupGray *ptr) {
             cleanups_gray.push() = ptr;
         }
 
-        virtual void addCleanupBinary(colib::ICleanupBinary *ptr) {
+        virtual void addCleanupBinary(ICleanupBinary *ptr) {
             cleanups_binary.push() = ptr;
         }
 
-        virtual colib::bytearray &grayPage() {
+        virtual bytearray &grayPage() {
             return gray;
         }
 
-        virtual colib::bytearray &binaryPage() {
+        virtual bytearray &binaryPage() {
             return binary;
         }
 
-        virtual colib::intarray &segmentation() {
+        virtual intarray &segmentation() {
             return seg;
         }
 
-        virtual void setPageSegmenter(colib::ISegmentPage *ptr) {
+        virtual void setPageSegmenter(ISegmentPage *ptr) {
             segmenter = ptr;
         }
         virtual const char *description() {

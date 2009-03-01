@@ -30,7 +30,7 @@
 
 namespace ocropus {
     struct Pages {
-        colib::autodel<colib::IBinarize> binarizer;
+        colib::autodel<IBinarize> binarizer;
         colib::narray<colib::strbuf> files;
         bool want_gray;
         bool want_color;
@@ -79,7 +79,7 @@ namespace ocropus {
         void setAutoInvert(bool flag) {
             autoinv = flag;
         }
-        void setBinarizer(colib::IBinarize *arg) {
+        void setBinarizer(IBinarize *arg) {
             binarizer = arg;
         }
         int length() {

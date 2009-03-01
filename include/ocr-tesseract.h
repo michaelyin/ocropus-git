@@ -38,7 +38,7 @@ namespace ocropus {
     ///
     /// Note: Tesseract uses a lot of global variables,
     /// so different instances of this IRecognizeLine will train each other.
-    colib::IRecognizeLine *make_TesseractRecognizeLine();
+    IRecognizeLine *make_TesseractRecognizeLine();
 
     void tesseract_recognize_blockwise_and_dump(colib::bytearray &gray,
                                                 colib::intarray &pageseg);

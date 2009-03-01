@@ -35,9 +35,9 @@ namespace ocropus {
 
     // FIXME get rid of this stuff; OCR-specific object construction
     // should not be in the same file as path search functions
-    void find_and_load_ICharacterClassifier(colib::ICharacterClassifier &,
+    void find_and_load_ICharacterClassifier(ICharacterClassifier &,
                                             const char *resource);
-    void find_and_load_IRecognizeLine(colib::IRecognizeLine &i,
+    void find_and_load_IRecognizeLine(IRecognizeLine &i,
                                       const char *resource);
 }
 

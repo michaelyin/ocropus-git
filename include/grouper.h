@@ -33,7 +33,7 @@ namespace ocropus {
 
     void sort_by_xcenter(colib::intarray &);
 
-    struct IGrouper : colib::IComponent {
+    struct IGrouper : IComponent {
         // Set the grouper for iterating over the elements of the
         // segmentation.
 

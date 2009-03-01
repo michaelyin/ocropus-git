@@ -54,7 +54,7 @@ namespace ocropus {
 
     WhitespaceCuts *make_WhitespaceCuts();
 
-    struct SegmentPageByWCUTS : colib::ISegmentPage {
+    struct SegmentPageByWCUTS : ISegmentPage {
         ~SegmentPageByWCUTS() {}
 
         const char *description() {
@@ -68,7 +68,7 @@ namespace ocropus {
         void segment(colib::intarray &image,colib::bytearray &in_not_inverted);
     };
 
-    colib::ISegmentPage *make_SegmentPageByWCUTS();
+    ISegmentPage *make_SegmentPageByWCUTS();
 
 }
 

@@ -27,10 +27,11 @@
 #define h_voronoi_ocropus__
 
 #include "colib.h"
+#include "ocropus.h"
 
 namespace ocropus {
 
-    struct SegmentPageByVORONOI : colib::ISegmentPage {
+    struct SegmentPageByVORONOI : ISegmentPage {
         bool  remove_noise; // remove noise from output image
         int   nm;
         int   sr;
@@ -64,10 +65,10 @@ namespace ocropus {
             else throw "unknown parameter";
         }
 
-        void segment(colib::intarray &image,colib::bytearray &in);
+        void segment(intarray &image,bytearray &in);
     };
 
-    colib::ISegmentPage *make_SegmentPageByVORONOI();
+    ISegmentPage *make_SegmentPageByVORONOI();
 
 }
 

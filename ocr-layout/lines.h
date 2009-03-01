@@ -39,7 +39,7 @@ namespace ocropus {
     // that it might have made.
 
     /// A collection of lines.
-    struct ILines : colib::IComponent {
+    struct ILines : IComponent {
         /// Get the total number of pages.
         virtual int pagesCount() = 0;
 
@@ -86,11 +86,11 @@ namespace ocropus {
             colib::copy(r, segmentation());
         }
 
-        virtual void setBinarizer     (colib::IBinarize      *) = 0;
-        virtual void setDeskewer      (colib::ICleanupGray   *) = 0;
-        virtual void addCleanupGray   (colib::ICleanupGray   *) = 0;
-        virtual void addCleanupBinary (colib::ICleanupBinary *) = 0;
-        virtual void setPageSegmenter (colib::ISegmentPage   *) = 0;
+        virtual void setBinarizer     (IBinarize      *) = 0;
+        virtual void setDeskewer      (ICleanupGray   *) = 0;
+        virtual void addCleanupGray   (ICleanupGray   *) = 0;
+        virtual void addCleanupBinary (ICleanupBinary *) = 0;
+        virtual void setPageSegmenter (ISegmentPage   *) = 0;
     };
 
     // FIXME this should not take a pointer argument

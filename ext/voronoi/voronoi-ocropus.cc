@@ -30,6 +30,7 @@
 #include "voronoi-ocropus.h"
 #include "defs.h"
 #include "function.h"
+#include "ocropus.h"
 
 #define MAXVAL 256
 

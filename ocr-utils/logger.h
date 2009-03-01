@@ -151,8 +151,8 @@ namespace ocropus {
         void log(const char *descr, void *ptr){(*this)(descr, ptr);}
 
         /// Get a bestpath() and log it.
-        void operator()(const char *description, colib::IGenericFst &l);
-        void log(const char *descr, colib::IGenericFst &L){(*this)(descr, L);}
+        void operator()(const char *description, IGenericFst &l);
+        void log(const char *descr, IGenericFst &L){(*this)(descr, L);}
 
         /// Increase indentation level in the log.
         void indent();

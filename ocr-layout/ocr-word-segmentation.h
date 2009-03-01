@@ -35,7 +35,7 @@
 
 namespace ocropus {
 
-    colib::ISegmentPage *make_SegmentWords();
+    ISegmentPage *make_SegmentWords();
     bool segment_words_by_projection(colib::intarray &seg,
                                      colib::bytearray &in, int nwords);
 

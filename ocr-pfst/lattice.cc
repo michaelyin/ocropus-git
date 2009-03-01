@@ -41,8 +41,8 @@ namespace {
     Logger rescore_path_log("rescore.path");
 
     struct StandardFst: IGenericFst {
-        colib::objlist< colib::narray<Arc> > arcs_; // we have a method arcs()
-        colib::floatarray accept_costs;
+        objlist< narray<Arc> > arcs_; // we have a method arcs()
+        floatarray accept_costs;
         int start;
 
         StandardFst() : start(0) {}
@@ -61,10 +61,10 @@ namespace {
         virtual float getAcceptCost(int node) {
             return accept_costs[node];
         }
-        virtual void arcs(colib::intarray &ids,
-                          colib::intarray &targets,
-                          colib::intarray &outputs,
-                          colib::floatarray &costs,
+        virtual void arcs(intarray &ids,
+                          intarray &targets,
+                          intarray &outputs,
+                          floatarray &costs,
                           int from) {
             narray<Arc> &a = arcs_[from];
             makelike(ids, a);
@@ -120,7 +120,7 @@ namespace {
         virtual int special(const char *s) {
             return 0;
         }
-        virtual void bestpath(colib::nustring &result) {
+        virtual void bestpath(nustring &result) {
             a_star(result, *this);
         }
         virtual void save(const char *path) {
@@ -172,9 +172,9 @@ namespace {
             result1 = index / k;
             result2 = index % k;
         }
-        virtual void splitIndices(colib::intarray &result1,
-                                  colib::intarray &result2,
-                                  colib::intarray &indices) {
+        virtual void splitIndices(intarray &result1,
+                                  intarray &result2,
+                                  intarray &indices) {
             makelike(result1, indices);
             makelike(result2, indices);
             int k = l2->nStates();
@@ -279,10 +279,10 @@ namespace ocropus {
     }
 
     void rescore_path(IGenericFst &fst,
-                      colib::intarray &inputs,
-                      colib::intarray &vertices,
-                      colib::intarray &outputs,
-                      colib::floatarray &new_costs,
+                      intarray &inputs,
+                      intarray &vertices,
+                      intarray &outputs,
+                      floatarray &new_costs,
                       int override_start) {
         CHECK_ARG(vertices.length() == inputs.length());
         CHECK_ARG(vertices.length() == outputs.length());
@@ -305,8 +305,8 @@ namespace ocropus {
         }
     }
 
-    void beam_search_and_rescore(colib::IGenericFst &main,
-                                 colib::IGenericFst &transcript,
+    void beam_search_and_rescore(IGenericFst &main,
+                                 IGenericFst &transcript,
                                  double coef,
                                  int beam_width,
                                  int override_start,
@@ -323,8 +323,8 @@ namespace ocropus {
         rescore_path(main, inputs, vertices1, outputs, costs, override_start);
     }
 
-    void a_star_and_rescore(colib::IGenericFst &main,
-                            colib::IGenericFst &transcript,
+    void a_star_and_rescore(IGenericFst &main,
+                            IGenericFst &transcript,
                             double coef) {
         intarray inputs;
         intarray vertices1;

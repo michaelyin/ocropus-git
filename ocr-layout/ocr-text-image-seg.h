@@ -43,7 +43,7 @@ namespace ocropus {
     const int ruling_color   = 0x0001fc01;
     const int noise_color    = 0x00ffff00;
 
-    struct TextImageSegByLogReg : colib::ITextImageClassification {
+    struct TextImageSegByLogReg : ITextImageClassification {
         ~TextImageSegByLogReg() {}
 
         const char *description() {
@@ -67,9 +67,9 @@ namespace ocropus {
 
     };
 
-    colib::ITextImageClassification *make_TextImageSegByLogReg();
+    ITextImageClassification *make_TextImageSegByLogReg();
 
-    struct RemoveImageRegions : colib::ICleanupBinary, colib::ICleanupGray{
+    struct RemoveImageRegions : virtual ICleanupBinary, ICleanupGray{
         ~RemoveImageRegions() {}
 
         const char *description() {
@@ -84,8 +84,8 @@ namespace ocropus {
 
     };
 
-    colib::ICleanupBinary *make_RemoveImageRegionsBinary();
-    colib::ICleanupGray   *make_RemoveImageRegionsGray();
+    ICleanupBinary *make_RemoveImageRegionsBinary();
+    ICleanupGray   *make_RemoveImageRegionsGray();
 }
 
 #endif

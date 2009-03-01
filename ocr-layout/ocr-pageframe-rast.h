@@ -51,7 +51,7 @@ namespace ocropus {
     // be internal to the module; this is not acceptable
 
     static const int npfparams = 4;
-    struct PageFrameRAST : colib::ICleanupBinary {
+    struct PageFrameRAST : ICleanupBinary {
         PageFrameRAST();
         virtual ~PageFrameRAST(){
         }

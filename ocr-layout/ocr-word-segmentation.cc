@@ -1,30 +1,30 @@
 // -*- C++ -*-
 
-// Copyright 2006-2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz 
+// Copyright 2006-2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
-// 
+//
 // You may not use this file except under the terms of the accompanying license.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License"); you
 // may not use this file except in compliance with the License. You may
 // obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 // This version of the xycut algorithm has been implemented according to
 // the algorithm described in "Empirical Performance Evaluation Methodology and
 // Its Application to Page Segmentation Algorithms" by Mao and Kanungo(Figure 3)
-// 
+//
 // Project: OCRopus
 // File: ocr-word-segmentation.cc
-// Purpose: Word segmentation using smearing of bounding boxes 
+// Purpose: Word segmentation using smearing of bounding boxes
 // Responsible: Faisal Shafait (faisal.shafait@dfki.de)
-// Reviewer: 
-// Primary Repository: 
+// Reviewer:
+// Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include "ocropus.h"
@@ -35,23 +35,23 @@ using namespace colib;
 using namespace ocropus;
 
 namespace {
-    struct SegmentWords : colib::ISegmentPage {
+    struct SegmentWords : ISegmentPage {
         SegmentWords();
-     
+
         ~SegmentWords() {}
-            
+
         const char *description() {
             return "segment words by smearing\n";
         }
-            
+
         void segment(colib::intarray &image,colib::bytearray &in);
     };
 
     SegmentWords::SegmentWords(){
     }
-    
+
     void SegmentWords::segment(intarray &image,bytearray &in_not_inverted) {
-        
+
         bytearray in;
         copy(in, in_not_inverted);
         binarize_simple(in);
@@ -165,7 +165,7 @@ namespace ocropus {
             fprintf(stderr,"Less gaps than desired no of words.\n");
             return false;
         }
-        
+
         for(int i=0; i<num_words-1; i++){
             int gappos = gaps.extractMax();
             for(int y=0,h=in.dim(1); y<h; y++){
