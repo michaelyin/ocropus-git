@@ -36,7 +36,7 @@ namespace {
     /// The key is either the input or the output of some arc,
     /// and the value is either -1 meaning that no arcs are present
     /// or positive for the best cost.
-    typedef inthash< floating<-1> > archash;
+    typedef inthash< Floating<-1> > archash;
 
     void fill_archash(archash &result, IGenericFst &fst,
                       int from, int to, int symbol, bool symbol_is_input) {

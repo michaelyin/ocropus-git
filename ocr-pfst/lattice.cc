@@ -392,7 +392,7 @@ namespace ocropus {
             ASSERT(n == targets.length());
             ASSERT(n == outputs.length());
             ASSERT(n == costs.length());
-            inthash< integer<-1> > hash;
+            inthash< Integer<-1> > hash;
             for(int j = 0; j < n; j++) {
                 int t = targets[j];
                 int best_so_far = hash(t);

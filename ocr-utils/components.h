@@ -89,38 +89,35 @@ namespace ocropus {
             pdef(name,svalue.ptr(),doc);
         }
         void pdef(const char *name,int value,const char *doc) {
-            strbuf svalue;
-            svalue.format("%d",value);
-            pdef(name,svalue.ptr(),doc);
+            pdef(name,double(value),doc);
         }
         void pdef(const char *name,bool value,const char *doc) {
-            strbuf svalue;
-            svalue.format("%d",value);
-            pdef(name,svalue.ptr(),doc);
+            pdef(name,double(value),doc);
+        }
+        // Check whether the parameter exists.
+        virtual bool pexists(const char *name) {
+            return !!params.find(name);
         }
         // Set a parameter; this allows changing the parameter after it
         // has been defined.  It should be called by other parts of the
         // system if they want to change a parameter value.
-        void pset(const char *name,const char *value) {
+        // These are virtual so that classes can forward them if necessary.
+        virtual void pset(const char *name,const char *value) {
             if(name[0]!='%' && !params.find(name)) throwf("pset: %s: no such parameter",name);
             params(name) = value;
             if(verbose_params>1)
                 fprintf(stderr,"set %s_%s=%s\n",this->name(),name,value);
         }
-        void pset(const char *name,double value) {
+        virtual void pset(const char *name,double value) {
             strbuf svalue;
             svalue.format("%g",value);
             pset(name,svalue.ptr());
         }
         void pset(const char *name,int value) {
-            strbuf svalue;
-            svalue.format("%d",value);
-            pset(name,svalue.ptr());
+            pset(name,double(value));
         }
         void pset(const char *name,bool value) {
-            strbuf svalue;
-            svalue.format("%d",value);
-            pset(name,svalue.ptr());
+            pset(name,double(value));
         }
         // Get a string paramter.  This can be called both from within the class
         // implementation, as well as from external functions, in order to see
