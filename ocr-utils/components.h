@@ -15,12 +15,16 @@ namespace ocropus {
     /// Base class for OCR components.
 
     struct IComponent {
-        int verbose_params;
+	const char *verbose_pattern;
 
         IComponent() {
-            verbose_params = 0;
-            if(getenv("verbose_params"))
-                verbose_params = atoi(getenv("verbose_params"));
+	    verbose_pattern = "%%%";
+            if(getenv("verbose_params")) {
+		if(!strcmp(getenv("verbose_params"),"1"))
+		    verbose_pattern = "";
+		else
+		    verbose_pattern = getenv("verbose_params");
+	    }
         }
 
         /// object name
@@ -77,7 +81,7 @@ namespace ocropus {
             key += name;
             if(getenv(key.ptr()))
                 params(name) = getenv(key.ptr());
-            if(verbose_params>0 && !shown.find(key.ptr())) {
+            if(strstr(key.ptr(),verbose_pattern)!=0 && !shown.find(key.ptr())) {
                 fprintf(stderr,"param def %s=%s # %s\n",
                         key.ptr(),params(name).ptr(),doc);
                 shown(key.ptr()) = true;
@@ -105,7 +109,7 @@ namespace ocropus {
         virtual void pset(const char *name,const char *value) {
             if(name[0]!='%' && !params.find(name)) throwf("pset: %s: no such parameter",name);
             params(name) = value;
-            if(verbose_params>1)
+            if(strstr(name,verbose_pattern))
                 fprintf(stderr,"set %s_%s=%s\n",this->name(),name,value);
         }
         virtual void pset(const char *name,double value) {

@@ -393,6 +393,10 @@ namespace ocropus {
             for(int i=0;i<boxes.length();i++) {
                 int start = min(segments[i]);
                 int end = max(segments[i]);
+                int id = (start << 16) + end;
+                if(!segments[i].length())
+                    id = 0;
+
                 int space_state = -1;
                 float yes = spaces(i,0);
                 float no = spaces(i,1);
@@ -403,13 +407,13 @@ namespace ocropus {
                 for(int j=0;j<classifications.dim(1);j++) {
                     if(classifications(i,j)==INFINITY) continue;
                     if(space_state<0) {
-                        fst.addTransition(states[start],states[end+1],j,classifications(i,j));
+                        fst.addTransition(states[start],states[end+1],j,classifications(i,j), id);
                     } else {
                         if(no<INFINITY) {
-                            fst.addTransition(states[start],states[end+1],j,classifications(i,j)+no);
+                            fst.addTransition(states[start],states[end+1],j,classifications(i,j)+no, id);
                         }
-                        fst.addTransition(states[start],space_state,j,classifications(i,j));
-                        fst.addTransition(space_state,states[end+1],' ',yes);
+                        fst.addTransition(states[start],space_state,j,classifications(i,j), id);
+                        fst.addTransition(space_state,states[end+1],' ',yes, 0);
                     }
                     // printf("%d,%d : %d -> %d\n",i,j,start,end);
                 }
