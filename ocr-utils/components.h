@@ -10,6 +10,17 @@
 using namespace colib;
 using namespace iulib;
 
+#ifndef _OPENMP
+#define THREAD 0
+#define NTHREADS 1
+#else
+#include <omp.h>
+#define THREAD omp_get_thread_num()
+#define NTHREADS omp_get_num_threads()
+#endif
+
+
+
 namespace ocropus {
 
     /// Base class for OCR components.
@@ -19,7 +30,11 @@ namespace ocropus {
 
         IComponent() {
 	    verbose_pattern = "%%%";
-            if(getenv("verbose_params")) {
+            bool enabled = true;
+#ifdef _OPENMP
+            enabled = (omp_get_thread_num()==0);
+#endif
+            if(enabled && getenv("verbose_params")) {
 		if(!strcmp(getenv("verbose_params"),"1"))
 		    verbose_pattern = "";
 		else
