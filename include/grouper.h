@@ -53,6 +53,10 @@ namespace ocropus {
 
         virtual void getMask(colib::rectangle &r,colib::bytearray &mask,int i,int margin) = 0;
 
+        // Get the mask around a given rectangle.
+
+        virtual void getMaskAt(bytearray &mask,int index,rectangle &b) = 0;
+
         // Get the bounding box for the group i.
 
         virtual rectangle boundingBox(int i) = 0;

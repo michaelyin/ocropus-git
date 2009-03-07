@@ -234,6 +234,28 @@ namespace ocropus {
             if(grow>0) binary_dilate_circle(mask,grow);
         }
 
+        // Get a mask at a given location
+
+        void getMaskAt(bytearray &mask,int index,rectangle &b) {
+            CHECK(b.x0>-1000 && b.x1<10000 && b.y0>-1000 && b.y1<10000);
+            mask.resize(b.width(),b.height());
+            mask = 0;
+            intarray &segs = segments[index];
+            int w = b.width(), h = b.height();
+            for(int i=0;i<w;i++) {
+                int x = b.x0+i;
+                if(unsigned(x)>=labels.dim(0)) continue;
+                for(int j=0;j<h;j++) {
+                    int y = b.y0+j;
+                    if(unsigned(y)>=labels.dim(1)) continue;
+                    int label = labels(b.x0+i,b.y0+j);
+                    if(first_index_of(segs,label)>=0) {
+                        mask(i,j) = 255;
+                    }
+                }
+            }
+        }
+
         // Extract the masked character from the source image/source
         // feature map.
 
