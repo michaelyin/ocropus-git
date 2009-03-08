@@ -47,6 +47,10 @@ namespace {
 
         StandardFst() : start(0) {}
 
+        const char *name() {
+            return "standardfst";
+        }
+
         virtual const char *description() {
             return "Lattice";
         }
@@ -147,6 +151,10 @@ namespace {
             // (otherwise if CHECKs throw an exception, bad things happen)
             this->l1 = l1;
             this->l2 = l2;
+        }
+
+        const char *name() {
+            return "compositionfst";
         }
 
         IGenericFst *move1() {return l1.move();}

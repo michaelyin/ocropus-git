@@ -37,6 +37,10 @@ namespace ocropus {
         ~DeskewPageByRAST() {
         }
 
+        const char *name() {
+            return "deskewrast";
+        }
+
         const char *description() {
             return "Deskew page image by RAST\n";
         }

@@ -121,6 +121,10 @@ namespace ocropus {
             else throw "unknown parameter";
         }
 
+        const char *name() {
+            return "simplegrouper";
+        }
+
         const char *description() {
             return "SimpleGrouper";
         }

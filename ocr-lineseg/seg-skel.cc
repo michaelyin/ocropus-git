@@ -119,6 +119,9 @@ namespace ocropus {
         virtual const char *description() {
             return "skeleton segmenter";
         }
+        const char *name() {
+            return "skelseg";
+        }
         virtual void init(const char **argv=0) {
         }
 

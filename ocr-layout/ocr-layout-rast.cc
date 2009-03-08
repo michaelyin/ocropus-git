@@ -1,26 +1,26 @@
 // -*- C++ -*-
 
-// Copyright 2006-2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz 
+// Copyright 2006-2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
-// 
+//
 // You may not use this file except under the terms of the accompanying license.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License"); you
 // may not use this file except in compliance with the License. You may
 // obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 // Project: OCRopus
 // File: ocr-layout-rast.cc
 // Purpose: perform layout analysis by RAST
 // Responsible: Faisal Shafait (faisal.shafait@dfki.de)
-// Reviewer: 
-// Primary Repository: 
+// Reviewer:
+// Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include <time.h>
@@ -41,7 +41,6 @@ namespace ocropus {
         use_four_line_model = false;
     }
 
-
     // FIXME refactor this
     // make the arguments instance variables
     // make separate private methods out of the individual processing steps
@@ -49,9 +48,9 @@ namespace ocropus {
     // this documents the individual steps and makes the overall algorithm easier to follow
     // --tmb
 
-    void SegmentPageByRAST::segmentInternal(intarray &visualization, 
+    void SegmentPageByRAST::segmentInternal(intarray &visualization,
                                             intarray &image,
-                                            bytearray &in_not_inverted, 
+                                            bytearray &in_not_inverted,
                                             bool need_visualization,
                                             rectarray &extra_obstacles) {
 
@@ -63,7 +62,7 @@ namespace ocropus {
         copy(in, in_not_inverted);
         make_page_binary_and_black(in);
         //fprintf(stderr,"Time elapsed (autoinvert): %.3f \n",(clock()/float(CLOCKS_PER_SEC)) - startTime);
-        
+
         // Do connected component analysis
         intarray charimage;
         copy(charimage,in);
@@ -113,7 +112,7 @@ namespace ocropus {
                                   extra_obstacles,charstats->xheight);
         rulings->analyzeObstacles(hor_rulings,vert_rulings,graphics,
                                   charstats->large_boxes,charstats->xheight);
-        
+
         // add whitespace gutters and the user-supplied obstacles to a list of
         // obstacles
         rectarray textline_obstacles;
@@ -134,10 +133,10 @@ namespace ocropus {
             ctextline->min_q     = 2.0; // Minimum acceptable quality of a textline
             ctextline->min_count = 2;   // ---- number of characters in a textline
             ctextline->min_length= 30;  // ---- length in pixels of a textline
-            
+
             ctextline->max_results = max_results;
             ctextline->min_gap = gap_factor*charstats->xheight;
-            
+
             ctextline->extract(textlines_extended,textline_obstacles,charstats);
             for(int i=0,l=textlines_extended.length();i<l;i++)
                 textlines.push(textlines_extended[i].getTextLine());
@@ -146,16 +145,16 @@ namespace ocropus {
             ctextline->min_q     = 2.0; // Minimum acceptable quality of a textline
             ctextline->min_count = 2;   // ---- number of characters in a textline
             ctextline->min_length= 30;  // ---- length in pixels of a textline
-            
+
             ctextline->max_results = max_results;
             ctextline->min_gap = gap_factor*charstats->xheight;
-            
+
             ctextline->extract(textlines,textline_obstacles,charstats);
         }
 
 
         // Sort textlines in reading order
-        autodel<ReadingOrderByTopologicalSort> 
+        autodel<ReadingOrderByTopologicalSort>
             reading_order(make_ReadingOrderByTopologicalSort());
         reading_order->sortTextlines(textlines,gutters,hor_rulings,vert_rulings,*charstats);
         //fprintf(stderr,"Time elapsed (ctextline): %.3f \n",(clock()/float(CLOCKS_PER_SEC)) - startTime);
@@ -207,12 +206,12 @@ namespace ocropus {
         }
         replace_values(image,zero,yellow);
         if(need_visualization) {
-            visualize_layout(visualization, in_not_inverted, textlines, 
+            visualize_layout(visualization, in_not_inverted, textlines,
                              vert_separators, extra_obstacles, *charstats);
         }
     }
 
-    void SegmentPageByRAST::segment(intarray &result, 
+    void SegmentPageByRAST::segment(intarray &result,
                                     bytearray &in_not_inverted,
                                     rectarray &obstacles) {
         intarray debug_image;
@@ -229,7 +228,7 @@ namespace ocropus {
         segment(result,in_not_inverted,obstacles);
     }
 
-    void SegmentPageByRAST::visualize(intarray &result, 
+    void SegmentPageByRAST::visualize(intarray &result,
                                       bytearray &in_not_inverted,
                                       rectarray &obstacles) {
         intarray segmentation;
@@ -239,6 +238,6 @@ namespace ocropus {
     ISegmentPage *make_SegmentPageByRAST() {
         return new SegmentPageByRAST();
     }
-    
+
 }
 

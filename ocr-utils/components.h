@@ -32,6 +32,7 @@ namespace ocropus {
 
         IComponent() {
 	    verbose_pattern = "%%%";
+            checked = false;
             bool enabled = true;
 #ifdef _OPENMP
             enabled = (omp_get_thread_num()==0);
@@ -84,7 +85,11 @@ namespace ocropus {
     private:
         strhash<strbuf> params;
         strhash<bool> shown;
+        bool checked;
     public:
+        /// verify that there are no extra parameters in the environment
+        virtual void check_parameters_();
+
         // Define a string parameter for this component.  Parameters
         // should be defined once in the constructor, together with
         // a default value and a documentation string.
@@ -148,10 +153,12 @@ namespace ocropus {
         // implementation, as well as from external functions, in order to see
         // what current parameter settings are.
         const char *pget(const char *name) {
+            if(!checked) check_parameters_();
             if(!params.find(name)) throwf("pget: %s: no such parameter",name);
             return params(name).ptr();
         }
         double pgetf(const char *name) {
+            if(!checked) check_parameters_();
             double value;
             if(sscanf(pget(name),"%lg",&value)!=1)
                 throwf("pgetf: %s=%s: bad number format",name,params(name).ptr());

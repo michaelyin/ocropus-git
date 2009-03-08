@@ -42,6 +42,10 @@ namespace ocropus {
             return "An implementation of Otsu's binarization algorithm.\n";
         }
 
+        const char *name() {
+            return "binotsu";
+        }
+
         BinarizeByOtsu() {
         }
 

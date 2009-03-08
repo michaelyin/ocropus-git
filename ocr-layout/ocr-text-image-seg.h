@@ -50,6 +50,10 @@ namespace ocropus {
             return "Get text/image probability map\n";
         }
 
+        const char *name() {
+            return "tiseglogreg";
+        }
+
         void init(const char **argv) {
             // nothing to be done
         }
@@ -71,6 +75,10 @@ namespace ocropus {
 
     struct RemoveImageRegions : virtual ICleanupBinary, ICleanupGray{
         ~RemoveImageRegions() {}
+
+        const char *name() {
+            return "removeimageregions";
+        }
 
         const char *description() {
             return "Remove text or non-text zones\n";

@@ -60,6 +60,10 @@ namespace ocropus {
 
         ~BinarizeByRange() {}
 
+        const char *name() {
+            return "binarizerange";
+        }
+
         const char *description() {
             return "binarize by thresholding the range between min(image) and max(image)\n";
         }

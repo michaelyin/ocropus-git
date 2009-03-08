@@ -37,6 +37,9 @@ namespace ocropus {
     struct TextImageSegByLeptonica : ITextImageClassification {
         ~TextImageSegByLeptonica() {}
 
+        const char *name() {
+            return "leptti";
+        }
         const char *description() {
             return "Get text/image probability map\n";
         }

@@ -44,6 +44,9 @@ namespace ocropus {
             // nothing to be done
         }
 
+        const char *name() {
+            return "docclean";
+        }
 
         void cleanup(bytearray &out,bytearray &in) {
 

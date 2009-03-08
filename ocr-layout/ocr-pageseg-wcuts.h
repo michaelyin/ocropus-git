@@ -57,6 +57,9 @@ namespace ocropus {
     struct SegmentPageByWCUTS : ISegmentPage {
         ~SegmentPageByWCUTS() {}
 
+        const char *name() {
+            return "segwcuts";
+        }
         const char *description() {
             return "segment characters by RAST\n";
         }

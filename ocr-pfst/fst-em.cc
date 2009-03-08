@@ -70,6 +70,9 @@ namespace {
 
         StandardTrainableFst() : start(0) {}
 
+        const char *name() {
+            return "standardtrainablefst";
+        }
         virtual const char *description() {
             return "StandardTrainableFst";
         }

@@ -52,6 +52,10 @@ namespace ocropus {
 
         ~SegmentPageByXYCUTS() {}
 
+        const char *name() {
+            return "segxy";
+        }
+
         const char *description() {
             return "segment page by XY-Cut algorithm\n"
                 "Default parameters: \n"

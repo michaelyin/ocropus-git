@@ -41,6 +41,10 @@ struct SegmentPageBy1CP : ISegmentPage {
         // nothing to be done
     }
 
+    const char *name() {
+        return "seg1cp";
+    }
+
     void segment(intarray &image,bytearray &in) {
         param_int thigh("thigh",20,"projection threshold");
         param_int tlow("tlow",1,"projection threshold");

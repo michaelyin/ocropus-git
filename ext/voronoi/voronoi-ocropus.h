@@ -47,6 +47,10 @@ namespace ocropus {
         }
         ~SegmentPageByVORONOI() {}
 
+        const char *name() {
+            return "segvoronoi";
+        }
+
         const char *description() {
             return "segment page by Voronoi algorithm\n";
         }

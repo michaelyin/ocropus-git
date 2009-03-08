@@ -35,9 +35,15 @@
 
 namespace ocropus {
 
+    // FIXME move this into .cc file
     struct SegmentPageByRAST : ISegmentPage {
         SegmentPageByRAST();
         ~SegmentPageByRAST() {}
+
+        const char *name() {
+            return "segrast";
+        }
+
 
         int  max_results;
         int  gap_factor;

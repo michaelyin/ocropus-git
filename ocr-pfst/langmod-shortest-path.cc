@@ -35,7 +35,7 @@ namespace {
     struct transition {
         int from;
         int to;
-        int id;     
+        int id;
         int output; // by convention, -1 = epsilon
         float cost;
     };
@@ -54,6 +54,10 @@ namespace {
         }
 
 
+        const char *name() {
+            return "shortestpath";
+        }
+
         virtual const char *description() {
             return "ShortestPath";
         }
@@ -68,7 +72,7 @@ namespace {
 
         virtual void init(const char **) {
         }
-        
+
         virtual void start_context() {
         }
 

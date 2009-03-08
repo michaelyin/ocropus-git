@@ -742,6 +742,10 @@ static struct sigaction SIGSEGV_old;
             return "Tesseract Wrapper";
         }
 
+        const char *name() {
+            return "tessline";
+        }
+
         TesseractRecognizeLine() {
             tess = new TesseractWrapper(0);
             lineseg = make_CurvedCutWithCcSegmenter();
@@ -776,7 +780,7 @@ static struct sigaction SIGSEGV_old;
                     segmentation.at1d(i) = 0;
             }
         }
-        
+
         virtual void align(nustring &chars,intarray &segmentation,floatarray &costs,bytearray &image,IGenericFst &transcription) {
             rectarray bboxes;
             tess->recognize_gray(chars, costs, bboxes, image);

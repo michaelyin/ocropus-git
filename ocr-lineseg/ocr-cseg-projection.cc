@@ -32,6 +32,10 @@ using namespace colib;
 struct SegmentLineByProjection : ISegmentLine {
     ~SegmentLineByProjection() {}
 
+    const char *name() {
+        return "projseg";
+    }
+
     const char *description() {
         return "segment characters by 1D projection\n";
     }

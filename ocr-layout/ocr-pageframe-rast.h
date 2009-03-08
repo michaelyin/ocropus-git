@@ -63,6 +63,10 @@ namespace ocropus {
             // nothing to be done
         }
 
+        const char *name() {
+            return "rastframe";
+        }
+
         void cleanup(colib::bytearray &out,colib::bytearray &in);
 
         // FIXME do not expose instance variables in header files!

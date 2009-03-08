@@ -1,8 +1,13 @@
+#include <unistd.h>
 #include "colib/colib.h"
 #include "iulib/iulib.h"
 #include "components.h"
 
 using namespace colib;
+
+namespace {
+    param_bool fatal_unknown_params("fatal_unknown_params",1,"unknown parameters for a class are a fatal error");
+}
 
 namespace ocropus {
     ////////////////////////////////////////////////////////////////
@@ -13,6 +18,34 @@ namespace ocropus {
     // parameter verbose_params; mainly used for letting us write a command
     // line program to print the default parameters for components
     const char *global_verbose_params;
+
+    void IComponent::check_parameters_() {
+        // FIXME rewrite this more cleanly in terms of iustring
+        if(checked) return;
+        checked = true;
+        strbuf prefix;
+        prefix = this->name();
+        prefix += "_";
+        for(int i=0;environ[i];i++) {
+            if(!strncmp(prefix.ptr(),environ[i],strlen(prefix.ptr()))) {
+                strbuf entry;
+                entry = environ[i];
+                const char *p = strchr(entry.ptr(),'=');
+                if(!p) continue;
+                int where = p-&entry[0];
+                entry[where] = '\0';
+                if(!params.find(entry.ptr()+strlen(prefix.ptr()))) {
+                    if(fatal_unknown_params)
+                        throwf("%s: unknown environment variable for %s\n"
+                               "(set fatal_unknown_params=0 to disable this check)\n",
+                               entry.ptr(),name());
+                    else
+                        debugf("info","%s: unknown environment variable for %s\n",
+                               entry.ptr(),name());
+                }
+            }
+        }
+    }
 
     typedef IComponent *(*component_constructor)();
 

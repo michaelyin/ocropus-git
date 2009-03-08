@@ -68,6 +68,10 @@ namespace {
 
         Lines(Pages *p) : pages(p), elapsed(0), last_elapsed(0) {}
 
+        const char *name() {
+            return "lines";
+        }
+
         /// Get the total number of pages.
         int pagesCount() {
             return pages->length();

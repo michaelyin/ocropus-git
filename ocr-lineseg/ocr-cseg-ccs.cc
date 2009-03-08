@@ -39,6 +39,10 @@ struct SegmentLineByCCS : ISegmentLine {
         return "segment characters by 1D projection\n";
     }
 
+    const char *name() {
+        return "segccs";
+    }
+
     void init(const char **argv) {
         // nothing to be done
     }

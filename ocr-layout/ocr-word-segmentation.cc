@@ -40,6 +40,10 @@ namespace {
 
         ~SegmentWords() {}
 
+        const char *name() {
+            return "segwords";
+        }
+
         const char *description() {
             return "segment words by smearing\n";
         }
