@@ -23,6 +23,8 @@ using namespace iulib;
 
 namespace ocropus {
 
+    extern const char *global_verbose_params;
+
     /// Base class for OCR components.
 
     struct IComponent {
@@ -34,11 +36,15 @@ namespace ocropus {
 #ifdef _OPENMP
             enabled = (omp_get_thread_num()==0);
 #endif
-            if(enabled && getenv("verbose_params")) {
-		if(!strcmp(getenv("verbose_params"),"1"))
-		    verbose_pattern = "";
-		else
-		    verbose_pattern = getenv("verbose_params");
+            if(enabled || global_verbose_params) {
+                if(global_verbose_params) {
+                    verbose_pattern = global_verbose_params;
+                } else if(getenv("verbose_params")) {
+                    if(!strcmp(getenv("verbose_params"),"1"))
+                        verbose_pattern = "";
+                    else
+                        verbose_pattern = getenv("verbose_params");
+                }
 	    }
         }
 
@@ -250,6 +256,7 @@ namespace ocropus {
         component_constructor f = &iconstructor2<T,S>;
         component_register_fun(name,f,replace);
     }
+    void list_components(narray<const char *> &names);
     component_constructor component_lookup(const char *name);
     IComponent *component_construct(const char *name);
 }

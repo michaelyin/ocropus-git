@@ -5,10 +5,14 @@
 using namespace colib;
 
 namespace ocropus {
-
     ////////////////////////////////////////////////////////////////
     // constructing, loading, and saving classifiers
     ////////////////////////////////////////////////////////////////
+
+    // a global variable that can be used to override the environment
+    // parameter verbose_params; mainly used for letting us write a command
+    // line program to print the default parameters for components
+    const char *global_verbose_params;
 
     typedef IComponent *(*component_constructor)();
 
@@ -28,6 +32,10 @@ namespace ocropus {
     IComponent *component_construct(const char *name) {
         component_constructor f = component_lookup(name);
         return f();
+    }
+
+    void list_components(narray<const char *> &names) {
+        constructors.keys(names);
     }
 
     static int level = 0;
