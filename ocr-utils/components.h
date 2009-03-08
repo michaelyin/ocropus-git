@@ -105,11 +105,20 @@ namespace ocropus {
             key = this->name();
             key += "_";
             key += name;
-            if(getenv(key.ptr()))
-                params(name) = getenv(key.ptr());
-            if(strstr(key.ptr(),verbose_pattern)!=0 && !shown.find(key.ptr())) {
-                fprintf(stderr,"param def %s=%s # %s\n",
-                        key.ptr(),params(name).ptr(),doc);
+            bool altered = false;
+            if(getenv(key.ptr())) {
+                const char *evalue = getenv(key.ptr());
+                if(strcmp(evalue,value)) altered = true;
+                params(name) = evalue;
+            }
+            if(!shown.find(key.ptr())) {
+                if(altered && !strcmp(verbose_pattern,"?")) {
+                    fprintf(stderr,"param altered %s=%s # %s\n",
+                            key.ptr(),params(name).ptr(),doc);
+                } else if(strstr(key.ptr(),verbose_pattern)!=0) {
+                    fprintf(stderr,"param default %s=%s # %s\n",
+                            key.ptr(),params(name).ptr(),doc);
+                }
                 shown(key.ptr()) = true;
             }
         }
