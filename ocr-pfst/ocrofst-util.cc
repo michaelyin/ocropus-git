@@ -107,64 +107,6 @@ namespace ocropus {
         fst_star(result);
     }
 
-    /// Returns a set of numbers that occur in the input array.
-    void get_alphabet(intarray &alphabet, intarray &symbols) {
-        intarray c;
-        copy(c, symbols);
-        quicksort(c);
-        alphabet.clear();
-        if(!c.length())
-            return;
-        alphabet.push(c[0]);
-        for(int i = 1; i < c.length(); i++) {
-            if(c[i] != c[i - 1])
-                alphabet.push(c[i]);
-        }
-    }
-
-    static void append_to_intarray(intarray &result, intarray &string) {
-        for(int i = 0; i < string.length(); i++)
-            result.push(string[i]);
-    }
-
-    void get_alphabet(intarray &alphabet, intarray &sym1, intarray &sym2) {
-        intarray t;
-        copy(t, sym1);
-        append_to_intarray(t, sym2);
-        get_alphabet(alphabet, t);
-    }
-
-    static void append_to_intarray(intarray &result, nustring &string) {
-        for(int i = 0; i < string.length(); i++)
-            result.push(string[i].ord());
-    }
-
-    static void append_to_intarray(intarray &result, objlist<nustring> &strings) {
-        for(int i = 0; i < strings.length(); i++)
-            append_to_intarray(result, strings[i]);
-    }
-
-    void get_alphabet(intarray &alphabet, objlist<nustring> &dict) {
-        intarray symbols;
-        append_to_intarray(symbols, dict);
-        get_alphabet(alphabet, symbols);
-    }
-
-    void get_alphabet(intarray &alphabet, IGenericFst &fst) {
-        int n = fst.nStates();
-        intarray all;
-        for(int i = 0; i < n; i++) {
-            intarray inputs;
-            intarray outputs;
-            intarray targets;
-            floatarray costs;
-            fst.arcs(inputs, targets, outputs, costs, i);
-            append_to_intarray(all, inputs);
-            append_to_intarray(all, outputs);
-        }
-        get_alphabet(alphabet, all);
-    }
-
     void fst_line(IGenericFst &fst, nustring &s) {
         int n = s.length();
         intarray inputs(n);
