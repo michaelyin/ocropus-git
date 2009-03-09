@@ -104,20 +104,6 @@ namespace ocropus {
     }
 
 
-    // FIXME comments
-
-    void boxes_height_histogram(floatarray &histogram, narray<rectangle> &bboxes,int max_height) {
-        int   i,d;
-        histogram.resize(max_height);
-        for(i=0;i<max_height;i++) histogram[i] = 0.0;
-
-        int len = bboxes.length();
-        for(i=0; i< len; i++){
-            d = (int) bboxes[i].y1 - (int) bboxes[i].y0;
-            if(d!=0 && d>=0 && d<max_height) histogram[d]++;
-        }
-    }
-
     void plot_hist(FILE *stream, floatarray &hist){
         if(!stream){
             fprintf(stderr,"Unable to open histogram image stream.\n");
