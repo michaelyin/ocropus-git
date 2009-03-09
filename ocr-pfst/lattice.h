@@ -21,14 +21,14 @@
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
-#ifndef h_lattice_
-#define h_lattice_
+#ifndef lattice_h_
+#define lattice_h_
 
-#include "ocropus.h"
+#include "ocr-pfst.h"
 
 namespace ocropus {
     using namespace colib;
-    enum {DEFAULT_BEAM_WIDTH = 1000};
+
     struct ReadOnlyFst;
     void beam_search(nustring &,IGenericFst &,int beam_width);
     struct ReadOnlyFst : IGenericFst {
@@ -39,9 +39,6 @@ namespace ocropus {
         virtual void setStart(int node) { oops(); }
         virtual void setAccept(int node,float cost=0.0) { oops(); }
         virtual int special(const char *s) { return oops(); }
-        virtual void bestpath(nustring &result) {
-            ocropus::beam_search(result,*this,DEFAULT_BEAM_WIDTH);
-        }
     };
 
     struct CompositionFst : ReadOnlyFst {
@@ -70,8 +67,8 @@ namespace ocropus {
     /// Setting override_finish to nonnegative value has the same effect
     /// as l2->getAcceptCost() returning 0 only for override_finish
     /// and INF otherwise.
-    CompositionFst *make_CompositionFst(IGenericFst *l1,
-                                        IGenericFst *l2,
+    CompositionFst *make_CompositionFst(OcroFST *l1,
+                                        OcroFST *l2,
                                         int override_start = -1,
                                         int override_finish = -1);
 
@@ -87,17 +84,6 @@ namespace ocropus {
                       intarray &outputs,
                       floatarray &new_costs,
                       int override_start = -1);
-
-    void beam_search_and_rescore(IGenericFst &main,
-                                 IGenericFst &transcript,
-                                 double coef,
-                                 int beam_width = DEFAULT_BEAM_WIDTH,
-                                 int override_start = -1,
-                                 int override_finish = -1);
-
-    void a_star_and_rescore(IGenericFst &main,
-                            IGenericFst &transcript,
-                            double coef);
 
 };
 

@@ -27,15 +27,34 @@
 /// \file ocr-pfst.h
 
 #include "colib/colib.h"
+#include "ocrinterfaces.h"
 
 namespace ocropus {
     using namespace colib;
 
-    /// \brief Make a readable/writable FST (independent on OpenFST).
-    ///
-    /// The FST will use OpenFST-compatible load() and save() routines,
-    /// and A* for bestpath().
-    IGenericFst *make_StandardFst();
+    struct OcroFST : IGenericFst {
+        virtual intarray &targets(int vertex) = 0;
+        virtual intarray &inputs(int vertex) = 0;
+        virtual intarray &outputs(int vertex) = 0;
+        virtual floatarray &costs(int vertex) = 0;
+        virtual float acceptCost(int vertex) = 0;
+        virtual void setAcceptCost(int vertex, float new_value) = 0;
+        virtual floatarray &heuristics() = 0;
+        
+        enum {
+            SORTED_BY_INPUT = 1,
+            SORTED_BY_OUTPUT = 2,
+            HAS_HEURISTICS = 4
+        };
+        virtual bool hasFlag(int flag) = 0;
+        virtual void clearFlags() = 0;
+
+        virtual void sortByInput() = 0;
+        virtual void sortByOutput() = 0;
+        virtual void calculateHeuristics() = 0;
+    };
+
+    OcroFST *make_OcroFST();
 
     /// \brief Copy one FST to another.
     ///
@@ -69,43 +88,67 @@ namespace ocropus {
                     IGenericFst &src,
                     int start, int accept = -1);
 
-    // ____________________________   A*   __________________________________
+    /// \brief Compose two FSTs.
+    ///
+    /// This function copies the composition of two given FSTs.
+    /// That causes expansion (storing all arcs explicitly).
+    void fst_expand_composition(IGenericFst &out, IGenericFst &, IGenericFst &);
 
-    /// \brief Search for the best path through the FST using A* algorithm.
+    /// Randomly sample an FST, assuming any input.
     ///
-    /// Technically, the best path always exists,
-    /// but its cost might be over 1e37.
-    /// So if your graph is disconnected,
-    /// the beam search will go somewhere
-    /// and take the extreme accept cost from there.
-    ///
-    /// All 4 output arrays will have the same length.
-    ///
-    /// \param[out] inputs      transition inputs along the path,
-    ///                         padded by one 0 at the end
-    ///                         (for the final jump out of the accept vertex)
-    /// \param[out] vertices    vertices that the path goes through,
-    ///                         including the starting vertex
-    /// \param[out] outputs     transition outputs along the path,
-    ///                         padded by one 0 at the end
-    ///                         (for the final jump out of the accept vertex).
-    ///                         Epsilons are not removed from the output.
-    /// \param[out] costs       costs along the path; the last value is
-    ///                         the accept cost of the final vertex
-    /// \param[in]  fst         the FST to search
-    bool a_star(intarray &inputs,
-                intarray &vertices,
-                intarray &outputs,
-                floatarray &costs,
-                IGenericFst &fst);
+    /// \param[out] result  The array of output labels (incl. 0) along the path.
+    /// \param[in]  fst     The FST.
+    /// \param      max     The maximum length of the result.
+    /// \returns total cost
+    double fst_sample(intarray &result, IGenericFst &fst, int max=1000);
 
-    // TODO: return cost
+    /// Randomly sample an FST, assuming any input. Removes epsilons.
+    /// \param[out] result  The array of output symbols, excluding epsilons.
+    /// \param[in]  fst     The FST.
+    /// \param      max     The maximum length of the result.
+    /// \returns total cost
+    double fst_sample(nustring &result, IGenericFst &fst, int max=1000);
+
+    /// Remove epsilons (zeros) and converts integers to nuchars.
+    void remove_epsilons(nustring &s, intarray &a);
+    
+    /// Make an in-place Kleene closure of the FST.
+    void fst_star(IGenericFst &fst);
+
+    /// Make a Kleene closure.
+    void fst_star(IGenericFst &result, IGenericFst &fst);
+
+    /// Set `dst' to the union of `dst' and `fst'.
+    inline void fst_union(IGenericFst &dst, IGenericFst &fst) {
+        fst_insert(dst, fst, dst.getStart());
+    }
+
+    void fst_line(IGenericFst &fst, nustring &s);
+    void fst_insert_line(IGenericFst &fst, const char *line, int s, int e);
+    void fst_insert_line(IGenericFst &fst, nustring &line, int s, int e);
+
+    void fst_insert_bunch(IGenericFst &fst, nustring &s, int start, int end);
+    void fst_insert_bunch(IGenericFst &fst, intarray &s, int start, int end);
+    void fst_insert_bunch(IGenericFst &fst, const char *s, int start, int end);
+    
+    void get_alphabet(intarray &alphabet, objlist<nustring> &dict);
+
     /// \brief Simplified interface for a_star().
     ///
     /// \param[out] result      FST output with epsilons removed,
     ///                         converted to a nustring.
     /// \param[in]  fst         the FST to search
-    void a_star(nustring &result, IGenericFst &fst);
+    /// \returns total cost
+    double a_star(nustring &result, OcroFST &fst);
+
+    /// \brief Simplified interface for a_star_in_composition().
+    ///
+    /// \param[out] result      FST output with epsilons removed,
+    ///                         converted to a nustring.
+    /// \param[in]  fst         the FST to search
+    /// \returns total cost
+    double a_star(nustring &result, OcroFST &fst1, OcroFST &fst2);
+
 
     // TODO: document return value
     /// \brief Search for the best path through the composition of 2 FSTs
@@ -122,8 +165,19 @@ namespace ocropus {
                                intarray &vertices2,
                                intarray &outputs,
                                floatarray &costs,
-                               IGenericFst &fst1,
-                               IGenericFst &fst2);
+                               OcroFST &fst1,
+                               OcroFST &fst2);
+
+    bool a_star_in_composition(intarray &inputs,
+                               intarray &vertices1,
+                               intarray &vertices2,
+                               intarray &outputs,
+                               floatarray &costs,
+                               OcroFST &fst1,
+                               floatarray &g1,
+                               OcroFST &fst2,
+                               floatarray &g2);
+
 
     // TODO: document return value
     /// \brief Search for the best path through the composition of 3 FSTs
@@ -140,9 +194,22 @@ namespace ocropus {
                                intarray &vertices3,
                                intarray &outputs,
                                floatarray &costs,
-                               IGenericFst &fst1,
-                               IGenericFst &fst2,
-                               IGenericFst &fst3);
+                               OcroFST &fst1,
+                               OcroFST &fst2,
+                               OcroFST &fst3);
+
+    
+    void beam_search(intarray &vertices1,
+                     intarray &vertices2,
+                     intarray &inputs,
+                     intarray &outputs,
+                     floatarray &costs,
+                     OcroFST &fst1,
+                     OcroFST &fst2,
+                     int beam_width=1000);
+
+    double beam_search(nustring &result, OcroFST &fst1, OcroFST &fst2,
+                       int beam_width=1000);
 
 };
 

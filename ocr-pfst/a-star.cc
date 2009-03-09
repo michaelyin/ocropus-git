@@ -21,131 +21,19 @@
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
-#ifndef a_star_h_
-#define a_star_h_
-
-#include "ocropus.h"
-#include "langmods.h"
+#include "ocr-pfst.h"
+#include "fst-heap.h"
+#include "lattice.h"
 
 using namespace colib;
 using namespace ocropus;
 
 namespace {
-    // OK, this turned out to be scarier than I thought.
-    // We need heap reimplementation here since we need to change costs on the fly.
-    // We maintain `heapback' array for that.
-    class Heap {
-        intarray heap;       // the priority queue
-        intarray heapback;   // heap[heapback[node]] == node; -1 if not in the heap
-        floatarray costs; // the cost of the node on the heap
-
-        int left(int i) {  return 2 * i + 1; }
-        int right(int i) {  return 2 * i + 2; }
-        int parent(int i) {  return (i - 1) / 2; }
-
-        int rotate(int i) {
-            int size = heap.length();
-            int j = left(i);
-            int k = right(i);
-            if(k < size && costs[k] < costs[j]) {
-                if(costs[k] < costs[i]) {
-                    heapswap(k, i);
-                    return k;
-                }
-            } else if (j < size) {
-                if(costs[j] < costs[i]) {
-                    heapswap(j, i);
-                    return j;
-                }
-            }
-            return i;
-        }
-
-        // Swap 2 nodes on the heap, maintaining heapback.
-        void heapswap(int i, int j) {
-            int t = heap[i];
-            heap[i] = heap[j];
-            heap[j] = t;
-
-            float c = costs[i];
-            costs[i] = costs[j];
-            costs[j] = c;
-
-            heapback[heap[i]] = i;
-            heapback[heap[j]] = j;
-        }
-
-        // Fix the heap invariant broken by increasing the cost of heap node i.
-        void heapify_down(int i) {
-            while(1) {
-                int k = rotate(i);
-                if(i == k)
-                    return;
-                i = k;
-            }
-        }
-
-        // Fix the heap invariant broken by decreasing the cost of heap node i.
-        void heapify_up(int i) {
-            while(i) {
-                int j = parent(i);
-                if(costs(i) < costs(j)) {
-                    heapswap(i, j);
-                    i = j;
-                } else {
-                    return;
-                }
-            }
-        }
-
-    public:
-        /// Create a heap storing node indices from 0 to n - 1.
-        Heap(int n) : heapback(n) {
-            fill(heapback, -1);
-        }
-
-        int length() {
-            return heap.length();
-        }
-
-        /// Return the item with the least cost and remove it from the heap.
-        int pop() {
-            heapswap(0, heap.length() - 1);
-            int result = heap.pop();
-            costs.pop();
-            heapify_down(0);
-            heapback[result] = -1;
-            return result;
-        }
-
-        /// Push the node in the heap if it's not already there, otherwise promote.
-        /// @returns True if the heap was changed, false if the item was already
-        ///          in the heap and with a better cost.
-        bool push(int node, float cost) {
-            int i = heapback[node];
-            if(i != -1) {
-                if(cost < costs[i]) {
-                    costs[i] = cost;
-                    heapify_up(i);
-                    return true;
-                }
-                return false;
-            } else {
-                heap.push(node);
-                costs.push(cost);
-                heapback[node] = heap.length() - 1;
-                heapify_up(heap.length() - 1);
-                return true;
-            }
-        }
-
-    };
-
     class AStarSearch {
         IGenericFst &fst;
 
-        intarray came_from; // the previous node in the best path; -1 for unseen,
-                            // self for the start
+        intarray came_from; // the previous node in the best path; 
+                            // -1 for unseen, self for the start
         int accepted_from;
         float g_accept;     // best cost for accept so far
         int n;              // the number of nodes; also the virtual accept index
@@ -263,7 +151,6 @@ namespace {
         }
     };
 
-
     struct AStarCompositionSearch : AStarSearch {
         floatarray &g1, &g2; // well, that's against our convention,
         CompositionFst &c;   // but I let it go since it's so local.
@@ -278,7 +165,7 @@ namespace {
         }
     };
 
-    struct AStarN : AStarSearch {
+    /*struct AStarN : AStarSearch {
         narray<floatarray> &g;
         narray< autodel<CompositionFst> > &c;
         int n;
@@ -299,20 +186,19 @@ namespace {
         : AStarSearch(*c[0]), g(g), c(c), n(g.length()) {
             CHECK_ARG(c.length() == n - 1);
         }
-    };
+    };*/
 
     bool a_star2_internal(intarray &inputs,
-                                    intarray &vertices1,
-                                    intarray &vertices2,
-                                    intarray &outputs,
-                                    floatarray &costs,
-                                    IGenericFst &fst1,
-                                    IGenericFst &fst2,
-                                    CompositionFst& composition) {
+                          intarray &vertices1,
+                          intarray &vertices2,
+                          intarray &outputs,
+                          floatarray &costs,
+                          IGenericFst &fst1,
+                          IGenericFst &fst2,
+                          floatarray &g1,
+                          floatarray &g2,
+                          CompositionFst& composition) {
         intarray vertices;
-        floatarray g1, g2;
-        a_star_backwards(g1, fst1);
-        a_star_backwards(g2, fst2);
         AStarCompositionSearch a(g1, g2, composition);
         if(!a.loop())
             return false;
@@ -323,14 +209,15 @@ namespace {
         return true;
     }
 
+    /*
     // Pointers - eek... I know.
     // But we don't have a non-owning wrapper yet, do we?
     // I don't like the idea of autodels around all IGenericFsts
     // just to take them back before the destruction. --IM
-    bool a_star_N_internal(intarray &inputs,
+    bool a_star_N_internal(colib::intarray &inputs,
                            narray<intarray> &vertices,
-                           intarray &outputs,
-                           floatarray &costs,
+                           colib::intarray &outputs,
+                           colib::floatarray &costs,
                            narray<IGenericFst *> &fsts,
                            narray< autodel<CompositionFst> > &compositions) {
         intarray v;
@@ -351,13 +238,43 @@ namespace {
         }
         move(vertices[n - 1], v);
         return true;
+    }*/
+
+}
+
+namespace ocropus {
+    bool a_star(intarray &inputs,
+                intarray &vertices,
+                intarray &outputs,
+                floatarray &costs,
+                OcroFST &fst) {
+        AStarSearch a(fst);
+        if(!a.loop())
+            return false;
+        if(!a.reconstruct_vertices(vertices))
+            return false;
+        a.reconstruct_edges(inputs, outputs, costs, vertices);
+        return true;
     }
 
-    bool a_star_N(intarray &inputs,
-                               narray<intarray> &vertices,
-                               intarray &outputs,
-                               floatarray &costs,
-                               narray<IGenericFst *> &fsts) {
+    double a_star(nustring &result, OcroFST &fst) {
+        intarray inputs;
+        intarray vertices;
+        intarray outputs;
+        floatarray costs;
+        if(!a_star(inputs, vertices, outputs, costs, fst))
+            return 1e38;
+        remove_epsilons(result, outputs);
+        return sum(costs);
+    }
+}
+
+namespace {
+    /*bool a_star_N(colib::intarray &inputs,
+                       narray<intarray> &vertices,
+                       colib::intarray &outputs,
+                       colib::floatarray &costs,
+                       narray<OcroFST *> &fsts) {
         int n = fsts.length();
         vertices.resize(n);
         if(n == 0)
@@ -386,46 +303,30 @@ namespace {
             compositions[i]->move2();
         }
         return result;
-    }
+    }*/
 
 }
 
 namespace ocropus {
-    bool a_star(intarray &inputs,
-                intarray &vertices,
-                intarray &outputs,
-                floatarray &costs,
-                IGenericFst &fst) {
-        AStarSearch a(fst);
-        if(!a.loop())
-            return false;
-        if(!a.reconstruct_vertices(vertices))
-            return false;
-        a.reconstruct_edges(inputs, outputs, costs, vertices);
-        return true;
-    }
 
-    void a_star_backwards(floatarray &costs_for_all_nodes, IGenericFst &fst) {
-        autodel<IGenericFst> reverse(make_StandardFst());
-        fst_copy_reverse(*reverse, fst, true); // creates an extra vertex
-        AStarSearch a(*reverse);
-        a.loop();
-        copy(costs_for_all_nodes, a.g);
-        costs_for_all_nodes.pop(); // remove the extra vertex
-    }
 
     bool a_star_in_composition(intarray &inputs,
                                intarray &vertices1,
                                intarray &vertices2,
                                intarray &outputs,
                                floatarray &costs,
-                               IGenericFst &fst1,
-                               IGenericFst &fst2) {
+                               OcroFST &fst1,
+                               OcroFST &fst2) {
         autodel<CompositionFst> composition(make_CompositionFst(&fst1, &fst2));
         bool result;
         try {
+            floatarray g1, g2;
+            fst1.calculateHeuristics();
+            fst2.calculateHeuristics();
             result = a_star2_internal(inputs, vertices1, vertices2, outputs,
-                                      costs, fst1, fst2, *composition);
+                                      costs, fst1, fst2,
+                                      fst1.heuristics(),
+                                      fst2.heuristics(), *composition);
         } catch(...) {
             composition->move1();
             composition->move2();
@@ -436,15 +337,65 @@ namespace ocropus {
         return result;
     }
 
+    void a_star_backwards(floatarray &costs_for_all_nodes, IGenericFst &fst) {
+        autodel<IGenericFst> reverse(make_OcroFST());
+        fst_copy_reverse(*reverse, fst, true); // creates an extra vertex
+        AStarSearch a(*reverse);
+        a.loop();
+        copy(costs_for_all_nodes, a.g);
+        costs_for_all_nodes.pop(); // remove the extra vertex
+    }
+
+
+
+
     bool a_star_in_composition(intarray &inputs,
-                 intarray &vertices1,
-                 intarray &vertices2,
-                 intarray &vertices3,
-                 intarray &outputs,
-                 floatarray &costs,
-                 IGenericFst &fst1,
-                 IGenericFst &fst2,
-                 IGenericFst &fst3) {
+                               intarray &vertices1,
+                               intarray &vertices2,
+                               intarray &outputs,
+                               floatarray &costs,
+                               OcroFST &fst1,
+                               floatarray &g1,
+                               OcroFST &fst2,
+                               floatarray &g2) {
+        autodel<CompositionFst> composition(make_CompositionFst(&fst1, &fst2));
+        bool result;
+        try {
+            result = a_star2_internal(inputs, vertices1, vertices2, outputs,
+                                      costs, fst1, fst2, g1, g2, *composition);
+        } catch(...) {
+            composition->move1();
+            composition->move2();
+            throw;
+        }
+        composition->move1();
+        composition->move2();
+        return result;
+    }
+
+    double a_star(nustring &result, OcroFST &fst1, OcroFST &fst2) {
+        intarray inputs;
+        intarray v1;
+        intarray v2;
+        intarray outputs;
+        floatarray costs;
+        if(!a_star_in_composition(inputs, v1, v2, outputs, costs, fst1, fst2))
+            return 1e38;
+        remove_epsilons(result, outputs);
+        return sum(costs);
+    }
+
+
+
+/*    bool a_star_in_composition(colib::intarray &inputs,
+                 colib::intarray &vertices1,
+                 colib::intarray &vertices2,
+                 colib::intarray &vertices3,
+                 colib::intarray &outputs,
+                 colib::floatarray &costs,
+                 colib::IGenericFst &fst1,
+                 colib::IGenericFst &fst2,
+                 colib::IGenericFst &fst3) {
         narray<intarray> v;
         narray<IGenericFst *> fsts(3);
         fsts[0] = &fst1;
@@ -456,20 +407,6 @@ namespace ocropus {
         move(vertices2, v[1]);
         move(vertices3, v[2]);
         return result;
-    }
-
-    void a_star(nustring &result, IGenericFst &fst) {
-        intarray inputs;
-        intarray vertices;
-        intarray outputs;
-        floatarray costs;
-        a_star(inputs, vertices, outputs, costs, fst);
-        for(int i = 0; i < outputs.length(); i++) {
-            if(outputs[i])
-                result.push(nuchar(outputs[i]));
-        }
-    }
+    }*/
 
 };
-
-#endif
