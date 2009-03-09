@@ -41,7 +41,7 @@ using namespace colib;
 
 namespace {
     Logger log_main("lineseg.seg-cuts");
-    
+
     void combine_segmentations(intarray &dst, intarray &src) {
         CHECK_ARG(samedims(dst, src));
         int n = max(dst) + 1;
@@ -383,6 +383,10 @@ namespace ocropus {
             small_merge_threshold = 1;
         }
 
+        const char *name() {
+            return "curvedcut";
+        }
+
         virtual const char *description() {
             return "curved cut segmenter";
         }
@@ -478,6 +482,10 @@ namespace ocropus {
             small_merge_threshold = 0;
         }
 
+        const char *name() {
+            return "curvedcut";
+        }
+
         virtual const char *description() {
             return "curved cut segmenter";
         }
@@ -558,7 +566,7 @@ namespace ocropus {
         }
     };
 
-    
+
 
     ISegmentLine *make_CurvedCutSegmenter() {
         return new CurvedCutSegmenterToISegmentLineAdapter();
@@ -572,11 +580,11 @@ namespace ocropus {
             optional_check_background_is_lighter(image);
             binarize_simple(image);
             invert(image);
-            
+
             intarray ccseg;
             copy(ccseg, image);
             label_components(ccseg);
-            
+
             CurvedCutSegmenterToISegmentLineAdapter::charseg(result_segmentation, orig_image);
             combine_segmentations(result_segmentation, ccseg);
         }

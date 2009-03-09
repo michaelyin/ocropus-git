@@ -26,11 +26,12 @@
 #ifndef h_voronoi_ocropus__
 #define h_voronoi_ocropus__
 
-#include "colib.h"
+#include "colib/colib.h"
+#include "ocropus.h"
 
 namespace ocropus {
 
-    struct SegmentPageByVORONOI : colib::ISegmentPage {
+    struct SegmentPageByVORONOI : ISegmentPage {
         bool  remove_noise; // remove noise from output image
         int   nm;
         int   sr;
@@ -45,6 +46,10 @@ namespace ocropus {
             ta=-1; // use default value
         }
         ~SegmentPageByVORONOI() {}
+
+        const char *name() {
+            return "segvoronoi";
+        }
 
         const char *description() {
             return "segment page by Voronoi algorithm\n";
@@ -64,10 +69,10 @@ namespace ocropus {
             else throw "unknown parameter";
         }
 
-        void segment(colib::intarray &image,colib::bytearray &in);
+        void segment(intarray &image,bytearray &in);
     };
 
-    colib::ISegmentPage *make_SegmentPageByVORONOI();
+    ISegmentPage *make_SegmentPageByVORONOI();
 
 }
 

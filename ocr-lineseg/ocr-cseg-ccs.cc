@@ -24,8 +24,8 @@
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include "colib/colib.h"
-#include "imgio.h"
-#include "imglib.h"
+#include "iulib/imgio.h"
+#include "iulib/imglib.h"
 #include "ocropus.h"
 
 using namespace ocropus;
@@ -37,6 +37,10 @@ struct SegmentLineByCCS : ISegmentLine {
 
     const char *description() {
         return "segment characters by 1D projection\n";
+    }
+
+    const char *name() {
+        return "segccs";
     }
 
     void init(const char **argv) {

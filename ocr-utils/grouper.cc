@@ -121,6 +121,10 @@ namespace ocropus {
             else throw "unknown parameter";
         }
 
+        const char *name() {
+            return "simplegrouper";
+        }
+
         const char *description() {
             return "SimpleGrouper";
         }
@@ -232,6 +236,28 @@ namespace ocropus {
                     }
                 }
             if(grow>0) binary_dilate_circle(mask,grow);
+        }
+
+        // Get a mask at a given location
+
+        void getMaskAt(bytearray &mask,int index,rectangle &b) {
+            CHECK(b.x0>-1000 && b.x1<10000 && b.y0>-1000 && b.y1<10000);
+            mask.resize(b.width(),b.height());
+            mask = 0;
+            intarray &segs = segments[index];
+            int w = b.width(), h = b.height();
+            for(int i=0;i<w;i++) {
+                int x = b.x0+i;
+                if(unsigned(x)>=labels.dim(0)) continue;
+                for(int j=0;j<h;j++) {
+                    int y = b.y0+j;
+                    if(unsigned(y)>=labels.dim(1)) continue;
+                    int label = labels(b.x0+i,b.y0+j);
+                    if(first_index_of(segs,label)>=0) {
+                        mask(i,j) = 255;
+                    }
+                }
+            }
         }
 
         // Extract the masked character from the source image/source
@@ -393,6 +419,10 @@ namespace ocropus {
             for(int i=0;i<boxes.length();i++) {
                 int start = min(segments[i]);
                 int end = max(segments[i]);
+                int id = (start << 16) + end;
+                if(!segments[i].length())
+                    id = 0;
+
                 int space_state = -1;
                 float yes = spaces(i,0);
                 float no = spaces(i,1);
@@ -403,13 +433,13 @@ namespace ocropus {
                 for(int j=0;j<classifications.dim(1);j++) {
                     if(classifications(i,j)==INFINITY) continue;
                     if(space_state<0) {
-                        fst.addTransition(states[start],states[end+1],j,classifications(i,j));
+                        fst.addTransition(states[start],states[end+1],j,classifications(i,j), id);
                     } else {
                         if(no<INFINITY) {
-                            fst.addTransition(states[start],states[end+1],j,classifications(i,j)+no);
+                            fst.addTransition(states[start],states[end+1],j,classifications(i,j)+no, id);
                         }
-                        fst.addTransition(states[start],space_state,j,classifications(i,j));
-                        fst.addTransition(space_state,states[end+1],' ',yes);
+                        fst.addTransition(states[start],space_state,j,classifications(i,j), id);
+                        fst.addTransition(space_state,states[end+1],' ',yes, 0);
                     }
                     // printf("%d,%d : %d -> %d\n",i,j,start,end);
                 }

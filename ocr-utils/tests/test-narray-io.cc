@@ -1,6 +1,7 @@
-#include "colib.h"
+#include <colib/colib.h>
 #include "narray-io.h"
 
+using namespace colib;
 using namespace ocropus;
 
 static void test_int32_io() {

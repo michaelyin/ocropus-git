@@ -30,7 +30,7 @@
 #include "ocr-layout.h"
 
 namespace ocropus {
-    colib::ICleanupBinary *make_DocCleanConComp();
+    ICleanupBinary *make_DocCleanConComp();
 };
 
 #endif

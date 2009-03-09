@@ -41,6 +41,10 @@ struct SegmentPageByMorphTrivial : ISegmentPage {
         // nothing to be done
     }
 
+    const char *name() {
+        return "segmorphtriv";
+    }
+
     void segment(intarray &image,bytearray &in) {
         param_int cwidth("cwidth",1,"cleaning width");
         param_int cheight("cheight",1,"cleaning height");

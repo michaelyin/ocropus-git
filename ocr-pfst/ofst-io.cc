@@ -14,7 +14,7 @@
 // limitations under the License.
 //
 // Project:
-// File: fst-io.cc
+// File: ofst-io.cc
 // Purpose: OpenFST-compatible I/O
 // Responsible: mezhirov
 // Reviewer:
@@ -31,6 +31,7 @@
 #include "langmods.h"
 
 using namespace colib;
+using namespace ocropus;
 
 enum {
     // They say it also encodes endianness. But I haven't seen any BE variant.

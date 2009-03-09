@@ -25,6 +25,9 @@
 #define h_ocr_openfst_
 
 #include "colib/colib.h"
+#include "ocrinterfaces.h"
+
+using namespace ocropus;
 
 // This is a forward declaration for StdVectorFst.
 namespace fst {
@@ -111,7 +114,7 @@ namespace ocropus {
     void fst_add_ascii_symbols(fst::StdVectorFst &a,bool input,bool output);
     void fst_add_to_each_transition(fst::StdVectorFst &fst,int ilabel,int olabel,float cost,bool eps_too);
 
-    struct FstBuilder : colib::IGenericFst {
+    struct FstBuilder : IGenericFst {
         virtual fst::StdVectorFst *take() = 0;
     };
     FstBuilder *make_FstBuilder(fst::StdVectorFst *fst = NULL);

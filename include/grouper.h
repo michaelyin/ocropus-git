@@ -33,7 +33,7 @@ namespace ocropus {
 
     void sort_by_xcenter(colib::intarray &);
 
-    struct IGrouper : colib::IComponent {
+    struct IGrouper : IComponent {
         // Set the grouper for iterating over the elements of the
         // segmentation.
 
@@ -52,6 +52,10 @@ namespace ocropus {
         // Optionally, expand the mask by the given margin.
 
         virtual void getMask(colib::rectangle &r,colib::bytearray &mask,int i,int margin) = 0;
+
+        // Get the mask around a given rectangle.
+
+        virtual void getMaskAt(bytearray &mask,int index,rectangle &b) = 0;
 
         // Get the bounding box for the group i.
 

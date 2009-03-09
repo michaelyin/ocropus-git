@@ -301,13 +301,13 @@ namespace {
         }
     };
 
-    bool a_star2_internal(colib::intarray &inputs,
-                                    colib::intarray &vertices1,
-                                    colib::intarray &vertices2,
-                                    colib::intarray &outputs,
-                                    colib::floatarray &costs,
-                                    colib::IGenericFst &fst1,
-                                    colib::IGenericFst &fst2,
+    bool a_star2_internal(intarray &inputs,
+                                    intarray &vertices1,
+                                    intarray &vertices2,
+                                    intarray &outputs,
+                                    floatarray &costs,
+                                    IGenericFst &fst1,
+                                    IGenericFst &fst2,
                                     CompositionFst& composition) {
         intarray vertices;
         floatarray g1, g2;
@@ -327,10 +327,10 @@ namespace {
     // But we don't have a non-owning wrapper yet, do we?
     // I don't like the idea of autodels around all IGenericFsts
     // just to take them back before the destruction. --IM
-    bool a_star_N_internal(colib::intarray &inputs,
+    bool a_star_N_internal(intarray &inputs,
                            narray<intarray> &vertices,
-                           colib::intarray &outputs,
-                           colib::floatarray &costs,
+                           intarray &outputs,
+                           floatarray &costs,
                            narray<IGenericFst *> &fsts,
                            narray< autodel<CompositionFst> > &compositions) {
         intarray v;
@@ -353,10 +353,10 @@ namespace {
         return true;
     }
 
-    bool a_star_N(colib::intarray &inputs,
+    bool a_star_N(intarray &inputs,
                                narray<intarray> &vertices,
-                               colib::intarray &outputs,
-                               colib::floatarray &costs,
+                               intarray &outputs,
+                               floatarray &costs,
                                narray<IGenericFst *> &fsts) {
         int n = fsts.length();
         vertices.resize(n);
@@ -414,13 +414,13 @@ namespace ocropus {
         costs_for_all_nodes.pop(); // remove the extra vertex
     }
 
-    bool a_star_in_composition(colib::intarray &inputs,
-                               colib::intarray &vertices1,
-                               colib::intarray &vertices2,
-                               colib::intarray &outputs,
-                               colib::floatarray &costs,
-                               colib::IGenericFst &fst1,
-                               colib::IGenericFst &fst2) {
+    bool a_star_in_composition(intarray &inputs,
+                               intarray &vertices1,
+                               intarray &vertices2,
+                               intarray &outputs,
+                               floatarray &costs,
+                               IGenericFst &fst1,
+                               IGenericFst &fst2) {
         autodel<CompositionFst> composition(make_CompositionFst(&fst1, &fst2));
         bool result;
         try {
@@ -436,15 +436,15 @@ namespace ocropus {
         return result;
     }
 
-    bool a_star_in_composition(colib::intarray &inputs,
-                 colib::intarray &vertices1,
-                 colib::intarray &vertices2,
-                 colib::intarray &vertices3,
-                 colib::intarray &outputs,
-                 colib::floatarray &costs,
-                 colib::IGenericFst &fst1,
-                 colib::IGenericFst &fst2,
-                 colib::IGenericFst &fst3) {
+    bool a_star_in_composition(intarray &inputs,
+                 intarray &vertices1,
+                 intarray &vertices2,
+                 intarray &vertices3,
+                 intarray &outputs,
+                 floatarray &costs,
+                 IGenericFst &fst1,
+                 IGenericFst &fst2,
+                 IGenericFst &fst3) {
         narray<intarray> v;
         narray<IGenericFst *> fsts(3);
         fsts[0] = &fst1;

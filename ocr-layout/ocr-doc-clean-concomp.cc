@@ -45,6 +45,10 @@ namespace ocropus {
             // nothing to be done
         }
 
+        const char *name() {
+            return "doccleancon";
+        }
+
 
         void cleanup(bytearray &out,bytearray &in) {
 

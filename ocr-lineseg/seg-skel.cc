@@ -30,8 +30,8 @@
 #include <math.h>
 #include <ctype.h>
 #include "colib/colib.h"
-#include "imgio.h"
-#include "imglib.h"
+#include "iulib/imgio.h"
+#include "iulib/imglib.h"
 #include "segmentation.h"
 #include "imgio.h"
 
@@ -118,6 +118,9 @@ namespace ocropus {
     class SkelSegmenter : public ISegmentLine {
         virtual const char *description() {
             return "skeleton segmenter";
+        }
+        const char *name() {
+            return "skelseg";
         }
         virtual void init(const char **argv=0) {
         }

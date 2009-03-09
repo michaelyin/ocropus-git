@@ -332,7 +332,7 @@ namespace ocropus {
 
     bool is_oversegmentation_of(colib::intarray &s1, colib::intarray &s2) {
         CHECK_ARG(samedims(s1, s2));
-        inthash< integer<-1> > colormap;
+        inthash< Integer<-1> > colormap;
         for(int i = 0; i < s1.length1d(); i++) {
             int &c1 = colormap(s1.at1d(i));
             int &c2 = s2.at1d(i);

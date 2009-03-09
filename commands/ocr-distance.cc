@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 #include "colib/colib.h"
+#include "ocropus.h"
 
 using namespace ocropus;
 using namespace colib;

@@ -236,7 +236,7 @@ namespace ocropus {
                 message, val.ord(), val.ord(), val.ord());
         fflush(get_log()->file);
     }
-    void Logger::operator()(const char *description, colib::intarray &a, float zoom) {
+    void Logger::operator()(const char *description, intarray &a, float zoom) {
         if(!enabled) return;
         if(a.rank() == 2) {
             int w = (zoom==100.) ? a.dim(0) : int(a.dim(0)*zoom/100.+.5);
@@ -249,7 +249,7 @@ namespace ocropus {
         }
     }
 
-    void Logger::recolor(const char *description, colib::intarray &a, float zoom) {
+    void Logger::recolor(const char *description, intarray &a, float zoom) {
         if(!enabled) return;
         if(a.rank() == 2) {
             int w = (zoom==100.) ? a.dim(0) : int(a.dim(0)*zoom/100.+.5);
@@ -264,7 +264,7 @@ namespace ocropus {
             text_write(f, a);
         }
     }
-    void Logger::operator()(const char *description, colib::bytearray &a, float zoom) {
+    void Logger::operator()(const char *description, bytearray &a, float zoom) {
         if(!enabled) return;
         if(a.rank() == 2) {
             int w = (zoom==100.) ? a.dim(0) : int(a.dim(0)*zoom/100.+.5);
@@ -276,7 +276,7 @@ namespace ocropus {
             text_write(f, a);
         }
     }
-    void Logger::html(colib::bytearray &a) {
+    void Logger::html(bytearray &a) {
         if(!enabled) return;
         if(a.rank() == 2) {
             stdio f = logImageHtml();
@@ -290,7 +290,7 @@ namespace ocropus {
         if(!enabled) return;
         fprintf(get_log()->file, "%s\n", s);
     }
-    void Logger::html_border(colib::bytearray &img) {
+    void Logger::html_border(bytearray &img) {
         if(!enabled) return;
         if(img.rank() == 2) {
             stdio f = logImageHtmlBorder();
@@ -301,12 +301,12 @@ namespace ocropus {
         }
     }
 
-    void Logger::operator()(const char *description, colib::floatarray &a) {
+    void Logger::operator()(const char *description, floatarray &a) {
         if(!enabled) return;
         stdio f = logText(description);
         text_write(f, a);
     }
-    void Logger::operator()(const char *message, colib::nustring &val) {
+    void Logger::operator()(const char *message, nustring &val) {
         if(!enabled) return;
         char *buf = val.newUtf8Encode();
         putIndent();
@@ -314,13 +314,13 @@ namespace ocropus {
         fflush(get_log()->file);
         delete[] buf;
     }
-    void Logger::html(colib::nustring &val) {
+    void Logger::html(nustring &val) {
         char *buf = val.newUtf8Encode();
         fprintf(get_log()->file, "%s", buf);
         fflush(get_log()->file);
         delete[] buf;
     }
-    void Logger::operator()(const char *description, colib::rectangle &val) {
+    void Logger::operator()(const char *description, rectangle &val) {
         if(!enabled) return;
         putIndent();
         fprintf(get_log()->file, "%s: rectangle(%d,%d,%d,%d)<BR>\n",
@@ -328,7 +328,7 @@ namespace ocropus {
         fflush(get_log()->file);
     }
 
-    void Logger::operator()(const char *message, colib::IGenericFst &val) {
+    void Logger::operator()(const char *message, IGenericFst &val) {
         if(!enabled) return;
         nustring s;
         val.bestpath(s);

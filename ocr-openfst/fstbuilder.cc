@@ -53,6 +53,9 @@ namespace {
         FstBuilderImpl() : fst() {
             clear();
         }
+        const char *name() {
+            return "fstbuilder";
+        }
         const char *description() {
             return "FstBuilder";
         }

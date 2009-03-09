@@ -53,6 +53,10 @@ namespace ocropus {
 binarization algorithm based on integral images.\n";
         }
 
+        const char *name() {
+            return "binsauvola";
+        }
+
         void set(const char *key,double value) {
             if(!strcmp(key,"k")) this->k = value;
             else if(!strcmp(key,"w")) this->w = int(value);

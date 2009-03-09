@@ -40,8 +40,8 @@ namespace ocropus {
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include "imgio.h"
-#include "imglib.h"
+#include "iulib/imgio.h"
+#include "iulib/imglib.h"
 #include "allheaders.h" // leptonica image class
 
 #include "ocr-text-image-seg-leptonica.h"
