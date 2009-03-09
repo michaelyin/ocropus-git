@@ -29,7 +29,7 @@ using namespace ocropus;
 int main() {
     autodel<IBinarize> binarizer(make_BinarizeBySauvola());
     bytearray image;
-    read_image_gray(image, "ocroscript/tests/images/blob600.png");
+    read_image_gray(image, "data/testimages/blob600.png");
     binarizer->description();
     bytearray out;
     floatarray in;

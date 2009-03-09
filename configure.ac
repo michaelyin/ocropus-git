@@ -31,11 +31,11 @@ AC_INIT(ocropus, 0.3, )
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_SRCDIR([ocr-utils/ocr-utils.cc])
 
-tesseract_prefix=/usr/local
+tesseract_prefix=/usr
 AC_ARG_WITH(tesseract,
 [
   --with-tesseract=...    the root of a non-default tesseract installation.
-                          (default is /usr/local/)
+                          (default is /usr/)
                           Should be the same directory as was given to
                           tesseract's configure script through --prefix=],
 AC_SUBST(tesseract_prefix,$withval))
@@ -180,8 +180,8 @@ fi
 AM_CONDITIONAL([use_leptonica], [test x$use_leptonica == xyes])
 
 
-# --- SDL (optional for graphical debugging in ocroscript) ---
-AC_ARG_WITH(SDL,[  --without-SDL           disable SDL (graphical debugging for ocroscript)],
+# --- SDL (optional for graphical debugging) ---
+AC_ARG_WITH(SDL,[  --without-SDL           disable SDL (graphical debugging)],
     [ac_cv_use_sdl=$withval], [ac_cv_use_sdl=yes])
 if test x$ac_cv_use_sdl != xno; then
     AC_CHECK_LIB(SDL,SDL_Init,,AC_SUBST(nosdl,1))
@@ -216,7 +216,7 @@ OLDLDFLAGS="$LDFLAGS"
 LDFLAGS="$LDFLAGS -Wl,-E"
 AC_TRY_LINK([],[],[],[LDFLAGS="$OLDLDFLAGS"])
 
-AC_CONFIG_FILES([Makefile ocroscript/Makefile ext/tolua++/Makefile ext/lua/Makefile])
+AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
 
 echo
