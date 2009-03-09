@@ -76,8 +76,6 @@ opts.Add(PathOption('tesseract', 'The installation root of tesseract', "/usr/loc
 opts.Add(PathOption('leptonica', 'The installation root of leptonica', "/usr/local"))
 
 ### configuration options
-opts.Add(BoolOption('openfst', 'Set to build with openFST', "yes"))
-
 ### optional build steps
 opts.Add(BoolOption('test', "Run some tests after the build", "no"))
 opts.Add(BoolOption('style', 'Check style', "no"))
@@ -116,12 +114,7 @@ assert conf.CheckLib('pthread')
 
 ### OpenFST
 
-if env["openfst"]:
-    env.Append(LIBS=["fst"])
-    env.Append(CPPDEFINES=['HAVE_FST'])
-    assert conf.CheckLibWithHeader('fst', 'fst/fst.h', 'C++')
-else:
-    sources = [s for s in sources if not "/fst" in s]
+sources = [s for s in sources if not "/fst" in s]
 
 ### SDL
 

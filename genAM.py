@@ -9,13 +9,6 @@ extradirs = """
     ext/voronoi
 """.split()
 
-# only add these files if openfst is enabled
-fst = """
-    ocr-openfst/fstbuilder.cc
-    ocr-openfst/fstutil.cc
-    ocr-openfst/fstmodels.cc
-""".split()
-
 # only add these files if tesseract is enabled
 tess = """
     ocr-tesseract/tesseract.cc
@@ -28,7 +21,7 @@ exclude = """
 """.split()
 
 # optional files
-exclude += fst + tess
+exclude += tess
 
 # some stupid flags for switching between writing to Makefile.am and stdout
 TLAM = True
@@ -117,11 +110,6 @@ word_DATA = $(srcdir)/data/words/*
 
 # optional stuff
 print
-print "if ! nofst"
-print "    AM_CPPFLAGS += -DHAVE_FST"
-print "    libocropus_a_SOURCES +=" + s.join(" $(srcdir)/"+f for f in fst)
-print "endif"
-print
 print "if ! notesseract"
 print "    AM_CPPFLAGS += -I@tessheaders@ -DHAVE_TESSERACT"
 print "    libocropus_a_SOURCES +=" + s.join(" $(srcdir)/"+f for f in tess)
@@ -204,7 +192,6 @@ if OSAM:
 
 
 optpkgs = """
-    ocroscript/fst.pkg
     ocroscript/lepton.pkg
     ocroscript/sdl.pkg
 """.split()
