@@ -72,7 +72,7 @@ opts.Add('warn', 'Compiler flags for warnings',
 ### path options
 opts.Add(PathOption('prefix', 'The installation root for OCRopus ', "/usr/local"))
 opts.Add(PathOption('iulib', 'The installation root of iulib', "/usr/local"))
-opts.Add(PathOption('tesseract', 'The installation root of tesseract', "/usr/local"))
+opts.Add(PathOption('tesseract', 'The installation root of tesseract', "/usr"))
 opts.Add(PathOption('leptonica', 'The installation root of leptonica', "/usr/local"))
 
 ### configuration options
