@@ -6,7 +6,6 @@ import glob, os, sys, string as s
 
 # extra directories for libocropus
 extradirs = """
-    ext/voronoi
 """.split()
 
 # only add these files if openfst is enabled
