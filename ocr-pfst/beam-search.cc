@@ -1,4 +1,4 @@
-// Copyright 2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
+// Copyright 2008-2009 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
 //
 // You may not use this file except under the terms of the accompanying license.
@@ -13,340 +13,325 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Project:
+// Project: ocrofst
 // File: beam-search.cc
-// Purpose:
+// Purpose: beam search
 // Responsible: mezhirov
 // Reviewer:
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
-#ifndef beam_search_h_
-#define beam_search_h_
-
-#include "ocropus.h"
-#include "langmods.h"
+#include "ocr-pfst.h"
+#include "fst-heap.h"
 
 using namespace colib;
 using namespace ocropus;
 
 namespace {
-    // FIXME: this version of NBest (with add_replacing_id) proposed for iulib
-    class NBest {
-    public:
-        int n;
-        int fill;
-        intarray ids;
-        intarray tags;
-        doublearray values;
-        /// constructor for a NBest data structure of size n
-        NBest(int n):n(n) {
-            ids.resize(n+1);
-            tags.resize(n+1);
-            values.resize(n+1);
-            clear();
-        }
-        /// remove all elements
-        void clear() {
-            fill = 0;
-            for(int i=0;i<=n;i++) ids[i] = -1;
-            for(int i=0;i<=n;i++) values[i] = -1e38;
-        }
-        void move_value(int id, int tag, double value, int start, int end) {
-            int i = start;
-            while(i>end) {
-                if(values[i-1]>=value) break;
-                values[i] = values[i-1];
-                tags[i] = tags[i-1];
-                ids[i] = ids[i-1];
-                i--;
-            }
-            values[i] = value;
-            tags[i] = tag;
-            ids[i] = id;
-        }
 
-
-        /// add the id with the corresponding value
-        bool add(int id, int tag, double value) {
-            if(fill==n) {
-                if(values[n-1]>=value) return false;
-                move_value(id, tag, value, n-1, 0);
-            } else if(fill==0) {
-                values[0] = value;
-                ids[0] = id;
-                tags[0] = tag;
-                fill++;
-            } else {
-                move_value(id, tag, value, fill, 0);
-                fill++;
-            }
-            return true;
-        }
-
-        int find_id(int id) {
-            for(int i = 0; i < fill; i++) {
-                if(ids[i] == id)
-                    return i;
-            }
-            return -1;
-        }
-
-        /// This function will move the existing id up
-        /// instead of creating a new one.
-        bool add_replacing_id(int id, int tag, double value) {
-            int former = find_id(id);
-            if(former == -1)
-                return add(id, tag, value);
-            if(values[former]>=value)
-                return false;
-            move_value(id, tag, value, former, 0);
-            return true;
-        }
-
-        /// get the value corresponding to rank i
-        double value(int i) {
-            if(unsigned(i)>=unsigned(n)) throw "range error";
-            return values[i];
-        }
-        int tag(int i) {
-            if(unsigned(i)>=unsigned(n)) throw "range error";
-            return tags[i];
-        }
-        /// get the id corresponding to rank i
-        int operator[](int i) {
-            if(unsigned(i)>=unsigned(n)) throw "range error";
-            return ids[i];
-        }
-        /// get the number of elements in the NBest structure (between 0 and n)
-        int length() {
-            return fill;
-        }
-    };
-
-
-    struct Trail {
-        intarray ids;
-        intarray vertices;
+    /// A SearchTree contains all vertices that were ever touched during the
+    /// search, and can produce a prehistory for every ID.
+    struct SearchTree {
+        intarray parents;
+        intarray inputs;
         intarray outputs;
+        intarray v1; // vertices from FST 1
+        intarray v2; // vertices from FST 2
         floatarray costs;
-        float total_cost;
-        int vertex;
+
+        void clear() {
+            parents.clear();
+            inputs.clear();
+            outputs.clear();
+            v1.clear();
+            v2.clear();
+            costs.clear();
+        }
+        
+        void get(intarray &r_vertices1,
+                 intarray &r_vertices2,
+                 intarray &r_inputs,
+                 intarray &r_outputs,
+                 floatarray &r_costs,
+                 int id) {
+            intarray t_v1; // vertices
+            intarray t_v2; // vertices
+            intarray t_i; // inputs
+            intarray t_o; // outputs
+            floatarray t_c; // costs
+            int current = id;
+            while(current != -1) {
+                t_v1.push(v1[current]);
+                t_v2.push(v2[current]);
+                t_i.push(inputs[current]);
+                t_o.push(outputs[current]);
+                t_c.push(costs[current]);
+                current = parents[current];
+            }
+            
+            reverse(r_vertices1, t_v1);
+            reverse(r_vertices2, t_v2);
+            reverse(r_inputs, t_i);
+            reverse(r_outputs, t_o);
+            reverse(r_costs, t_c);
+        }
+
+        int add(int parent, int vertex1, int vertex2,
+                   int input, int output, float cost) {
+            int n = parents.length();
+            //logger.format("stree: [%d]: parent %d, v1 %d, v2 %d, cost %f",
+            //               n, parent, vertex1, vertex2, cost);
+            parents.push(parent);
+            v1.push(vertex1);
+            v2.push(vertex2);
+            inputs.push(input);
+            outputs.push(output);
+            costs.push(cost);
+            return n;
+        }
     };
+    
+    struct BeamSearch {
+        OcroFST &fst1;
+        OcroFST &fst2;
+        SearchTree stree;
 
-    void copy(Trail &a, Trail &b) {
-        copy(a.ids, b.ids);
-        copy(a.vertices, b.vertices);
-        copy(a.outputs, b.outputs);
-        copy(a.costs, b.costs);
-        a.total_cost = b.total_cost;
-        a.vertex = b.vertex;
-    }
+        intarray beam; // indices into stree
+        floatarray beamcost; // global cost, corresponds to the beam
 
-    // Traverse the beam; accept costs are not traversed
-    void radiate(narray<Trail> &new_beam,
-                 narray<Trail> &beam,
-                 IGenericFst &fst,
-                 double bound,
-                 int beam_width) {
-        NBest nbest(beam_width);
-        intarray all_ids;
-        intarray all_targets;
+        PriorityQueue nbest;
+        intarray all_inputs;
+        intarray all_targets1;
+        intarray all_targets2;
         intarray all_outputs;
         floatarray all_costs;
-        intarray parents;
+        intarray parent_trails; // indices into the beam
+        int beam_width;
+        int accepted_from1;
+        int accepted_from2;
+        float g_accept;   // best cost for accept so far
+        int best_so_far;  // ID into stree (-1 for start)
+        float best_cost_so_far;
 
-        for(int i = 0; i < beam.length(); i++) {
-            intarray ids;
-            intarray targets;
-            intarray outputs;
-            floatarray costs;
-            fst.arcs(ids, targets, outputs, costs, beam[i].vertex);
-            float max_acceptable_cost = bound - beam[i].total_cost;
-            if(max_acceptable_cost < 0) continue;
-            for(int j = 0; j < targets.length(); j++) {
-                if(costs[j] >= max_acceptable_cost)
+        BeamSearch(OcroFST &fst1, OcroFST &fst2, int beam_width): 
+                fst1(fst1),
+                fst2(fst2),
+                nbest(beam_width),
+                beam_width(beam_width),
+                accepted_from1(-1),
+                accepted_from2(-1) {
+        }
+
+        void clear() {
+            nbest.clear();
+            all_targets1.clear();
+            all_targets2.clear();
+            all_inputs.clear();
+            all_outputs.clear();
+            all_costs.clear();
+            parent_trails.clear();
+        }
+
+        void relax(int f1, int f2, int t1, int t2, double cost,
+                   int arc_id1, int arc_id2,
+                   int input, int intermediate, int output,
+                   double base_cost, int trail_index) {
+            //logger.format("relaxing %d %d -> %d %d (bcost %f, cost %f)", f1, f2, t1, t2, base_cost, cost);
+            
+            if(!nbest.add_replacing_id(t1 * fst2.nStates() + t2,
+                                       all_costs.length(),
+                                       - base_cost - cost))
+                return;
+            
+            //logger.format("nbest changed");
+            //nbest.log(logger);
+
+            if(input) {
+                // The candidate for the next beam is stored in all_XX arrays.
+                // (can we store it in the stree instead?)
+                all_inputs.push(input);
+                all_targets1.push(t1);
+                all_targets2.push(t2);
+                all_outputs.push(output);
+                all_costs.push(cost);
+                parent_trails.push(trail_index);
+            } else {
+                // Beam control hack
+                // -----------------
+                // if a node is important (changes nbest) AND its input is 0,
+                // then it's added to the CURRENT beam.
+                
+                //logger.format("pushing control point from trail %d to %d, %d",
+                              //trail_index, t1, t2);
+                int new_node = stree.add(beam[trail_index], t1, t2, input, output, cost);
+                beam.push(new_node);
+                beamcost.push(base_cost + cost);
+
+                // This is a stub entry indicating that the node should not
+                // be added to the next generation beam.
+                all_inputs.push(0);
+                all_targets1.push(-1);
+                all_targets2.push(-1);
+                all_outputs.push(0);
+                all_costs.push(0);
+                parent_trails.push(-1);
+            }
+        }
+
+        /// Call relax() for each arc going out of the given node.
+        void traverse(int n1, int n2, double cost, int trail_index) {
+            //logger.format("traversing %d %d", n1, n2);
+            intarray &o1 = fst1.outputs(n1);
+            intarray &i1 = fst1.inputs(n1);
+            intarray &t1 = fst1.targets(n1);
+            floatarray &c1 = fst1.costs(n1);
+
+            intarray &o2 = fst2.outputs(n2);
+            intarray &i2 = fst2.inputs(n2);
+            intarray &t2 = fst2.targets(n2);
+            floatarray &c2 = fst2.costs(n2);
+
+            // for optimization
+            int *O1 = o1.data;
+            int *O2 = o2.data;
+            int *I1 = i1.data;
+            int *I2 = i2.data;
+            int *T1 = t1.data;
+            int *T2 = t2.data;
+            float *C1 = c1.data;
+            float *C2 = c2.data;
+
+            // Relax outbound arcs in the composition
+            int k1, k2;
+            // relaxing fst1 epsilon moves
+            for(k1 = 0; k1 < o1.length() && !O1[k1]; k1++) {
+                relax(n1, n2, T1[k1], n2, C1[k1], k1, -1, 
+                      I1[k1], 0, 0, cost, trail_index);
+            }
+            // relaxing fst2 epsilon moves
+            for(k2 = 0; k2 < o2.length() && !I2[k2]; k2++) {
+                relax(n1, n2, n1, T2[k2], C2[k2], -1, k2, 0,
+                      0, O2[k2], cost, trail_index);
+            }
+            
+            // relaxing non-epsilon moves
+            while(k1 < o1.length() && k2 < i2.length()) {
+                while(k1 < o1.length() && O1[k1] < I2[k2]) k1++;
+                if(k1 >= o1.length()) break;
+                while(k2 < i2.length() && O1[k1] > I2[k2]) k2++;
+                while(k1 < o1.length() && k2 < i2.length() && O1[k1] == I2[k2]){
+                    for(int j = k2; j < i2.length() && O1[k1] == I2[j]; j++)
+                        relax(n1, n2, T1[k1], T2[j], C1[k1] + C2[j],
+                              k1, j, I1[k1], O1[k1], O2[j], cost, trail_index);
+                    k1++;
+                }
+            }
+        }
+
+        // The main loop iteration.
+        void radiate() {
+            clear();
+            
+            //logger("beam", beam);
+            //logger("beamcost", beamcost);
+
+            int control_beam_start = beam.length();
+            for(int i = 0; i < control_beam_start; i++)
+                try_accept(i);
+
+            // in this loop, traversal may add "control nodes" to the beam
+            for(int i = 0; i < beam.length(); i++) {
+                traverse(stree.v1[beam[i]], stree.v2[beam[i]],
+                         beamcost[i], i);
+            }
+
+            // try accepts from control beam nodes 
+            // (they're not going to the next beam)
+            for(int i = control_beam_start; i < beam.length(); i++)
+                try_accept(i);
+
+
+            intarray new_beam;
+            floatarray new_beamcost;
+            for(int i = 0; i < nbest.length(); i++) {
+                int k = nbest.tag(i);
+                if(parent_trails[k] < 0) // skip the control beam nodes
                     continue;
-                nbest.add_replacing_id(targets[j], all_targets.length(),
-                                       -costs[j]-beam[i].total_cost);
-                all_ids.push(ids[j]);
-                all_targets.push(targets[j]);
-                all_outputs.push(outputs[j]);
-                all_costs.push(costs[j]);
-                parents.push(i);
+                new_beam.push(stree.add(beam[parent_trails[k]],
+                                        all_targets1[k], all_targets2[k],
+                                        all_inputs[k], all_outputs[k],
+                                        all_costs[k]));
+                new_beamcost.push(beamcost[parent_trails[k]] + all_costs[k]);
+                //logger.format("to new beam: trail index %d, stree %d, target %d,%d",
+                        //k, new_beam[new_beam.length() - 1], all_targets1[k], all_targets2[k]);
+            }
+            move(beam, new_beam);
+            move(beamcost, new_beamcost);
+        }
+
+        // Relax the accept arc from the beam node number i.
+        void try_accept(int i) {
+            float a_cost1 = fst1.getAcceptCost(stree.v1[beam[i]]);
+            float a_cost2 = fst2.getAcceptCost(stree.v2[beam[i]]);
+            float candidate = beamcost[i] + a_cost1 + a_cost2;
+            if(candidate < best_cost_so_far) {
+                //logger.format("accept from beam #%d (stree %d), cost %f",
+                //              i, beam[i], candidate);
+                best_so_far = beam[i];
+                best_cost_so_far = candidate;
             }
         }
 
-        // build new beam
-        new_beam.resize(nbest.length());
-        for(int i = 0; i < new_beam.length(); i++) {
-            Trail &t = new_beam[i];
-            int k = nbest.tag(i);
-            Trail &parent = beam[parents[k]];
-            copy(t.ids, parent.ids);
-            t.ids.push(all_ids[k]);
-            copy(t.vertices, parent.vertices);
-            t.vertices.push(beam[parents[k]].vertex);
-            copy(t.outputs, parent.outputs);
-            t.outputs.push(all_outputs[k]);
-            copy(t.costs, parent.costs);
-            t.costs.push(all_costs[k]);
-            t.total_cost = -nbest.value(i);
-            t.vertex = all_targets[k];
-        }
-    }
+        void bestpath(intarray &v1, intarray &v2, intarray &inputs, 
+                      intarray &outputs, floatarray &costs) {
+            stree.clear();
 
-    void try_accepts(Trail &best_so_far,
-                     narray<Trail> &beam,
-                     IGenericFst &fst) {
-        float best_cost = best_so_far.total_cost;
-        for(int i = 0; i < beam.length(); i++) {
-            float accept_cost = fst.getAcceptCost(beam[i].vertex);
-            float candidate = beam[i].total_cost + accept_cost;
-            if(candidate < best_cost) {
-                copy(best_so_far, beam[i]);
-                best_cost = best_so_far.total_cost = candidate;
-            }
-        }
-    }
+            beam.resize(1);
+            beamcost.resize(1);
+            beam[0] = stree.add(-1, fst1.getStart(), fst2.getStart(), 0, 0, 0);
+            beamcost[0] = 0;
 
-    void try_finish(Trail &best_so_far,
-                     narray<Trail> &beam,
-                     IGenericFst &fst,
-                     int finish) {
-        float best_cost = best_so_far.total_cost;
-        for(int i = 0; i < beam.length(); i++) {
-            if(beam[i].vertex != finish) continue;
-            float candidate = beam[i].total_cost;
-            if(candidate < best_cost) {
-                copy(best_so_far, beam[i]);
-                best_cost = best_so_far.total_cost = candidate;
-            }
-        }
-    }
-}
+            best_so_far = 0;
+            best_cost_so_far = fst1.getAcceptCost(fst1.getStart()) + 
+                               fst2.getAcceptCost(fst1.getStart());
 
+            while(beam.length())
+                radiate();
+
+            stree.get(v1, v2, inputs, outputs, costs, best_so_far);
+            costs.push(fst1.getAcceptCost(stree.v1[best_so_far]) + 
+                       fst2.getAcceptCost(stree.v2[best_so_far]));
+
+            //logger("costs", costs);
+        }
+    };
+
+};
 
 namespace ocropus {
-
-    void beam_search(intarray &ids,
-                     intarray &vertices,
+    void beam_search(intarray &vertices1,
+                     intarray &vertices2,
+                     intarray &inputs,
                      intarray &outputs,
                      floatarray &costs,
-                     IGenericFst &fst,
-                     int beam_width,
-                     int override_start,
-                     int override_finish) {
-        narray<Trail> beam(1);
-        Trail &start = beam[0];
-        start.total_cost = 0;
-        if(override_start != -1)
-            start.vertex = override_start;
-        else
-            start.vertex = fst.getStart();
-
-        Trail best_so_far;
-        best_so_far.vertex = start.vertex;
-        best_so_far.total_cost = fst.getAcceptCost(start.vertex);
-
-        while(beam.length()) {
-            narray<Trail> new_beam;
-            if(override_finish != -1)
-                try_finish(best_so_far, beam, fst, override_finish);
-            else
-                try_accepts(best_so_far, beam, fst);
-            double bound = best_so_far.total_cost;
-            radiate(new_beam, beam, fst, bound, beam_width);
-            move(beam, new_beam);
-        }
-
-        move(ids, best_so_far.ids);
-        ids.push(0);
-        move(vertices, best_so_far.vertices);
-        vertices.push(best_so_far.vertex);
-        move(outputs, best_so_far.outputs);
-        outputs.push(0);
-        move(costs, best_so_far.costs);
-        costs.push(fst.getAcceptCost(best_so_far.vertex));
-    }
-
-    void beam_search(nustring &result,
-                     IGenericFst &fst,
+                     OcroFST &fst1, 
+                     OcroFST &fst2,
                      int beam_width) {
-        intarray ids;
-        intarray vertices;
-        intarray outputs;
-        floatarray costs;
-        beam_search(ids, vertices, outputs, costs, fst);
-        for(int i = 0; i < outputs.length(); i++) {
-            if(outputs[i])
-                result.push(nuchar(outputs[i]));
-        }
+        BeamSearch b(fst1, fst2, beam_width);
+        fst1.sortByOutput();
+        fst2.sortByInput();
+        b.bestpath(vertices1, vertices2, inputs, outputs, costs);
     }
 
-    // FIXME this needs to do the search without an explicit composition --tmb
-
-    void beam_search_in_composition(intarray &inputs,
-                                    intarray &vertices1,
-                                    intarray &vertices2,
-                                    intarray &outputs,
-                                    floatarray &costs,
-                                    IGenericFst &fst1,
-                                    IGenericFst &fst2,
-                                    int beam_width,
-                                    int override_start,
-                                    int override_finish) {
-        autodel<CompositionFst> composition(
-            make_CompositionFst(&fst1, &fst2));
-        try {
-            intarray vertices;
-            beam_search(inputs, vertices, outputs, costs, *composition,
-                        beam_width, override_start, override_finish);
-            composition->splitIndices(vertices1, vertices2, vertices);
-        } catch(...) {
-            composition->move1();
-            composition->move2();
-            throw;
-        }
-        composition->move1();
-        composition->move2();
-    }
-
-    void beam_search_in_composition(intarray &outputs,
-                                    floatarray &costs,
-                                    IGenericFst &fst1,
-                                    IGenericFst &fst2,
-                                    int beam_width,
-                                    int override_start,
-                                    int override_finish) {
-        intarray inputs, vertices1, vertices2;
-        beam_search_in_composition(inputs,vertices1,vertices2,outputs,costs,fst1,fst2,
-                                   beam_width,override_start,override_finish);
-    }
-    void beam_search_in_composition(intarray &outputs,
-                                    IGenericFst &fst1,
-                                    IGenericFst &fst2,
-                                    int beam_width,
-                                    int override_start,
-                                    int override_finish) {
-        intarray inputs, vertices1, vertices2;
-        floatarray costs;
-        beam_search_in_composition(inputs,vertices1,vertices2,outputs,costs,fst1,fst2,
-                                   beam_width,override_start,override_finish);
-    }
-
-    void beam_search_in_composition(nustring &result,
-                                    IGenericFst &fst1,
-                                    IGenericFst &fst2,
-                                    int beam_width,
-                                    int override_start,
-                                    int override_finish) {
-        intarray inputs, vertices1, vertices2, outputs;
-        floatarray costs;
-        beam_search_in_composition(inputs,vertices1,vertices2,outputs,costs,fst1,fst2,
-                                   beam_width,override_start,override_finish);
-        result.of(outputs);
+    double beam_search(nustring &result, OcroFST &fst1, OcroFST &fst2,
+                       int beam_width) {
+        intarray v1;
+        intarray v2;
+        intarray i;
+        intarray o;
+        floatarray c;
+        beam_search(v1, v2, i, o, c, fst1, fst2, beam_width);
+        remove_epsilons(result, o);
+        return sum(c);
     }
 }
-
-#endif

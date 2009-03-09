@@ -22,120 +22,14 @@
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
 
-#include "ocropus.h"
-#include "langmods.h"
+#include "ocr-pfst.h"
+#include "lattice.h"
 
 using namespace colib;
 using namespace ocropus;
 
 namespace {
-    struct Arc {
-        int from;
-        int to;
-        int input;
-        bool epsilon;
-        float cost;
-        int output;
-    };
-
-    Logger rescore_path_log("rescore.path");
-
-    struct StandardFst: IGenericFst {
-        objlist< narray<Arc> > arcs_; // we have a method arcs()
-        floatarray accept_costs;
-        int start;
-
-        StandardFst() : start(0) {}
-
-        const char *name() {
-            return "standardfst";
-        }
-
-        virtual const char *description() {
-            return "Lattice";
-        }
-
-        // reading
-        virtual int nStates() {
-            return arcs_.length();
-        }
-        virtual int getStart() {
-            return start;
-        }
-        virtual float getAcceptCost(int node) {
-            return accept_costs[node];
-        }
-        virtual void arcs(intarray &ids,
-                          intarray &targets,
-                          intarray &outputs,
-                          floatarray &costs,
-                          int from) {
-            narray<Arc> &a = arcs_[from];
-            makelike(ids, a);
-            makelike(targets, a);
-            makelike(outputs, a);
-            makelike(costs, a);
-            for(int i = 0; i < a.length(); i++) {
-                ids[i]     = a[i].input;
-                targets[i] = a[i].to;
-                outputs[i] = a[i].epsilon ? 0 : a[i].output;
-                costs[i]   = a[i].cost;
-            }
-        }
-        virtual void clear() {
-            arcs_.clear();
-            accept_costs.clear();
-            start = 0;
-        }
-
-        // writing
-        virtual int newState() {
-            arcs_.push();
-            accept_costs.push(1e38);
-            return arcs_.length() - 1;
-        }
-        virtual void addTransition(int from,int to,int output,float cost,int input) {
-            Arc a;
-            a.from = from;
-            a.to = to;
-            a.output = output;
-            a.cost = cost;
-            a.input = input;
-            a.epsilon = output == 0;
-            arcs_[from].push(a);
-        }
-        virtual void rescore(int from,int to,int output,float cost,int input) {
-            narray<Arc> &arcs = arcs_[from];
-            for(int i = 0; i < arcs.length(); i++) {
-                if(arcs[i].input == input &&
-                   arcs[i].to == to &&
-                   (arcs[i].output == output || (arcs[i].epsilon && !output))) {
-                    arcs[i].cost = cost;
-                    break;
-                }
-            }
-        }
-        virtual void setStart(int node) {
-            start = node;
-        }
-        virtual void setAccept(int node,float cost=0.0) {
-            accept_costs[node] = cost;
-        }
-        virtual int special(const char *s) {
-            return 0;
-        }
-        virtual void bestpath(nustring &result) {
-            a_star(result, *this);
-        }
-        virtual void save(const char *path) {
-            fst_write(path, *this);
-        }
-        virtual void load(const char *path) {
-            fst_read(*this, path);
-        }
-    };
-
-
+    /// FIXME: presort
     struct CompositionFstImpl : CompositionFst {
         autodel<IGenericFst> l1, l2;
         int override_start;
@@ -151,10 +45,6 @@ namespace {
             // (otherwise if CHECKs throw an exception, bad things happen)
             this->l1 = l1;
             this->l2 = l2;
-        }
-
-        const char *name() {
-            return "compositionfst";
         }
 
         IGenericFst *move1() {return l1.move();}
@@ -180,9 +70,9 @@ namespace {
             result1 = index / k;
             result2 = index % k;
         }
-        virtual void splitIndices(intarray &result1,
-                                  intarray &result2,
-                                  intarray &indices) {
+        virtual void splitIndices(colib::intarray &result1,
+                                  colib::intarray &result2,
+                                  colib::intarray &indices) {
             makelike(result1, indices);
             makelike(result2, indices);
             int k = l2->nStates();
@@ -271,36 +161,37 @@ namespace {
                 }
             }
         }
+
+        virtual void bestpath(nustring &s) {
+            throw "NIY";
+        }
     };
 }
 
 namespace ocropus {
-    IGenericFst *make_StandardFst() {
-        return new StandardFst();
-    }
-    CompositionFst *make_CompositionFst(IGenericFst *l1,
-                                          IGenericFst *l2,
-                                          int override_start,
-                                          int override_finish) {
+    CompositionFst *make_CompositionFst(OcroFST *l1,
+                                        OcroFST *l2,
+                                        int override_start,
+                                        int override_finish) {
         return new CompositionFstImpl(l1, l2,
                                       override_start, override_finish);
     }
 
     void rescore_path(IGenericFst &fst,
-                      intarray &inputs,
-                      intarray &vertices,
-                      intarray &outputs,
-                      floatarray &new_costs,
+                      colib::intarray &inputs,
+                      colib::intarray &vertices,
+                      colib::intarray &outputs,
+                      colib::floatarray &new_costs,
                       int override_start) {
         CHECK_ARG(vertices.length() == inputs.length());
         CHECK_ARG(vertices.length() == outputs.length());
         CHECK_ARG(vertices.length() == new_costs.length());
         CHECK_ARG(vertices.length() > 0);
-        rescore_path_log("inputs", inputs);
-        rescore_path_log("vertices", vertices);
-        rescore_path_log("outputs", outputs);
-        rescore_path_log("new_costs", new_costs);
-        rescore_path_log("override_start", override_start);
+        //rescore_path_log("inputs", inputs);
+        //rescore_path_log("vertices", vertices);
+        //rescore_path_log("outputs", outputs);
+        //rescore_path_log("new_costs", new_costs);
+        //rescore_path_log("override_start", override_start);
         int start;
         if(override_start != -1)
             start = override_start;
@@ -311,38 +202,6 @@ namespace ocropus {
             fst.rescore(vertices[i], vertices[i + 1],
                         outputs[i], new_costs[i], inputs[i]);
         }
-    }
-
-    void beam_search_and_rescore(IGenericFst &main,
-                                 IGenericFst &transcript,
-                                 double coef,
-                                 int beam_width,
-                                 int override_start,
-                                 int override_finish) {
-        intarray inputs;
-        intarray vertices1;
-        intarray vertices2;
-        intarray outputs;
-        floatarray costs;
-        beam_search_in_composition(inputs, vertices1, vertices2, outputs, costs,
-                                   main, transcript, beam_width,
-                                   override_start, override_finish);
-        narray_ops::mul(costs, coef);
-        rescore_path(main, inputs, vertices1, outputs, costs, override_start);
-    }
-
-    void a_star_and_rescore(IGenericFst &main,
-                            IGenericFst &transcript,
-                            double coef) {
-        intarray inputs;
-        intarray vertices1;
-        intarray vertices2;
-        intarray outputs;
-        floatarray costs;
-        a_star_in_composition(inputs, vertices1, vertices2, outputs, costs,
-                              main, transcript);
-        narray_ops::mul(costs, coef);
-        rescore_path(main, inputs, vertices1, outputs, costs, -1);
     }
 
     void fst_copy(IGenericFst &dst, IGenericFst &src) {
@@ -414,6 +273,20 @@ namespace ocropus {
                 dst.addTransition(i, targets[j], outputs[j], costs[j], inputs[j]);
             }
         }
+    }
+
+    void fst_expand_composition(IGenericFst &out,
+                                OcroFST &f1, OcroFST &f2) {
+        autodel<CompositionFst> composition(make_CompositionFst(&f1, &f2));
+        try {
+            fst_copy(out, *composition);
+        } catch(...) {
+            composition->move1();
+            composition->move2();
+            throw;
+        }
+        composition->move1();
+        composition->move2();
     }
 
     void fst_insert(IGenericFst &dst, IGenericFst &src, int start, int accept) {

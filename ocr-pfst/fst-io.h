@@ -13,37 +13,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-// Project: 
-// File: fst-em.h
-// Purpose: EM training of FSTs
+// Project: ocrofst
+// File: fst-io.h
+// Purpose: OpenFST-compatible I/O
 // Responsible: mezhirov
 // Reviewer: 
 // Primary Repository: 
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
+#ifndef fst_io_h_
+#define fst_io_h_
 
-#ifndef h_fst_em_
-#define h_fst_em_
-
-#include "ocropus.h"
-#include "langmods.h"
+#include "ocr-pfst.h"
 
 namespace ocropus {
     using namespace colib;
 
-    struct ITrainableFst : IGenericFst {
-        /// Update internal statistics reflecting the apperance of this FST
-        /// in composition with the others, in this order: left o this o right.
-        virtual void expectation(IGenericFst &left,
-                                 IGenericFst &right)=0;
+    // These functions use OpenFST-compatible format.
+    
+    void fst_write(FILE *stream, IGenericFst &fst);
+    void fst_read(IGenericFst &fst, FILE *stream);
+    void fst_write(const char *path, IGenericFst &fst);
+    void fst_read(IGenericFst &fst, const char *path);
 
-        /// Use the statistics accumulated with calls to expectation()
-        /// to update the weights, maximizing the likelihood of what was seen.
-        /// Reset the statistics for the new sequence of expectation() calls.
-        virtual void maximization()=0;
-    };
-
-    ITrainableFst *make_StandardTrainableFst();
 }
 
 #endif

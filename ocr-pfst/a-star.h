@@ -1,4 +1,4 @@
-// Copyright 2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
+// Copyright 2008-2009 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
 // 
 // You may not use this file except under the terms of the accompanying license.
@@ -13,30 +13,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // 
-// Project: 
+// Project: ocrofst
 // File: a-star.h
-// Purpose: A* search
+// Purpose: private A* functions (see include/*.h for the public ones)
 // Responsible: mezhirov
 // Reviewer: 
 // Primary Repository: 
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
-#ifndef h_a_star_
-#define h_a_star_
+#ifndef a_star_h_
+#define a_star_h_
 
-/// \file a_star.h
-
-
-#include "ocropus.h"
-#include "langmods.h"
-
-/// \namespace ocropus
 namespace ocropus {
-    using namespace colib;
-    
-    void a_star_backwards(floatarray &costs_for_all_nodes,
-                          IGenericFst &fst);
-
-}
+    void a_star_backwards(floatarray &costs_for_all_nodes, IGenericFst &fst);
+};
 
 #endif
