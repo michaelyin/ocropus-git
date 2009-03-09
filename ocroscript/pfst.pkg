@@ -30,7 +30,7 @@ module pfst {
     ///
     /// The FST will use OpenFST-compatible load() and save() routines,
     /// and A* for bestpath().
-    IGenericFst *make_StandardFst();
+    IGenericFst *make_OcroFST();
 
     /// \brief Copy one FST to another.
     /// 

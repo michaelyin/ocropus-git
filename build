@@ -11,7 +11,7 @@ then
     if [ `which autoreconf` ]
     then
         echo "# generating Makefile.am"
-        python genAM.py
+        python genAM.py > Makefile.am
         echo "# running autoreconf"
         autoreconf
         if [ $? != 0 ]
