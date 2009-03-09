@@ -27,6 +27,7 @@
 /// \file ocr-pfst.h
 
 #include "colib/colib.h"
+#include "ocrinterfaces.h"
 
 namespace ocropus {
     using namespace colib;
