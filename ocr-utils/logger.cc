@@ -395,7 +395,7 @@ namespace ocropus {
 #if 0
 
 
-    // FIXME please get this code out of logger.cc
+    // FIXME please get this code out of logger.cc --tmb
     // This sort of specialized code belongs in a separate file.
     void Logger::display_one_line_graph(int d_d_trans,
             int size, int indent, intarray &cuts, floatarray &cost_t,

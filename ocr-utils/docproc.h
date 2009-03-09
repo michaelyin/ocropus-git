@@ -80,7 +80,7 @@ namespace ocropus {
                 int shift_x = 0,
                 int shift_y = 0) DEPRECATED;
 
-    // FIXME move into narray-util
+    // FIXME move into narray-util --tmb
     // float median(intarray &a) DEPRECATED;
 
     // FIXME explain what method this uses --tmb

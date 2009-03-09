@@ -1,27 +1,27 @@
 // -*- C++ -*-
 
-// Copyright 2006-2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz 
+// Copyright 2006-2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
-// 
+//
 // You may not use this file except under the terms of the accompanying license.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License"); you
 // may not use this file except in compliance with the License. You may
 // obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 // Project:
-// File: 
-// Purpose: 
+// File:
+// Purpose:
 // Responsible: mezhirov
-// Reviewer: 
-// Primary Repository: 
-// Web Sites: 
+// Reviewer:
+// Primary Repository:
+// Web Sites:
 
 
 #include <stdio.h>
@@ -49,13 +49,13 @@ float dk_edit_cost(bytearray &from, bytearray &to, float c) {
         row[j] = min(c, j);
     for(int i=1;i<=to.length();i++) {
         swap_(row, upper);
-        
+
         // calculate costs of a sequence of actions
         row[0] = upper[0] + 1;
         for(int j=1;j<=from.length();j++)
             row[j] = min(min(upper[j] + 1, upper[j-1] + (to[i-1] == from[j-1] ? 0 : 1)),
                                row[j-1] + 1);
-        
+
         // find the minimum in the current row
         float best = row[0];
         for(int j=1;j<=from.length();j++) {
@@ -69,7 +69,7 @@ float dk_edit_cost(bytearray &from, bytearray &to, float c) {
         for(int j=0;j<=from.length();j++) {
             if (row[j] > upper_bound)
                 row[j] = upper_bound;
-        }          
+        }
     }
 
     //printf_narray("%f", table);
@@ -78,7 +78,7 @@ float dk_edit_cost(bytearray &from, bytearray &to, float c) {
 
 #if 0
 
-// FIXME remove this if it's not working/needed anymore
+// FIXME dead code -- remove this if it's not working/needed anymore --tmb
 
 float dk_edit_cost_record_jumps(intarray &jumps_from, intarray &jumps_to, bytearray &from, bytearray &to, float c) {
     floatarray upper(from.length() + 1);
@@ -89,7 +89,7 @@ float dk_edit_cost_record_jumps(intarray &jumps_from, intarray &jumps_to, bytear
     for(int i=1;i<=to.length();i++) {
         swap(row, upper);
         intarray jumps_tmp; // contains what was in jumps[j-1] at previous iteration
-        
+
         // calculate costs of a sequence of actions
         row[0] = upper[0] + 1;
         for(int j=1;j<=from.length();j++) {
@@ -109,7 +109,7 @@ float dk_edit_cost_record_jumps(intarray &jumps_from, intarray &jumps_to, bytear
                 swap(jumps_tmp, jumps[j]);
             }
         }
-        
+
         // find the minimum in the current row
         float best = row[0];
         int best_index = 0;
@@ -125,7 +125,7 @@ float dk_edit_cost_record_jumps(intarray &jumps_from, intarray &jumps_to, bytear
 
         for(int j=0;j<=from.length();j++) {
             if (row[j] > upper_bound) {
-                // we jump from best_index to j 
+                // we jump from best_index to j
                 row[j] = upper_bound;
                 copy(jumps[j], jumps[best_index]);
                 jumps[j].push(best_index);

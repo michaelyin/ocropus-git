@@ -33,7 +33,7 @@ namespace {
     // moved that to private because I think there's a function that does
     // a better job by looking not at all pixels, but only at the boundary.
     //  -- IM
-    // FIXME: get rid of this function
+    // FIXME: get rid of this function --tmb
     static bool line_is_inverted(bytearray &line_mask, bytearray &gray_line) {
         ASSERT(samedims(line_mask, gray_line));
         double s0 = 0, s255 = 0;
@@ -61,7 +61,7 @@ namespace ocropus {
         }
     }
 
-    // FIXME comments
+    // FIXME add comments
 
     void extract_lines(narray<bytearray> &lines,narray<rectangle> &rboxes,intarray &image) {
         //int minwidth = 10, minheight = 10;
@@ -102,7 +102,7 @@ namespace ocropus {
         }
     }
 
-    // FIXME comments
+    // FIXME add comments
 
     void rescale_if_needed(bytearray &bin_line,
                            bytearray &gray_line) {
@@ -148,7 +148,7 @@ namespace ocropus {
         }
     }
 
-    // FIXME comments
+    // FIXME add comments
 
     void normalize_segmentation(intarray &segmentation, bytearray &line_mask) {
         ASSERT(samedims(line_mask, segmentation));
@@ -186,7 +186,7 @@ namespace ocropus {
         return true;
     }
 
-    // FIXME comments
+    // FIXME add comments
 
     void blit_segmentation_line(intarray &page,
                                 rectangle bbox,
@@ -206,7 +206,7 @@ namespace ocropus {
         }
     }
 
-    // FIXME comments
+    // FIXME add comments
 
     int max_cnum(intarray &seg) {
         int result = 0;
@@ -219,7 +219,7 @@ namespace ocropus {
         return result;
     }
 
-    // FIXME comments
+    // FIXME add comments
 
     void forget_segmentation(bytearray &image, intarray &segmentation) {
         check_line_segmentation(segmentation);
@@ -230,7 +230,7 @@ namespace ocropus {
         }
     }
 
-    // FIXME comments
+    // FIXME add comments
 
     void check_line_segmentation_old(intarray &cseg,bool allow_zero,
                                      bool allow_gaps,bool allow_lzero) {
@@ -264,7 +264,7 @@ namespace ocropus {
         if(!allow_gaps) CHECK_ARG2(nused>=mused,"segmentation contains gaps");
     }
 
-    // FIXME comments
+    // FIXME add comments
 
     void get_recoloring_map(intarray &recolor, intarray &image) {
         make_line_segmentation_black(image);
@@ -281,7 +281,7 @@ namespace ocropus {
         }
     }
 
-    // FIXME comments
+    // FIXME add comments
 
     void remove_gaps_by_recoloring(intarray &image) {
         intarray map;

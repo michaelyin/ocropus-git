@@ -64,7 +64,11 @@ namespace ocropus {
     /// If Lua would be able to handle stuff like narray<narray<rectangle>>,
     /// we would use tesseract_recognize_blockwise_and_split_to_lines() instead
     /// of this.
+
+    // FIXME this should get factored out of ocropus-ng and moved into ocrotess --tmb
+
     class RecognizedPage {
+
         colib::narray<colib::nustring>   line_texts;
         colib::narray<colib::floatarray> line_costs;
         colib::narray<colib::rectarray> line_bboxes;
