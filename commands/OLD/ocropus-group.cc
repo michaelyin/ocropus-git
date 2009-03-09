@@ -25,7 +25,7 @@
 // Web Sites:
 
 
-// TODO: add garbage collection of unreachable components
+// MAYBE add garbage collection of unreachable components
 
 #include <math.h>
 #include <stdio.h>

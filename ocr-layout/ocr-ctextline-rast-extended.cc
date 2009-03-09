@@ -380,8 +380,8 @@ namespace ocropus {
     }
 
 
-    // FIXME: call setDefaultParameters method of parent class
-    // FIXME use new IComponent parameter facility
+    // MAYBE call setDefaultParameters method of parent class
+    // FIXME/faisal use new IComponent parameter facility --tmb
     void CTextlineRASTExtended::setDefaultParameters() {
         generation = 0;
         all_params[0] = interval(0,6000);

@@ -48,7 +48,7 @@ namespace ocropus {
             // nothing to be done
         }
 
-        // FIXME this should not be exposed in the header file
+        // FIXME/faisal this should not be exposed in the header file --tmb
         // Get non-text mask from leptonica
         void getLeptNonTextMask(bytearray &out, bytearray &in);
 

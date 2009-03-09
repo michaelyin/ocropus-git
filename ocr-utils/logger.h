@@ -167,7 +167,7 @@ namespace ocropus {
         void html(const char*);
 
 #if 0
-        // FIXME get this out of the logger class; some of these should
+        // FIXME/rangoni get this out of the logger class; some of these should
         // just become top-level functions, others should go into
         // their respective packages --tmb
 

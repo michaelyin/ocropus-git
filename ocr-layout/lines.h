@@ -30,7 +30,7 @@ namespace ocropus {
     using namespace colib;
     using namespace iulib;
 
-    // FIXME do not use this interface anymore --tmb
+    // FIXME/mezhirov do not use this interface anymore --tmb
     // This should go away along with RecognizedPage and the complicated
     // Tesseract interface.
     //
@@ -75,7 +75,7 @@ namespace ocropus {
         virtual int paragraphIndex(int line) = 0;
 
         /// Return the bounding box of the line on the page.
-        /// FIXME: doesn't work with a deskewer (gives the deskewed coordinates)
+        /// FIXME/mezhirov doesn't work with a deskewer (gives the deskewed coordinates)
         virtual colib::rectangle bbox(int index) = 0;
 
         virtual colib::bytearray &grayPage() = 0;
@@ -96,7 +96,7 @@ namespace ocropus {
         virtual void setPageSegmenter (ISegmentPage   *) = 0;
     };
 
-    // FIXME this should not take a pointer argument
+    // FIXME/mezhirov this should not take a pointer argument
     ILines *make_Lines(Pages *) WARN_DEPRECATED;
     ILines *make_Lines(const char *page_specs) WARN_DEPRECATED;
 }

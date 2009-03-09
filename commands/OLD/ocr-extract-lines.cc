@@ -52,7 +52,7 @@ int main(int argc,char **argv) {
             rectangle box = bboxes(key);
             if(box.width()<minwidth || box.height()<minheight) continue;
             intarray line(box.width(),box.height());
-            // FIXME: add greyscale extraction here
+            // FIXME/tmb add greyscale extraction here --???
             for(int i=0;i<box.width();i++) for(int j=0;j<box.height();j++) {
                 line(i,j) = 0xffffff * !!image(i+box.x0,j+box.y0);
             }

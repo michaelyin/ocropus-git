@@ -80,10 +80,10 @@ namespace ocropus {
                 int shift_x = 0,
                 int shift_y = 0) DEPRECATED;
 
-    // FIXME move into narray-util --tmb
+    // FIXME/tmb move into narray-util --tmb
     // float median(intarray &a) DEPRECATED;
 
-    // FIXME explain what method this uses --tmb
+    // FIXME/tmb explain what method this uses --tmb
     /// Estimate xheight given a slope and a segmentation.
     /// (That's an algorithm formerly used together with MLP).
 

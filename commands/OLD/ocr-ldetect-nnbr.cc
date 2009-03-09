@@ -114,7 +114,7 @@ void fit_into(floatarray &out,bytearray &in) {
     for(int i=0;i<out.dim(0);i++) for(int j=0;j<out.dim(1);j++) {
         int x = iclamp(i*scale,in.dim(0));
         int y = iclamp(j*scale,in.dim(1));
-        out(i,j) = !!in(x,y);        // FIXME add dx,dy here
+        out(i,j) = !!in(x,y);        // MAYBE add dx,dy here
     }
 }
 

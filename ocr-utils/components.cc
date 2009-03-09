@@ -20,7 +20,7 @@ namespace ocropus {
     const char *global_verbose_params;
 
     void IComponent::check_parameters_() {
-        // TODO rewrite this more cleanly in terms of iustring
+        // TODO/tmb rewrite this more cleanly in terms of iustring
         if(checked) return;
         checked = true;
         strbuf prefix;

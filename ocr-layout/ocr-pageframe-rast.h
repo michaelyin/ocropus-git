@@ -47,7 +47,7 @@ namespace ocropus {
     ///
     //////////////////////////////////////////////////////////////////////
 
-    // FIXME this class exposes instance variables and types that should
+    // FIXME/faisal this class exposes instance variables and types that should
     // be internal to the module; this is not acceptable --tmb
 
     static const int npfparams = 4;
@@ -69,7 +69,7 @@ namespace ocropus {
 
         void cleanup(colib::bytearray &out,colib::bytearray &in);
 
-        // FIXME do not expose instance variables in header files! --tmb
+        // FIXME/faisal do not expose instance variables in header files! --tmb
 
         int    generation;
         bool   lsq;

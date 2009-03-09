@@ -188,7 +188,7 @@ namespace ocropus {
 
     void TextImageSegByLogReg::textImageProbabilities(intarray &out,
                                                       intarray &in){
-        // FIXME this must accept grayscale image (it can threshold them
+        // FIXME/faisal this must accept grayscale image (it can threshold them
         // internally using one of the standard methods if it likes) --tmb
         rectarray bboxes;
         bounding_boxes(bboxes,in);

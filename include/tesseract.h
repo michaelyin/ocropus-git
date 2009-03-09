@@ -65,7 +65,7 @@ namespace ocropus {
     /// we would use tesseract_recognize_blockwise_and_split_to_lines() instead
     /// of this.
 
-    // FIXME this should get factored out of ocropus-ng and moved into ocrotess --tmb
+    // FIXME/mezhirov this should get factored out of ocropus-ng and moved into ocrotess --tmb
 
     class RecognizedPage {
 

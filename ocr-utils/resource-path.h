@@ -16,24 +16,24 @@
 // Project:
 // File: resource-path.h
 // Purpose:
-// Responsible: kofler
+// Responsible: mezhirov
 // Reviewer:
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
-// FIXME spelling --tmb
+// FIXME/mezhirov spelling --tmb
 #ifndef h_resourse_path_
 #define h_resourse_path_
 
 #include "ocropus.h"
 
 namespace ocropus {
-    // FIXME clean this up and turn it into a simple utility function:
+    // FIXME/mezhirov clean this up and turn it into a simple utility function:
     // find_file_on_path(path,file) --tmb
     void set_resource_path(const char *path);
     FILE *open_resource(const char *relative_path);
 
-    // FIXME get rid of this stuff; OCR-specific object construction
+    // FIXME/mezhirov get rid of this stuff; OCR-specific object construction
     // should not be in the same file as path search functions --tmb
     void find_and_load_ICharacterClassifier(ICharacterClassifier &,
                                             const char *resource);

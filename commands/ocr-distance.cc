@@ -78,7 +78,7 @@ float dk_edit_cost(bytearray &from, bytearray &to, float c) {
 
 #if 0
 
-// FIXME dead code -- remove this if it's not working/needed anymore --tmb
+// FIXME/mezhirov dead code -- remove this if it's not working/needed anymore --tmb
 
 float dk_edit_cost_record_jumps(intarray &jumps_from, intarray &jumps_to, bytearray &from, bytearray &to, float c) {
     floatarray upper(from.length() + 1);

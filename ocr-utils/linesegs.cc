@@ -22,7 +22,7 @@ namespace ocropus {
         }
     }
 
-    // FIXME add comments --tmb
+    // FIXME/mezhirov add comments --tmb
 
     void make_line_segmentation_black(intarray &a) {
         check_line_segmentation(a);
@@ -31,7 +31,7 @@ namespace ocropus {
             a.at1d(i) &= 0xFFF;
     }
 
-    // FIXME add comments --tmb
+    // FIXME/mezhirov add comments --tmb
 
     void make_line_segmentation_white(intarray &a) {
         replace_values(a, 0, 0xFFFFFF);

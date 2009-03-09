@@ -150,7 +150,7 @@ namespace ocropus {
     double a_star(nustring &result, OcroFST &fst1, OcroFST &fst2);
 
 
-    // TODO: document return value
+    // TODO/mezhirov document return value
     /// \brief Search for the best path through the composition of 2 FSTs
     ///        using A* algorithm.
     ///
@@ -179,7 +179,7 @@ namespace ocropus {
                                floatarray &g2);
 
 
-    // TODO: document return value
+    // TODO/mezhirov document return value
     /// \brief Search for the best path through the composition of 3 FSTs
     ///        using A* algorithm.
     /// The interface is analogous to a_star(),

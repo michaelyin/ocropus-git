@@ -46,7 +46,7 @@ namespace ocropus {
             narray<rectangle> rboxes;
             bounding_boxes(rboxes,labels);
 #if 0
-            // TODO disabling check until the overseg issue is fixed --tmb
+            // TODO/tmb disabling check until the overseg issue is fixed --tmb
             for(int i=1;i<rboxes.length();i++) {
                 if(rboxes[i].x1<rboxes[i-1].x0) {
                     errors_log("bad segmentation", labels);
@@ -362,11 +362,11 @@ namespace ocropus {
             extractSlicedWithBackground(out,source,dflt,index,grow);
         }
 
-        // FIXME add comment --tmb
+        // FIXME/mezhirov add comment --tmb
 
         void maybeInit() {
             if(classifications.length1d()==0) {
-                classifications.resize(boxes.length(),256); // FIXME limited size
+                classifications.resize(boxes.length(),256); // FIXME/tmb limited size
                 classifications.fill(INFINITY);
                 spaces.resize(boxes.length(),2);
                 spaces.fill(INFINITY);

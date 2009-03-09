@@ -41,7 +41,7 @@ namespace ocropus {
         use_four_line_model = false;
     }
 
-    // FIXME refactor this
+    // FIXME/faisal refactor this
     // make the arguments instance variables
     // make separate private methods out of the individual processing steps
     // give descriptive names to each such private method
@@ -54,7 +54,7 @@ namespace ocropus {
                                             bool need_visualization,
                                             rectarray &extra_obstacles) {
 
-        // FIXME remove this dead code --tmb
+        // FIXME/faisal remove this dead code --tmb
         //float startTime = clock()/float(CLOCKS_PER_SEC);
         const int zero   = 0;
         const int yellow = 0x00ffff00;

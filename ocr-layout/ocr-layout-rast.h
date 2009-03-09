@@ -35,7 +35,7 @@
 
 namespace ocropus {
 
-    // FIXME move this into .cc file
+    // FIXME/faisal move this into .cc file --tmb
     struct SegmentPageByRAST : ISegmentPage {
         SegmentPageByRAST();
         ~SegmentPageByRAST() {}

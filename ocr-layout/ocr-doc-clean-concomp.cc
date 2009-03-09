@@ -26,7 +26,7 @@
 #include "ocropus.h"
 #include "ocr-layout.h"
 
-// FIXME this dependency violates coding conventions
+// FIXME/faisal this dependency violates coding conventions --tmb
 #include "ocr-char-stats.h"
 
 using namespace iulib;

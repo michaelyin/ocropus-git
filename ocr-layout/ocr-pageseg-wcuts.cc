@@ -151,7 +151,7 @@ namespace ocropus {
         }
     }
 
-    // FIXME method naming --tmb
+    // FIXME/faisal method naming --tmb
 
     void WhitespaceCuts::filter_hanging_hspaces(rectarray &hspaces,
                                                 rectarray &columns,
@@ -190,18 +190,18 @@ namespace ocropus {
         }
     }
 
-    // FIXME method naming --tmb
+    // FIXME/faisal method naming --tmb
 
     void WhitespaceCuts::get_whitespace_cuts(rectarray &wcuts,
                                              CharStats &charstats){
         wcuts.clear();
-        rectarray hspaces,columns,colcandidates; // FIXME column_candidates --tmb
+        rectarray hspaces,columns,colcandidates; // FIXME/faisal column_candidates --tmb
 
         // Remove very small and very big connected components
-        rectarray concomps;     // FIXME pick better variable name --tmb
+        rectarray concomps;     // FIXME/faisal pick better variable name --tmb
         for(int i=0, l=charstats.concomps.length(); i<l; i++){
             rectangle r = charstats.concomps[i];
-            // FIXME maybe pull out the magic, tunable parameters and make them consts --tmb
+            // FIXME/faisal maybe pull out the magic, tunable parameters and make them consts --tmb
             if(r.area() > 2*charstats.xheight &&
                r.area() < charstats.img_width * charstats.img_height/2)
                 concomps.push(r);
@@ -214,7 +214,7 @@ namespace ocropus {
         whitespaces->setMinWeight(500);
         whitespaces->compute(whitespaceboxes,concomps);
 
-        // FIXME code layout: no fancy spacing --tmb
+        // FIXME/faisal code layout: no fancy spacing --tmb
         max_boxes = 4;
         //min_boxes = 2;
         min_space = 15;
@@ -263,7 +263,7 @@ namespace ocropus {
         }
     }
 
-    // FIXME
+    // FIXME/faisal
     // method naming
     // documentation--what does this do? "refine" how?
     // document the arguments

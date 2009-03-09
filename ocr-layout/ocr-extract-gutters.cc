@@ -40,7 +40,7 @@ ColSeparators::ColSeparators(){
     min_boxes  = 3;
 }
     
-// FIXME
+// FIXME/faisal
 // why does a method called "findGutters" return an array of columns?
 // explain how this works
 // make terminology consistent: does this find column separators, gutters, or what?
@@ -51,13 +51,13 @@ ColSeparators::ColSeparators(){
 void ColSeparators::findGutters(rectarray &columns,
                                 rectarray &whitespace_boxes,
                                 CharStats &charstats) {
-    // FIXME remove fancy spacing and alignment --tmb
+    // FIXME/faisal remove fancy spacing and alignment --tmb
     int   num_chars       = charstats.char_boxes.length();
     int   maxthreshold    = max_boxes; //Minimum number of text boxes on each side
     int   minthreshold    = min_boxes;
     int   word_spacing    = charstats.word_spacing;
         
-    // FIXME
+    // FIXME/faisal
     // variable name is non-descriptive and doesn't conform to our conventions
     // why is there a >>1? do you mean /2?
     // better: int ... = int(neighbor_frac_for_... * charstats.xheight);
@@ -82,9 +82,9 @@ void ColSeparators::findGutters(rectarray &columns,
         left_neighbors  = 0;
         right_neighbors = 0;
             
-        // FIXME you don't need the extra constructor; rectangle is a value type --tmb
+        // FIXME/faisal you don't need the extra constructor; rectangle is a value type --tmb
         rectangle left   = rectangle(whitespace_boxes[i]);
-        // FIXME
+        // FIXME/faisal
         // remove fancy spacing
         // what does this do?
         // --tmb
@@ -114,13 +114,13 @@ void ColSeparators::findGutters(rectarray &columns,
     }
 }
     
-// FIXME explain what this does and what it's used for --tmb
+// FIXME/faisal explain what this does and what it's used for --tmb
 
 void ColSeparators::filterOverlaps(rectarray &colboxes, rectarray &colcandidates){
 
     int len=colcandidates.length();
     heap<rectangle>   colheap;
-    float        overlapt = 0.3; // FIXME no fancy spacing in variable declarations
+    float        overlapt = 0.3; // FIXME/faisal no fancy spacing in variable declarations
     rectarray colfiltered;
     bool         overlap = false;
     int          cflen = 0;
@@ -128,7 +128,7 @@ void ColSeparators::filterOverlaps(rectarray &colboxes, rectarray &colcandidates
     for(int i=0; i<len; i++){
         colheap.insert(colcandidates[i],colcandidates[i].height());
     }
-    float        hlen = colheap.length(); // FIXME spacing
+    float        hlen = colheap.length(); // FIXME/faisal spacing
 
     //Filtering out overlapping candidates
     for(int i=0; i<hlen; i++){

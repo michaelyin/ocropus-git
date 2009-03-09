@@ -530,7 +530,7 @@ static struct sigaction SIGSEGV_old;
                 // character will actually receive the segment.
                 // Note that this situation probably suggests
                 // that we'd better not train on this word.
-                // But we still do. FIXME?
+                // But we still do. FIXME/mezhirov  --tmb
                 if (bbox.width() > 0 && bbox.height() > 0)
                 {
                     int center_x = (bbox.x0 + bbox.x1) / 2;
@@ -571,7 +571,7 @@ static struct sigaction SIGSEGV_old;
             throw "TesseractWrapper: linewise training is not supported";
         }
 
-        // TODO: beautify
+        // TODO/mezhirov beautify
         void tesseract_recognize_blockwise(
             narray<rectangle> &zone_bboxes,
             narray<nustring> &text,
@@ -770,7 +770,7 @@ static struct sigaction SIGSEGV_old;
 
             makelike(segmentation, image);
             color_boxes(segmentation, bboxes);
-            // crude binarization (FIXME?) ...
+            // FIXME?/mezhirov crude binarization --mezhirov
             bytearray binarized;
             binarize_simple(binarized, image);
             optional_check_background_is_lighter(binarized);

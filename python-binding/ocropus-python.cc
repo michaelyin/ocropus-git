@@ -34,7 +34,7 @@ extern "C" {
 #include "tolua++.h"
 #include "ocrotoplevel.h"
 
-// TODO: add checks for weird numpy dimensions
+// TODO/mezhirov add checks for weird numpy dimensions
 
 using namespace colib;
 
@@ -356,7 +356,7 @@ static PyMethodDef methods[] = {
 
 PyMODINIT_FUNC initocropus(void) {
     (void) Py_InitModule("ocropus", methods);
-    L = ocroscript_init(); // TODO: deinitialize appropriately (?)
+    L = ocroscript_init(); // TODO/mezhirov deinitialize appropriately (?)
     import_array();
 }
 

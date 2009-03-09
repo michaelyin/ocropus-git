@@ -60,7 +60,7 @@ namespace voronoi{
         newedge -> edgenbr = nedges;
         nedges += 1;
 
-        /* ¥Ü¥í¥Î¥¤ÊÕ¤Ë¤½¤ÎÎ¾Â¦¤ÎÏ¢·ëÀ®Ê¬¤Î¥é¥Ù¥ë¤ò³ÊÇ¼¤¹¤ë */
+        /* ï¿½Ü¥ï¿½ï¿½Î¥ï¿½ï¿½Õ¤Ë¤ï¿½ï¿½ï¿½Î¾Â¦ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½Ê¬ï¿½Î¥ï¿½ï¿½Ù¥ï¿½ï¿½ï¿½ï¿½ï¿½Ç¼ï¿½ï¿½ï¿½ï¿½ */
         if(s1->label < s2 -> label) {
             newedge -> lab1 = s1 -> label;
             newedge -> lab2 = s2 -> label;
@@ -70,7 +70,7 @@ namespace voronoi{
             newedge -> lab2 = s1 -> label;
         }
 
-        /* ÊìÅÀ´Ö¤Îµ÷Î¥¤ò³ÊÇ¼¤¹¤ë */
+        /* ï¿½ï¿½ï¿½ï¿½Ö¤Îµï¿½Î¥ï¿½ï¿½ï¿½ï¿½Ç¼ï¿½ï¿½ï¿½ï¿½ */
         newedge -> dist =
             sqrt(pow((double)dx,(double)2) + pow((double)dy,(double)2));
 
@@ -136,7 +136,7 @@ namespace voronoi{
             dyp = p->y - topsite->coord.y;
             dxp = p->x - topsite->coord.x;
             fast = 0;
-            // FIXME the following line was the original one; I suspect the
+            // BUG?/faisal the following line was the original one; I suspect the
             // bit operator version was a mistake on the part of the original
             // programmer
             // if ((!right_of_site &e->b<0.0) | (right_of_site&e->b>=0.0) ) {
@@ -172,7 +172,7 @@ namespace voronoi{
         e -> ep[lr] = s;
         ref(s);
         if(e -> ep[RE-lr]== (struct Site *) NULL) return;
-        out_ep2(e,s,imax,jmax); /* ¥Ü¥í¥Î¥¤ÊÕÀ¸À® */
+        out_ep2(e,s,imax,jmax); /* ï¿½Ü¥ï¿½ï¿½Î¥ï¿½ï¿½ï¿½ï¿½ï¿½ */
 
         deref(e->reg[LE]);
         deref(e->reg[RE]);

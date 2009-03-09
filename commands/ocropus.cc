@@ -44,7 +44,7 @@ namespace glinerec {
 }
 
 void nustring_convert(narray<char> &output,nustring &str) {
-    // FIXME the utf8Encode doesn't seem to be doing the right thing
+    // FIXME/mezhirov the utf8Encode doesn't seem to be doing the right thing
     // (Tesseract output wasn't working; we need to revisit this after the iustring)
     output.clear();
     for(int i=0;i<str.length();i++) {
@@ -58,7 +58,7 @@ void nustring_convert(narray<char> &output,nustring &str) {
 }
 
 void nustring_convert(nustring &output,strbuf &str) {
-    // FIXME the utf8Decode doesn't seem to be doing the right thing
+    // FIXME/mezhirov the utf8Decode doesn't seem to be doing the right thing
     // (Tesseract output wasn't working; we need to revisit this after the iustring)
     int n = str.length();
     output.resize(n);
@@ -67,7 +67,7 @@ void nustring_convert(nustring &output,strbuf &str) {
 }
 
 void nustring_convert(strbuf &output,nustring &str) {
-    // FIXME the utf8Encode doesn't seem to be doing the right thing
+    // FIXME/mezhirov the utf8Encode doesn't seem to be doing the right thing
     // (Tesseract output wasn't working; we need to revisit this after the iustring)
     output.dealloc();
     for(int i=0;i<str.length();i++) {
@@ -154,7 +154,7 @@ int main_book2pages(int argc,char **argv) {
             mkdir(s,0777);
             bytearray page_binary,page_gray;
 
-            // TODO make binarizer settable
+            // TODO/mezhirov make binarizer settable
             s.format("%s/%04d.png",outdir,pageno);
             pages.getGray(page_gray);
             write_image_gray(s,page_gray);
@@ -206,12 +206,12 @@ int main_pages2lines(int argc,char **argv) {
         for(int lineno=1;lineno<regions.length();lineno++) {
             bytearray line_image;
             regions.extract(line_image,page_gray,lineno,1);
-            // TODO output log of coordinates here
+            // TODO/mezhirov output log of coordinates here
             s.format("%s/%04d/%04d.png",outdir,pageno,lineno);
             write_image_gray(s,line_image);
         }
         debugf("info","#lines = %d\n",regions.length());
-        // TODO output other blocks here
+        // TODO/mezhirov output other blocks here
     }
     return 0;
 }
@@ -234,7 +234,7 @@ int main_tesslines(int argc,char **argv) {
         base[base.length()-4] = 0;
         debugf("progress","line %s\n",(char*)base);
         bytearray image;
-        // TODO output binary versions, intermediate results for debugging
+        // TODO/mezhirov output binary versions, intermediate results for debugging
         read_image_gray(image,files(index));
         autodel<IGenericFst> result(make_OcroFST());
         try {
@@ -352,7 +352,7 @@ int main_evalconf(int argc,char **argv) {
     s.format("%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
     Glob files(s);
     float total = 0.0, tchars = 0, pchars = 0, lines = 0;
-    intarray confusion(256,256); // FIXME limited to 256x256, replace with int2hash
+    intarray confusion(256,256); // FIXME/tmb limited to 256x256, replace with int2hash
     confusion = 0;
     for(int index=0;index<files.length();index++) {
         if(index%1000==0)
@@ -399,7 +399,7 @@ int main_evalconf(int argc,char **argv) {
                truth.ptr(),
                predicted.ptr());
     }
-    intarray list(65536,3); // FIXME replace with hash table when we move to Unicode
+    intarray list(65536,3); // FIXME/tmb replace with hash table when we move to Unicode
     int row = 0;
     for(int i=0;i<confusion.dim(0);i++) {
         for(int j=0;j<confusion.dim(1);j++) {
