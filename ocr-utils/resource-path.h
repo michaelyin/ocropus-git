@@ -21,24 +21,13 @@
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
-// FIXME spelling
-#ifndef h_resourse_path_
-#define h_resourse_path_
+#ifndef h_resource_path_
+#define h_resource_path_
 
 #include "ocropus.h"
 
 namespace ocropus {
-    // FIXME clean this up and turn it into a simple utility function:
-    // find_file_on_path(path,file)
-    void set_resource_path(const char *path);
-    FILE *open_resource(const char *relative_path);
-
-    // FIXME get rid of this stuff; OCR-specific object construction
-    // should not be in the same file as path search functions
-    void find_and_load_ICharacterClassifier(ICharacterClassifier &,
-                                            const char *resource);
-    void find_and_load_IRecognizeLine(IRecognizeLine &i,
-                                      const char *resource);
+    colib::strbuf find_file_on_path(const char *path, const char *file);
 }
 
 #endif
