@@ -49,8 +49,8 @@ def print_header():
 
 print_header()
 print """
-# first build this (libocropus) and then ocroscript
-SUBDIRS = . ocroscript
+# first build this (libocropus)
+SUBDIRS = .
 
 # the folder where all ocropus headers will be installed
 ocropusincludedir=$(includedir)/ocropus
@@ -141,7 +141,7 @@ print
 print "check:"
 print '	@echo "# running tests"'
 for t in tests:
-    print "	$(srcdir)/" + os.path.basename(t)[:-3] + " $(srcdir)/ocroscript/tests/images"
+    print "	$(srcdir)/" + os.path.basename(t)[:-3] + " $(srcdir)/data/testimages"
 
 
 print """

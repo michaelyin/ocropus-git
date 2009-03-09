@@ -1,6 +1,0 @@
-image = bytearray()
-read_image_binary(image,arg[1])
-narray.sub(255,image)
-erode_circle(image,3)
-narray.sub(255,image)
-write_png(arg[2],image)
