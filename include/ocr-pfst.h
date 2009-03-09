@@ -92,7 +92,7 @@ namespace ocropus {
     ///
     /// This function copies the composition of two given FSTs.
     /// That causes expansion (storing all arcs explicitly).
-    void fst_expand_composition(IGenericFst &out, IGenericFst &, IGenericFst &);
+    void fst_expand_composition(IGenericFst &out, OcroFST &, OcroFST &);
 
     /// Randomly sample an FST, assuming any input.
     ///
