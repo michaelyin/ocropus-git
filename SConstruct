@@ -54,7 +54,7 @@ from glob import glob
 
 os.system("./generate_version_cc.sh ./version.cc")
 
-sources = glob("ocr-*/*.cc") + glob("ext/voronoi/*.cc") + ["version.cc"]
+sources = glob("ocr-*/*.cc") + ["version.cc"]
 exclude = r'.*/(main|test|bigtest)-.*\.cc'
 sources = [f for f in sources if not re.search(exclude,f)]
 headers = glob("include/*.h") + glob("ocr-utils/*.h")
@@ -154,7 +154,6 @@ conf.Finish()
 ### main targets
 ################################################################
 
-env.Append(CPPPATH=["ext/voronoi"])
 env.Append(CPPPATH=["include","ocr-utils"])
 
 #env.Append(CPPPATH=glob("ocr-*"))
