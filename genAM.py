@@ -8,13 +8,6 @@ import glob, os, sys, string as s
 extradirs = """
 """.split()
 
-# only add these files if openfst is enabled
-fst = """
-    ocr-openfst/fstbuilder.cc
-    ocr-openfst/fstutil.cc
-    ocr-openfst/fstmodels.cc
-""".split()
-
 # only add these files if tesseract is enabled
 tess = """
     ocr-tesseract/tesseract.cc
@@ -27,17 +20,7 @@ exclude = """
 """.split()
 
 # optional files
-exclude += fst + tess
-
-# some stupid flags for switching between writing to Makefile.am and stdout
-TLAM = True
-OSAM = False
-# disable writing of Top Level AM file if set to zero
-if len(sys.argv) > 1 and int(sys.argv[1]) is 0:
-    TLAM = False
-# enable writing of OcroScript AM file if set to one
-if len(sys.argv) > 2 and  int(sys.argv[2]) is 1:
-    OSAM = True
+exclude += tess
 
 def print_header():
     print """# Copyright 2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
@@ -63,13 +46,6 @@ def print_header():
 # Primary Repository: http://ocropus.googlecode.com/svn/trunk/
 # Web Sites: www.iupr.org, www.dfki.de
 """
-
-if TLAM:
-    # save stdout to put it back later
-    saveout = sys.stdout
-    # redirect output
-    fsock = open('Makefile.am', 'w')
-    sys.stdout = fsock
 
 print_header()
 print """
@@ -117,11 +93,6 @@ word_DATA = $(srcdir)/data/words/*
 """
 
 # optional stuff
-print
-print "if ! nofst"
-print "    AM_CPPFLAGS += -DHAVE_FST"
-print "    libocropus_a_SOURCES +=" + s.join(" $(srcdir)/"+f for f in fst)
-print "endif"
 print
 print "if ! notesseract"
 print "    AM_CPPFLAGS += -I@tessheaders@ -DHAVE_TESSERACT"
@@ -181,83 +152,3 @@ all:
 	@echo "Use 'make check' to run tests!"
 	@echo
 """
-
-if TLAM:
-    # reset stdout and close file
-    sys.stdout = saveout
-    fsock.close()
-
-
-
-# FIXME look at ocroscript Makefile.am again! stop here for now!
-sys.exit()
-
-### libocroscript ##############################################################
-# all paths need to be relative to ocroscript now !!!
-###
-
-if OSAM:
-    # save stdou to put it back later
-    saveout = sys.stdout
-    # redirect output
-    fsock = open('ocroscript/Makefile.am', 'w')
-    sys.stdout = fsock
-
-
-optpkgs = """
-    ocroscript/fst.pkg
-    ocroscript/lepton.pkg
-    ocroscript/sdl.pkg
-""".split()
-
-packages = [ p for p in glob.glob("ocroscript/*.pkg") 
-             if not p in exclude and not p in optpkgs ] 
-# add pkgs in other folders than ocroscript
-for dir in dirs:
-    packages += [ p for p in glob.glob(dir+"/*.pkg") if not p in exclude
-                and not p in packages and not p in optpkgs ]
-
-
-print 'TOLUADIR = $(srcdir)/../ext/tolua++'
-print 'TOLUALIB = $(TOLUADIR)/libtolua++.a'
-print 'TOLUA = $(TOLUADIR)/tolua++'
-print 'LUADIR = $(srcdir)/../ext/lua'
-print 'LUALIB = $(LUADIR)/liblua.a'
-
-print "AM_CPPFLAGS = ",
-for d in dirs:
-    print "-I$(srcdir)/../"+d,
-print "-I@iulibheaders@",
-print "-I@tessheaders@",
-print "-I$(TOLUADIR)"
-print
-
-print
-print "lib_LIBRARIES = libocroscript.a"
-
-print "libocroscript_a_SOURCES =",
-print s.join(" $(srcdir)/../"+f.replace(".pkg", ".cc") for f in packages)
-
-#print "libocroscript.a: $(TOLUA)"
-
-print
-# make pkg depend on cc
-for p in packages:
-    print "$(srcdir)/../" + p.replace(".pkg", ".cc") + " : $(srcdir)/../" + p,
-    print " $(TOLUA)"
-    print "	$(TOLUA) -L $(srcdir)/../ocroscript/hook_exceptions.lua -o $@ $<"
-# build cc from pkg
-print ".pkg.cc: "
-print "	$(TOLUA) -L $(srcdir)/../ocroscript/hook_exceptions.lua -o $@ $<"
-
-print "$(TOLUA):"
-print "	cd $(TOLUADIR) && $(MAKE)"
-
-
-
-if OSAM:
-    # reset stdout and close file
-    sys.stdout = saveout
-    fsock.close()
-
-

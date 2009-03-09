@@ -33,7 +33,6 @@
 #include "colib/colib.h"
 #include "iulib/iulib.h"
 #include "ocropus.h"
-#include "ocr-openfst.h"
 
 using namespace iulib;
 using namespace colib;
@@ -235,7 +234,7 @@ int main_tesslines(int argc,char **argv) {
         bytearray image;
         // FIXME output binary versions, intermediate results for debugging
         read_image_gray(image,files(index));
-        autodel<IGenericFst> result(make_StandardFst());
+        autodel<IGenericFst> result(make_OcroFST());
         try {
             linerec->recognizeLine(*result,image);
         }
@@ -508,7 +507,7 @@ int main_fsts2bestpaths(int argc,char **argv) {
     for(int index=0;index<files.length();index++) {
         if(index%1000==0)
             debugf("info","%s (%d/%d)\n",files(index),index,files.length());
-        autodel<IGenericFst> fst(make_StandardFst());
+        autodel<IGenericFst> fst(make_OcroFST());
         fst->load(files(index));
         nustring str;
         try {

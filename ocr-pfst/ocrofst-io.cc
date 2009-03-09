@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-// Project:
-// File: ofst-io.cc
+// Project: ocrofst
+// File: fst-io.cc
 // Purpose: OpenFST-compatible I/O
 // Responsible: mezhirov
 // Reviewer:
@@ -22,13 +22,9 @@
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 //
 
-#ifndef fst_io_h_
-#define fst_io_h_
-
 #include <stdio.h>
 #include <stdint.h>
-#include "ocropus.h"
-#include "langmods.h"
+#include "ocr-pfst.h"
 
 using namespace colib;
 using namespace ocropus;
@@ -234,5 +230,3 @@ namespace ocropus {
         fst_read(fst, stdio(path, "rb"));
     }
 }
-
-#endif
