@@ -179,26 +179,6 @@ namespace ocropus {
                                floatarray &g2);
 
 
-    // TODO: document return value
-    /// \brief Search for the best path through the composition of 3 FSTs
-    ///        using A* algorithm.
-    /// The interface is analogous to a_star(),
-    /// but returns 3 arrays of vertices.
-    ///
-    /// This function uses A* on reversed FSTs separately,
-    /// then uses the cost sum as a heuristic.
-    /// No attempt to cache the heuristic is made.
-    bool a_star_in_composition(intarray &inputs,
-                               intarray &vertices1,
-                               intarray &vertices2,
-                               intarray &vertices3,
-                               intarray &outputs,
-                               floatarray &costs,
-                               OcroFST &fst1,
-                               OcroFST &fst2,
-                               OcroFST &fst3);
-
-    
     void beam_search(intarray &vertices1,
                      intarray &vertices2,
                      intarray &inputs,
