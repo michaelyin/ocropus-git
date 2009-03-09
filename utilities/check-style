@@ -88,7 +88,7 @@ def check(arg):
     global svnauthor
 
     for root,dirs,files in os.walk(arg):
-        if re.search(r'(/.svn|/EXTERNAL|/ext|/doc|/data|/CLEAN-ME-UP|/.deps)(/|$)',root): continue
+        if re.search(r'(/.svn|/EXTERNAL|/ext|/doc|/data|ocr-voronoi|/CLEAN-ME-UP|/.deps)(/|$)',root): continue
         if root is '.':
             for d in dirs:
                 if d.startswith('ocr'):
