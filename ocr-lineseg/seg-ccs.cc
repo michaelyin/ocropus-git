@@ -39,7 +39,7 @@ using namespace iulib;
 using namespace colib;
 
 namespace ocropus {
-    // FIXME what is the difference between this and SegmentLineByCCS
+    // FIXME what is the difference between this and SegmentLineByCCS? --tmb
     class ConnectedComponentSegmenter : public ISegmentLine {
         virtual const char *description() {
             return "connected component segmenter";

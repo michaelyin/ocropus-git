@@ -22,7 +22,7 @@ namespace ocropus {
         }
     }
 
-    // FIXME comments
+    // FIXME add comments --tmb
 
     void make_line_segmentation_black(intarray &a) {
         check_line_segmentation(a);
@@ -31,11 +31,10 @@ namespace ocropus {
             a.at1d(i) &= 0xFFF;
     }
 
-    // FIXME comments
+    // FIXME add comments --tmb
 
     void make_line_segmentation_white(intarray &a) {
         replace_values(a, 0, 0xFFFFFF);
-        // FIXME should not give gaps
         //for(int i = 0; i < a.length1d(); i++)
         //    a.at1d(i) = (a.at1d(i) & 0xFFF) | 0x1000;
         check_line_segmentation(a);

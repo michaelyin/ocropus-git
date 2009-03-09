@@ -214,7 +214,7 @@ namespace ocropus {
         whitespaces->setMinWeight(500);
         whitespaces->compute(whitespaceboxes,concomps);
 
-        // FIXME no fancy spacing --tmb
+        // FIXME code layout: no fancy spacing --tmb
         max_boxes = 4;
         //min_boxes = 2;
         min_space = 15;

@@ -29,7 +29,7 @@ using namespace colib;
 using namespace ocropus;
 
 namespace {
-    /// FIXME: presort
+    /// FIXME: presort -- ???
     struct CompositionFstImpl : CompositionFst {
         autodel<IGenericFst> l1, l2;
         int override_start;

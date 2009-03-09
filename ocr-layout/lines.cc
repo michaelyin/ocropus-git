@@ -34,8 +34,9 @@ namespace {
     // Observe the mapping between `from' and `to' and return its inverse.
     // This function is just a complement to renumber_labels (and probably
     // renumber_labels should be rewritten to support this thing).
-    // FIXME: some optimization?
-    // FIXME: anyway, better to hack imglib instead
+    // FIXME: some optimization? --???
+    // FIXME: anyway, better to hack imglib instead --???
+
     void learn_backmapping(intarray &result, intarray &from, intarray &to) {
         CHECK_ARG(samedims(from, to));
         int n = max(to);
@@ -125,7 +126,7 @@ namespace {
             region_extractor.setPageLines(seg);
 
             // FIXME: region_extractor.segmentation probably shouldn't be used
-            // directly
+            // directly -- ???
             learn_backmapping(ids, seg, region_extractor.segmentation);
 
             double end = now();

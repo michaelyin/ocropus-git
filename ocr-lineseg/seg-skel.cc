@@ -33,7 +33,6 @@
 #include "iulib/imgio.h"
 #include "iulib/imglib.h"
 #include "segmentation.h"
-#include "imgio.h"
 
 using namespace ocropus;
 using namespace iulib;

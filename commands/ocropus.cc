@@ -45,6 +45,7 @@ namespace glinerec {
 
 void nustring_convert(narray<char> &output,nustring &str) {
     // FIXME the utf8Encode doesn't seem to be doing the right thing
+    // (Tesseract output wasn't working; we need to revisit this after the iustring)
     output.clear();
     for(int i=0;i<str.length();i++) {
         int c = str(i).ord();
@@ -58,6 +59,7 @@ void nustring_convert(narray<char> &output,nustring &str) {
 
 void nustring_convert(nustring &output,strbuf &str) {
     // FIXME the utf8Decode doesn't seem to be doing the right thing
+    // (Tesseract output wasn't working; we need to revisit this after the iustring)
     int n = str.length();
     output.resize(n);
     for(int i=0;i<n;i++)
@@ -65,8 +67,8 @@ void nustring_convert(nustring &output,strbuf &str) {
 }
 
 void nustring_convert(strbuf &output,nustring &str) {
-    // FIXME the utf8Encode doesn't seem to be
-    // doing the right thing
+    // FIXME the utf8Encode doesn't seem to be doing the right thing
+    // (Tesseract output wasn't working; we need to revisit this after the iustring)
     output.dealloc();
     for(int i=0;i<str.length();i++) {
         int c = str(i).ord();
@@ -123,12 +125,12 @@ int main_book2lines(int argc,char **argv) {
             for(int lineno=1;lineno<regions.length();lineno++) {
                 bytearray line_image;
                 regions.extract(line_image,page_gray,lineno,1);
-                // FIXME output log of coordinates here
+                // MAYBE output log of coordinates here
                 s.format("%s/%04d/%04d.png",outdir,pageno,lineno);
                 write_image_gray(s,line_image);
             }
             debugf("info","#lines = %d\n",regions.length());
-            // FIXME output images here
+            // MAYBE output images here
         }
     }
     return 0;
@@ -152,7 +154,7 @@ int main_book2pages(int argc,char **argv) {
             mkdir(s,0777);
             bytearray page_binary,page_gray;
 
-            // FIXME make binarizer settable
+            // TODO make binarizer settable
             s.format("%s/%04d.png",outdir,pageno);
             pages.getGray(page_gray);
             write_image_gray(s,page_gray);
@@ -204,12 +206,12 @@ int main_pages2lines(int argc,char **argv) {
         for(int lineno=1;lineno<regions.length();lineno++) {
             bytearray line_image;
             regions.extract(line_image,page_gray,lineno,1);
-            // FIXME output log of coordinates here
+            // TODO output log of coordinates here
             s.format("%s/%04d/%04d.png",outdir,pageno,lineno);
             write_image_gray(s,line_image);
         }
         debugf("info","#lines = %d\n",regions.length());
-        // FIXME output other blocks here
+        // TODO output other blocks here
     }
     return 0;
 }
@@ -232,7 +234,7 @@ int main_tesslines(int argc,char **argv) {
         base[base.length()-4] = 0;
         debugf("progress","line %s\n",(char*)base);
         bytearray image;
-        // FIXME output binary versions, intermediate results for debugging
+        // TODO output binary versions, intermediate results for debugging
         read_image_gray(image,files(index));
         autodel<IGenericFst> result(make_OcroFST());
         try {
@@ -350,7 +352,7 @@ int main_evalconf(int argc,char **argv) {
     s.format("%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
     Glob files(s);
     float total = 0.0, tchars = 0, pchars = 0, lines = 0;
-    intarray confusion(256,256); // FIXME
+    intarray confusion(256,256); // FIXME limited to 256x256, replace with int2hash
     confusion = 0;
     for(int index=0;index<files.length();index++) {
         if(index%1000==0)
@@ -397,7 +399,7 @@ int main_evalconf(int argc,char **argv) {
                truth.ptr(),
                predicted.ptr());
     }
-    intarray list(65536,3); // FIXME
+    intarray list(65536,3); // FIXME replace with hash table when we move to Unicode
     int row = 0;
     for(int i=0;i<confusion.dim(0);i++) {
         for(int j=0;j<confusion.dim(1);j++) {

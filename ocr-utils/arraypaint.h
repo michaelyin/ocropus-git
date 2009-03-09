@@ -2,8 +2,8 @@
 #define arraypaint_h_
 
 namespace ocropus {
-    // FIXME implement these using function templates
-    // FIXME create a bunch of narray drawing functions in iulib/utils
+    // TODO implement these using function templates --tmb
+    // TODO create a bunch of narray drawing functions in iulib/utils --tmb
     /// Draw a rectangle on an image
     void paint_box(intarray &image, rectangle r,
                    int color, bool inverted=false);

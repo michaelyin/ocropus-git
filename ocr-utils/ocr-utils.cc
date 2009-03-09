@@ -80,7 +80,7 @@ namespace ocropus {
     }
 
 
-    // FIXME use imgmorph stuff
+    // FIXME use imgmorph stuff --tmb
 
     void blit2d(bytearray &dest, const bytearray &src, int shift_x, int shift_y) {
         int w = src.dim(0);
@@ -104,7 +104,7 @@ namespace ocropus {
     }
 
 
-    // FIXME comments
+    // FIXME comments --tmb
 
     void boxes_height_histogram(floatarray &histogram, narray<rectangle> &bboxes,int max_height) {
         int   i,d;
@@ -118,7 +118,7 @@ namespace ocropus {
         }
     }
 
-    // FIXME comments
+    // FIXME add comments --tmb
 
     float estimate_boxes_height(narray<rectangle> &bboxes,int h,int min_height,float smooth) {
 
@@ -144,7 +144,7 @@ namespace ocropus {
     }
 
 
-    // FIXME comments
+    // FIXME add comments --tmb
 
     float estimate_xheight(intarray &orig_seg, float slope) {
         intarray seg;
@@ -341,7 +341,7 @@ namespace ocropus {
 
     }
 
-    // FIXME comments
+    // FIXME add comments --tmb
 
     void get_line_info(float &baseline, float &xheight, float &descender, float &ascender, intarray &seg) {
         narray<rectangle> bboxes;
@@ -363,17 +363,17 @@ namespace ocropus {
         ascender  = baseline + 2 * xheight;
     }
 
-    // FIXME comments
+    // FIXME add comments --tmb
 
     static const char *version_string = NULL;
 
-    // FIXME comments
+    // FIXME add comments --tmb
 
     const char *get_version_string() {
         return version_string;
     }
 
-    // FIXME comments
+    // FIXME add comments --tmb
 
     void set_version_string(const char *new_version_string) {
         if (version_string) {

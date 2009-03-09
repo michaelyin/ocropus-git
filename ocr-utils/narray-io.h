@@ -79,6 +79,9 @@ namespace ocropus {
     inline void print(colib::intarray &a) {printf_narray("%d", a);}
 
 
+    // FIXME there is another, binary narray-io facility in glinerec; that
+    // needs to move to ocropus, and we need to give them different names. --tmb
+
     // ________________________   text I/O for narrays  _______________________
 
     /// Write a 1D intarray in a simple format: length and items.
@@ -86,7 +89,7 @@ namespace ocropus {
     /// Read a 1D intarray in a simple format: length and items.
     void text_read_1d(FILE *, colib::intarray &);
 
-    // FIXME rename these to write_narray_text (verb first!)
+    // FIXME rename these to write_narray_text (verb first!) --tmb
     //\{
     /// Write the array (with dimensions) into a text file.
     void text_write(FILE *, colib::floatarray &);
@@ -185,7 +188,7 @@ namespace ocropus {
         colib::copy(result, tmp);
     }
 
-    // FIXME rename these to write_narray_bin etc.
+    // FIXME rename these to write_narray_bin etc. --tmb
     void bin_write_1d(FILE *, colib::intarray &);
     void bin_read_1d(FILE *, colib::intarray &);
     void bin_write_mnist_dims(FILE *, colib::intarray &);

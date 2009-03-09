@@ -4,7 +4,7 @@ namespace ocropus {
     using namespace colib;
     using namespace iulib;
 
-        // FIXME comments
+    // FIXME add comments --tmb
 
     void check_page_segmentation(intarray &pseg) {
         bool allow_zero = true;
@@ -32,14 +32,14 @@ namespace ocropus {
         CHECK_ARG(nused==mused || nused==mused+1);
     }
 
-    // FIXME comments
+    // FIXME add comments --tmb
 
     void make_page_segmentation_black(intarray &a) {
         check_page_segmentation(a);
         replace_values(a, 0xFFFFFF, 0);
     }
 
-    // FIXME comments
+    // FIXME add comments --tmb
 
     void make_page_segmentation_white(intarray &a) {
         replace_values(a, 0, 0xFFFFFF);

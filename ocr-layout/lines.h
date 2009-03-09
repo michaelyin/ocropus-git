@@ -31,6 +31,9 @@ namespace ocropus {
     using namespace iulib;
 
     // FIXME do not use this interface anymore --tmb
+    // This should go away along with RecognizedPage and the complicated
+    // Tesseract interface.
+    //
     // This interface provides line-level access to the pages.
     // Apart from encapsulating Pages, ISegmentPage and RegionExtractor,
     // it will also (in the near future) help in building color-coded
@@ -94,8 +97,8 @@ namespace ocropus {
     };
 
     // FIXME this should not take a pointer argument
-    ILines *make_Lines(Pages *);
-    ILines *make_Lines(const char *page_specs);
+    ILines *make_Lines(Pages *) WARN_DEPRECATED;
+    ILines *make_Lines(const char *page_specs) WARN_DEPRECATED;
 }
 
 #endif

@@ -27,7 +27,7 @@
 
 // FIXME this should really work "word"-wise, centered on each word,
 // otherwise it does the wrong thing for non-deskewed lines
-// (it worked "word"-wise in the original version)
+// (it worked "word"-wise in the original version) --tmb
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -471,7 +471,7 @@ namespace ocropus {
         return new CurvedCutSegmenter();
     }
 
-// FIXME Messy implementation--get rid of this.
+// FIXME Messy implementation--get rid of this. --tmb
 
     class CurvedCutSegmenterToISegmentLineAdapter : public ISegmentLine {
     public:

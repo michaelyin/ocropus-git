@@ -1,20 +1,20 @@
 // -*- C++ -*-
 
-// Copyright 2006-2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz 
+// Copyright 2006-2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
-// 
+//
 // You may not use this file except under the terms of the accompanying license.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License"); you
 // may not use this file except in compliance with the License. You may
 // obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 // Project: OCRopus
 // File: ocr-reading-order.cc
 // Purpose: Topological sorting reading order algrithm for arranging
@@ -24,8 +24,8 @@
 //          Symposium on Document Image Understanding Technology, Maryland.
 //          http://pubs.iupr.org/DATA/2003-breuel-sdiut.pdf
 // Responsible: Faisal Shafait (faisal.shafait@dfki.de)
-// Reviewer: 
-// Primary Repository: 
+// Reviewer:
+// Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include "ocropus.h"
@@ -37,20 +37,21 @@ namespace ocropus {
 
     //Assuming horizontal lines with slope in the interval [-0.05, 0.05]
     static int wbox_intersection(line l, rectangle wbox){
-        
+
         float y = l.m * wbox.xcenter() + l.c;
         return ( (y > wbox.y0) && (y < wbox.y1) );
     }
-    
+
     //Extend textlines to the nearest whitespace gutter or image start/end
-    void extend_lines(narray<line> &lines, 
+    void extend_lines(narray<line> &lines,
                       rectarray &wboxes,
                       int image_width){
 
         int num_lines = lines.length();
         int num_wboxes = wboxes.length();
-        
-        // FIXME: extend to image start/width if not intersecting with column separator 
+
+        // NOTE: maybe extend to image start/width if not intersecting with column separator
+        // if we observe problems in benchmarks
         for(int i = 0; i<num_lines; i++){
             float new_start = 0;
             float new_end = image_width-1;
@@ -71,36 +72,36 @@ namespace ocropus {
     static inline bool x_overlap(line a, line b){
         return ( (a.end >= b.start) && (b.end >= a.start) );
     }
-    
+
     static bool separator_segment_found(line a, line b, narray<line> &lines){
         int lines_length = lines.length();
         float y_min = (a.c < b.c) ? a.c : b.c;
         float y_max = (a.c > b.c) ? a.c : b.c;
-        
+
         for(int i = 0; i<lines_length; i++)
             if( x_overlap(lines[i],a) && x_overlap(lines[i],b) )
                 if( (lines[i].c > y_min) && (lines[i].c < y_max) )
                     return true;
-        
+
         return false;
-        
+
     }
-    
+
     static void construct_graph(narray<line> &lines, narray<bool> &lines_dag){
         //lines_dag(i,j) = 1 iff there is a directed edge from i to j
         int graph_length = lines.length();
-        
+
         for(int i = 0; i<graph_length; i++){
             for(int j = i; j<graph_length; j++){
-                
+
                 if(i == j){ lines_dag(i,j) = 1; continue; }
-                
+
                 if( x_overlap(lines[i],lines[j]) ){
                     //assuming parallel horizontal lines and page origin and bottom left corner
                     if(lines[i].top > lines[j].top) { lines_dag(i,j) = 1; }
                     else { lines_dag(j,i) = 1; }
                 }
-                
+
                 else{
                     if( separator_segment_found(lines[i],lines[j],lines) )        continue;
                     else if(lines[i].end <= lines[j].start)  { lines_dag(i,j) = 1; }
@@ -109,7 +110,7 @@ namespace ocropus {
             }
         }
     }
-    
+
     ReadingOrderByTopologicalSort::ReadingOrderByTopologicalSort(){
         id = 0;
     }
@@ -124,7 +125,7 @@ namespace ocropus {
         }
         ro_index.push(k);
     }
-    
+
     void ReadingOrderByTopologicalSort::depthFirstSearch(narray<bool> &lines_dag){
         int size = lines_dag.dim(0);
         val.resize(size);
@@ -133,7 +134,7 @@ namespace ocropus {
             if (val(k) == 0)
                 visit(k, lines_dag);
     }
-    
+
     void ReadingOrderByTopologicalSort::sortTextlines(narray<TextLine> &textlines,
                                                       rectarray &gutters,
                                                       CharStats &charstats){
@@ -156,7 +157,7 @@ namespace ocropus {
         narray<bool> lines_dag; // Directed acyclic graph of lines
         lines_dag.resize( lines.length(), lines.length() );
         fill(lines_dag,false);
-        
+
         construct_graph(lines, lines_dag);
         depthFirstSearch(lines_dag);
         int size = ro_index.length();
@@ -165,7 +166,7 @@ namespace ocropus {
             textlines.push(lines[ro_index[size-i]].getTextLine());
         }
     }
-    
+
     void ReadingOrderByTopologicalSort::sortTextlines(narray<TextLine> &textlines,
                                                       rectarray &gutters,
                                                       rectarray &hor_rulings,
@@ -222,7 +223,7 @@ namespace ocropus {
         narray<bool> lines_dag; // Directed acyclic graph of lines
         lines_dag.resize( lines.length(), lines.length() );
         fill(lines_dag,false);
-        
+
         construct_graph(lines, lines_dag);
         depthFirstSearch(lines_dag);
         int size = ro_index.length();
@@ -233,7 +234,7 @@ namespace ocropus {
                 textlines.push(tl);
         }
     }
-    
+
     ReadingOrderByTopologicalSort *make_ReadingOrderByTopologicalSort(){
         return new ReadingOrderByTopologicalSort();
     }

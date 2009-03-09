@@ -169,7 +169,7 @@ namespace ocropus {
 #if 0
         // FIXME get this out of the logger class; some of these should
         // just become top-level functions, others should go into
-        // their respective packages
+        // their respective packages --tmb
 
         void display_one_line_graph(
                         int debug_display_transitions, int size, int indent,
