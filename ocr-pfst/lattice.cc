@@ -29,17 +29,18 @@ using namespace colib;
 using namespace ocropus;
 
 namespace {
-    /// FIXME: presort
     struct CompositionFstImpl : CompositionFst {
-        autodel<IGenericFst> l1, l2;
+        autodel<OcroFST> l1, l2;
         int override_start;
         int override_finish;
         virtual const char *description() {return "CompositionLattice";}
-        CompositionFstImpl(IGenericFst *l1, IGenericFst *l2,
+        CompositionFstImpl(OcroFST *l1, OcroFST *l2,
                                int o_s, int o_f) :
             override_start(o_s), override_finish(o_f) {
             CHECK_ARG(l1->nStates() > 0);
             CHECK_ARG(l2->nStates() > 0);
+            l1->sortByOutput();
+            l2->sortByInput();
 
             // this should be here, not in the initializers.
             // (otherwise if CHECKs throw an exception, bad things happen)
@@ -114,21 +115,6 @@ namespace {
             floatarray c1, c2;
             l1->arcs(ids1, t1, o1, c1, n1);
             l2->arcs(ids2, t2, o2, c2, n2);
-
-            // sort & permute
-            intarray p1, p2;
-
-            quicksort(p1, o1);
-            permute(ids1, p1);
-            permute(t1, p1);
-            permute(o1, p1);
-            permute(c1, p1);
-
-            quicksort(p2, ids2);
-            permute(ids2, p2);
-            permute(t2, p2);
-            permute(o2, p2);
-            permute(c2, p2);
 
             int k1, k2;
             // l1 epsilon moves
