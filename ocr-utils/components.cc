@@ -47,24 +47,24 @@ namespace ocropus {
         }
     }
 
-    typedef IComponent *(*component_constructor)();
+    strhash<IComponentConstructor*> constructors;
 
-    strhash<component_constructor> constructors;
-
-    void component_register_fun(const char *name,component_constructor f,bool replace) {
-        if(constructors.find(name) && !replace)
-            throwf("%s: already registered as a component",name);
+    void component_register_(const char *name,IComponentConstructor *f,bool replace) {
+        if(constructors.find(name)) {
+            if(!replace) throwf("%s: already registered as a component",name);
+            delete constructors(name);
+        }
         constructors(name) = f;
     }
 
-    component_constructor component_lookup(const char *name) {
+    IComponentConstructor *component_lookup(const char *name) {
         if(!constructors.find(name)) throwf("%s: no such component",name);
         return constructors(name);
     }
 
     IComponent *component_construct(const char *name) {
-        component_constructor f = component_lookup(name);
-        return f();
+        IComponentConstructor *f = component_lookup(name);
+        return (*f)();
     }
 
     void list_components(narray<const char *> &names) {

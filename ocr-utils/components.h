@@ -251,29 +251,49 @@ namespace ocropus {
 
     /// Component registry.
 
-    typedef IComponent *(*component_constructor)();
-    void component_register_fun(const char *name,component_constructor f,bool replace=false);
+    struct IComponentConstructor {
+        virtual IComponent *operator()() = 0;
+    };
 
     template <class T>
-    inline IComponent *iconstructor() {
-        return new T();
-    }
+    struct ComponentConstructorNew:IComponentConstructor {
+        IComponent *operator()() {
+            return (IComponent*)new T();
+        }
+    };
+    template <class T,class S>
+    struct ComponentConstructorNew2:IComponentConstructor {
+        IComponent *operator()() {
+            return (IComponent*)new T(new S());
+        }
+    };
+
+    template <class T>
+    struct ComponentConstructorFun:IComponentConstructor {
+        T *(*f)();
+        ComponentConstructorFun(T *(*f)()):f(f) {}
+        IComponent *operator()() {
+            return (IComponent*)(*f)();
+        }
+    };
+
+    void component_register_(const char *name,IComponentConstructor *f,
+            bool replace=false);
+
     template <class T>
     inline void component_register(const char *name,bool replace=false) {
-        component_constructor f = &iconstructor<T>;
-        component_register_fun(name,f,replace);
-    }
-    template <class T,class S>
-    inline IComponent *iconstructor2() {
-        return new T(new S());
+        component_register_(name,new ComponentConstructorNew<T>(),replace);
     }
     template <class T,class S>
     inline void component_register2(const char *name,bool replace=false) {
-        component_constructor f = &iconstructor2<T,S>;
-        component_register_fun(name,f,replace);
+        component_register_(name,new ComponentConstructorNew2<T,S>(),replace);
+    }
+    template <class T>
+    inline void component_register2(const char *name,T *(*f)(),bool replace=false) {
+        component_register_(name,new ComponentConstructorFun<T>(f),replace);
     }
     void list_components(narray<const char *> &names);
-    component_constructor component_lookup(const char *name);
+    IComponentConstructor *component_lookup(const char *name);
     IComponent *component_construct(const char *name);
 }
 
