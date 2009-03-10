@@ -289,12 +289,26 @@ namespace ocropus {
         component_register_(name,new ComponentConstructorNew2<T,S>(),replace);
     }
     template <class T>
-    inline void component_register2(const char *name,T *(*f)(),bool replace=false) {
+    inline void component_register(const char *name,T *(*f)(),bool replace=false) {
         component_register_(name,new ComponentConstructorFun<T>(f),replace);
     }
     void list_components(narray<const char *> &names);
+
     IComponentConstructor *component_lookup(const char *name);
+
     IComponent *component_construct(const char *name);
+
+    template <class T>
+    T *make_component(const char *name) {
+        IComponent *component = component_construct(name);
+        if(!component) throwf("%s: failed to instantiate component",name);
+        T *result = dynamic_cast<T*>(component);
+        if(!result) {
+            delete component;
+            throwf("%s: yielded component of wrong type\n",name);
+        }
+        return result;
+    }
 }
 
 #endif

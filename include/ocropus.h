@@ -76,6 +76,7 @@ namespace ocropus {
 #include "segmentation.h"
 #include "sysutil.h"
 #include "xml-entities.h"
+#include "init-ocropus.h"
 
 #ifndef CHECK
 #define CHECK(X) CHECK_ARG(X)
