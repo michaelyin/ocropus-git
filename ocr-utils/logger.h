@@ -67,7 +67,7 @@ namespace ocropus {
     /// Note: you can use logger.log() methods along with logger() operators.
     /// (This is the only way under Lua)
     class Logger {
-        colib::strbuf name;
+        colib::iucstring name;
         colib::stdio logImage(const char *description, int w, int h);
         void html(colib::bytearray &img);
         void html(colib::nustring &val);

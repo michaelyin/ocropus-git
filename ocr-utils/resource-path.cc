@@ -23,22 +23,22 @@
 
 #include "resource-path.h"
 
-static const char *default_path = "/usr/local/share/ocropus:"
+static const iucstring default_path = "/usr/local/share/ocropus:"
                                   "/usr/share/ocropus";
 
 using namespace colib;
 
 
-static strbuf original_path;
-static narray<strbuf> path;
-static strbuf errmsg;
+static iucstring original_path;
+static narray<iucstring> path;
+static iucstring errmsg;
 
 
 namespace ocropus {
 
     void set_resource_path(const char *s) {
         const char *env = getenv("OCROPUS_DATA");
-        strbuf p;
+        iucstring p;
         if(!s && !env)
             p = default_path;
         else if(!s)
@@ -46,10 +46,9 @@ namespace ocropus {
         else if(!env)
             p = s;
         else {
-            p.ensure(strlen(s) + 1 + strlen(env));
-            strcpy(p, s);
-            strcat(p, ":");
-            strcat(p, env);
+            p = s;
+            p += ":";
+            p += env;
         }
         original_path = p;
         split_string(path, p, ":;");
@@ -59,20 +58,15 @@ namespace ocropus {
         if(!original_path)
             set_resource_path(NULL);
         for(int i = 0; i < path.length(); i++) {
-            strbuf s;
-            s.ensure(strlen(path[i]) + 1 + strlen(relative_path));
-            strcpy(s, path[i]);
-            strcat(s, "/");
-            strcat(s, relative_path);
+            iucstring s = path[i] + "/" + relative_path;
             FILE *f = fopen(s, "rb");
             if(f)
                 return f;
         }
-        errmsg.ensure(strlen(original_path) + strlen(relative_path) + 1000);
-        sprintf(errmsg, "Unable to find resource %s in the data path, which is %s", (char *) relative_path, (char *) original_path);
-        fprintf(stderr, "%s\n", (char *) errmsg);
+        sprintf(errmsg, "Unable to find resource %s in the data path, which is %s", relative_path, original_path.c_str());
+        fprintf(stderr, "%s\n", errmsg.c_str());
         fprintf(stderr, "Please check that your $OCROPUS_DATA variable points to the OCRopus data directory");
-        throw (const char *) errmsg;
+        throw errmsg.c_str();
     }
 
     void find_and_load_ICharacterClassifier(ICharacterClassifier &i,

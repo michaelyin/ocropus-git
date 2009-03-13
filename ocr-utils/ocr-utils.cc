@@ -606,7 +606,7 @@ namespace ocropus {
     }
 
     /// Analogous to python's split().
-    void split_string(narray<strbuf> &components,
+    void split_string(narray<iucstring> &components,
                       const char *s,
                       const char *delimiters) {
         components.clear();
@@ -617,10 +617,7 @@ namespace ocropus {
                 p++;
             int len = p - s;
             if(len) {
-                strbuf &item = components.push();
-                item.ensure(len + 1);
-                strncpy(item, s, len);
-                item[len] = '\0';
+                components.push().append(s, len);
             }
             if(!*p) return;
             s = p + 1;
@@ -743,33 +740,6 @@ namespace ocropus {
                 for(int y=r.y0;y<r.y1;y++)
                     image(x,y) = color;
         }
-    }
-
-    void strbuf_format(strbuf &str, const char *format, ...) {
-        strbuf result;
-        int len = 1;
-        result.ensure(len);
-        va_list v;
-        va_start(v, format);
-        int written = vsnprintf(result, len + 1, format, v);
-        va_end(v);
-        if(written > len) {
-            len = written;
-            result.ensure(len);
-            va_start(v, format);
-            written = vsnprintf(result, len + 1, format, v);
-            va_end(v);
-        }
-        str = result;
-    }
-
-    void code_to_strbuf(strbuf &sb, int code) {
-        nuchar ch(code);
-        nustring ns(1);
-        ns[0] = ch;
-        char* buf = ns.newUtf8Encode();
-        sb = buf;
-        delete[] buf;
     }
 
     template<class T>

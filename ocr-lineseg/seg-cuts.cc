@@ -205,7 +205,7 @@ namespace ocropus {
 
         intarray bestcuts;
 
-        strbuf debug;
+        iucstring debug;
         intarray dimage;
 
         narray< narray <point> > cuts;

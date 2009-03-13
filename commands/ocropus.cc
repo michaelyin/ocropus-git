@@ -43,42 +43,6 @@ namespace glinerec {
     IRecognizeLine *make_Linerec();
 }
 
-void nustring_convert(narray<char> &output,nustring &str) {
-    // FIXME/mezhirov the utf8Encode doesn't seem to be doing the right thing
-    // (Tesseract output wasn't working; we need to revisit this after the iustring)
-    output.clear();
-    for(int i=0;i<str.length();i++) {
-        int c = str(i).ord();
-        if(c>=32 && c<=127)
-            output.push() = c;
-        else
-            output.push() = '~';
-    }
-    output.push() = 0;
-}
-
-void nustring_convert(nustring &output,strbuf &str) {
-    // FIXME/mezhirov the utf8Decode doesn't seem to be doing the right thing
-    // (Tesseract output wasn't working; we need to revisit this after the iustring)
-    int n = str.length();
-    output.resize(n);
-    for(int i=0;i<n;i++)
-        output[i] = nuchar((int)str[i]);
-}
-
-void nustring_convert(strbuf &output,nustring &str) {
-    // FIXME/mezhirov the utf8Encode doesn't seem to be doing the right thing
-    // (Tesseract output wasn't working; we need to revisit this after the iustring)
-    output.dealloc();
-    for(int i=0;i<str.length();i++) {
-        int c = str(i).ord();
-        if(c>=32 && c<=127)
-            output += c;
-        else
-            output += '~';
-    }
-}
-
 struct Glob {
     glob_t g;
     Glob(const char *pattern,int flags=0) {
@@ -106,14 +70,14 @@ int main_book2lines(int argc,char **argv) {
         perror(outdir);
         exit(1);
     }
-    strbuf s;
+    iucstring s;
     for(int arg=2;arg<argc;arg++) {
         Pages pages;
         pages.parseSpec(argv[arg]);
         while(pages.nextPage()) {
             pageno++;
             debugf("info","page %d\n",pageno);
-            s.format("%s/%04d",outdir,pageno);
+            sprintf(s,"%s/%04d",outdir,pageno);
             mkdir(s,0777);
             bytearray page_binary,page_gray;
             pages.getBinary(page_binary);
@@ -126,7 +90,7 @@ int main_book2lines(int argc,char **argv) {
                 bytearray line_image;
                 regions.extract(line_image,page_gray,lineno,1);
                 // MAYBE output log of coordinates here
-                s.format("%s/%04d/%04d.png",outdir,pageno,lineno);
+                sprintf(s,"%s/%04d/%04d.png",outdir,pageno,lineno);
                 write_image_gray(s,line_image);
             }
             debugf("info","#lines = %d\n",regions.length());
@@ -144,7 +108,7 @@ int main_book2pages(int argc,char **argv) {
         perror(outdir);
         exit(1);
     }
-    strbuf s;
+    iucstring s;
     for(int arg=2;arg<argc;arg++) {
         Pages pages;
         pages.parseSpec(argv[arg]);
@@ -155,12 +119,12 @@ int main_book2pages(int argc,char **argv) {
             bytearray page_binary,page_gray;
 
             // TODO/mezhirov make binarizer settable
-            s.format("%s/%04d.png",outdir,pageno);
+            sprintf(s,"%s/%04d.png",outdir,pageno);
             pages.getGray(page_gray);
             write_image_gray(s,page_gray);
 
             pages.getBinary(page_binary);
-            s.format("%s/%04d.bin.png",outdir,pageno);
+            sprintf(s,"%s/%04d.bin.png",outdir,pageno);
             write_image_binary(s,page_binary);
         }
     }
@@ -177,8 +141,8 @@ int main_pages2lines(int argc,char **argv) {
     const char *outdir = argv[1];
     autodel<ISegmentPage> segmenter;
     segmenter = make_SegmentPageByRAST();
-    strbuf s;
-    s.format("%s/[0-9][0-9][0-9][0-9].png",outdir);
+    iucstring s;
+    sprintf(s,"%s/[0-9][0-9][0-9][0-9].png",outdir);
     Glob files(s);
     if(files.length()<1)
         throw "no pages found";
@@ -189,13 +153,13 @@ int main_pages2lines(int argc,char **argv) {
         CHECK(sscanf(files(index),"%[^/]/%d.png",buf,&pageno)==2);
         debugf("info","page %d\n",pageno);
 
-        s.format("%s/%04d",outdir,pageno);
+        sprintf(s,"%s/%04d",outdir,pageno);
         mkdir(s,0777);          // ignore errors
 
         bytearray page_gray;
         read_image_gray(page_gray,files(index));
         bytearray page_binary;
-        s.format("%s/%04d.bin.png",outdir,pageno);
+        sprintf(s,"%s/%04d.bin.png",outdir,pageno);
         read_image_binary(page_binary,s);
 
         intarray page_seg;
@@ -207,7 +171,7 @@ int main_pages2lines(int argc,char **argv) {
             bytearray line_image;
             regions.extract(line_image,page_gray,lineno,1);
             // TODO/mezhirov output log of coordinates here
-            s.format("%s/%04d/%04d.png",outdir,pageno,lineno);
+            sprintf(s,"%s/%04d/%04d.png",outdir,pageno,lineno);
             write_image_gray(s,line_image);
         }
         debugf("info","#lines = %d\n",regions.length());
@@ -223,16 +187,15 @@ int main_tesslines(int argc,char **argv) {
     dinit(1000,1000);
     autodel<IRecognizeLine> linerec;
     linerec = make_TesseractRecognizeLine();
-    strbuf pattern;
-    pattern.format("%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].png",argv[1]);
+    iucstring pattern;
+    sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].png",argv[1]);
     Glob files(pattern);
     for(int index=0;index<files.length();index++) {
         if(index%1000==0)
             debugf("info","%s (%d/%d)\n",files(index),index,files.length());
-        strbuf base;
-        base = files(index);
-        base[base.length()-4] = 0;
-        debugf("progress","line %s\n",(char*)base);
+        iucstring base = files(index);
+        base.erase(base.length()-4);
+        debugf("progress","line %s\n",base.c_str());
         bytearray image;
         // TODO/mezhirov output binary versions, intermediate results for debugging
         read_image_gray(image,files(index));
@@ -259,25 +222,22 @@ int main_tesslines(int argc,char **argv) {
                 printf(" %d[%c]",str(i).ord(),str(i).ord());
             printf("\n");
         }
-        strbuf output;
-        nustring_convert(output,str);
-        strbuf s;
-        s.format("%s.txt",(char*)base);
-        fprintf(stdio(s,"w"),"%s\n",output.ptr());
-        debugf("transcript","%s\t%s\n",files(index),output.ptr());
+        iucstring output = str;
+        iucstring s = base + ".txt";
+        fprintf(stdio(s,"w"),"%s\n",output.c_str());
+        debugf("transcript","%s\t%s\n",files(index),output.c_str());
     }
     return 0;
 }
 
 param_string eval_flags("eval_flags","space","which features to ignore during evaluation");
 
-void cleanup_for_eval(strbuf &s) {
+void cleanup_for_eval(iucstring &s) {
     bool space = strflag(eval_flags,"space");
     bool scase = strflag(eval_flags,"case");
     bool nonanum = strflag(eval_flags,"nonanum");
     bool nonalpha = strflag(eval_flags,"nonalpha");
-    strbuf result;
-    result = "";
+    iucstring result = "";
     for(int i=0;i<s.length();i++) {
         int c = s[i];
         if(space && c==' ') continue;
@@ -285,48 +245,44 @@ void cleanup_for_eval(strbuf &s) {
         if(nonalpha && !isalpha(c)) continue;
         if(c<32||c>127) continue;
         if(scase && isupper(c)) c = tolower(c);
-        result += c;
+        result.push_back(c);
     }
     s = result;
 }
 
 int main_evaluate(int argc,char **argv) {
     if(argc!=2) throw "usage: ... dir";
-    strbuf s;
-    s.format("%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
+    iucstring s;
+    sprintf(s, "%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
     Glob files(s);
     float total = 0.0, tchars = 0, pchars = 0, lines = 0;
     for(int index=0;index<files.length();index++) {
         if(index%1000==0)
             debugf("info","%s (%d/%d)\n",files(index),index,files.length());
 
-        strbuf base;
-        base = files(index);
-        base.truncate(-7);
+        iucstring base = files(index);
+        base.erase(base.length()-7);
 
-        char buf[100000];
+        iucstring truth;
         try {
-            fgets(buf,sizeof buf,stdio(files(index),"r"));
+            fgets(truth, stdio(files(index),"r"));
         } catch(const char *error) {
             continue;
         }
-        strbuf truth;
-        truth = buf;
 
-        strbuf s; s = base; s += ".txt";
+        iucstring s = base + ".txt";
+        iucstring predicted;
         try {
-            fgets(buf,sizeof buf,stdio(s.ptr(),"r"));
+            fgets(predicted, stdio(s,"r"));
         } catch(const char *error) {
             continue;
         }
-        strbuf predicted;
-        predicted = buf;
 
         cleanup_for_eval(truth);
         cleanup_for_eval(predicted);
         nustring ntruth,npredicted;
-        nustring_convert(ntruth,truth);
-        nustring_convert(npredicted,predicted);
+        truth.toNustring(ntruth);
+        predicted.toNustring(npredicted);
         float dist = edit_distance(ntruth,npredicted);
 
         total += dist;
@@ -338,8 +294,8 @@ int main_evaluate(int argc,char **argv) {
                "%g\t%s\t%s\t%s\n",
                dist,
                files(index),
-               truth.ptr(),
-               predicted.ptr());
+               truth.c_str(),
+               predicted.c_str());
     }
     printf("rate %g total_error %g true_chars %g predicted_chars %g lines %g\n",
            total/float(tchars),total,tchars,pchars,lines);
@@ -348,8 +304,8 @@ int main_evaluate(int argc,char **argv) {
 
 int main_evalconf(int argc,char **argv) {
     if(argc!=2) throw "usage: ... dir";
-    strbuf s;
-    s.format("%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
+    iucstring s;
+    sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
     Glob files(s);
     float total = 0.0, tchars = 0, pchars = 0, lines = 0;
     intarray confusion(256,256); // FIXME/tmb limited to 256x256, replace with int2hash
@@ -358,33 +314,29 @@ int main_evalconf(int argc,char **argv) {
         if(index%1000==0)
             debugf("info","%s (%d/%d)\n",files(index),index,files.length());
 
-        strbuf base;
-        base = files(index);
-        base.truncate(-7);
+        iucstring base = files(index);
+        base.erase(base.length()-7);
 
-        char buf[100000];
+        iucstring truth;
         try {
-            fgets(buf,sizeof buf,stdio(files(index),"r"));
+            fgets(truth, stdio(files(index),"r"));
         } catch(const char *error) {
             continue;
         }
-        strbuf truth;
-        truth = buf;
 
-        strbuf s; s = base; s += ".txt";
+        iucstring s = base + ".txt";
+        iucstring predicted;
         try {
-            fgets(buf,sizeof buf,stdio(s.ptr(),"r"));
+            fgets(predicted, stdio(s,"r"));
         } catch(const char *error) {
             continue;
         }
-        strbuf predicted;
-        predicted = buf;
 
         cleanup_for_eval(truth);
         cleanup_for_eval(predicted);
         nustring ntruth,npredicted;
-        nustring_convert(ntruth,truth);
-        nustring_convert(npredicted,predicted);
+        truth.toNustring(ntruth);
+        predicted.toNustring(npredicted);
         float dist = edit_distance(confusion,ntruth,npredicted,1,1,1);
 
         total += dist;
@@ -396,8 +348,8 @@ int main_evalconf(int argc,char **argv) {
                "%g\t%s\t%s\t%s\n",
                dist,
                files(index),
-               truth.ptr(),
-               predicted.ptr());
+               truth.c_str(),
+               predicted.c_str());
     }
     intarray list(65536,3); // FIXME/tmb replace with hash table when we move to Unicode
     int row = 0;
@@ -440,61 +392,56 @@ int main_findconf(int argc,char **argv) {
         sscanf(argv[3],"%c",&c);
         to = c;
     }
-    strbuf s;
-    s.format("%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
+    iucstring s;
+    sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
     Glob files(s);
     intarray confusion(256,256);
     for(int index=0;index<files.length();index++) {
-        strbuf base;
-        base = files(index);
-        base.truncate(-7);
-        char buf[100000];
-        try {
-            fgets(buf,sizeof buf,stdio(files(index),"r"));
-        } catch(const char *error) {
-            continue;
-        }
-        strbuf truth;
-        truth = buf;
+        iucstring base = files(index);
+        base.erase(base.length()-7);
 
-        strbuf s; s = base; s += ".txt";
+
+        iucstring truth;
         try {
-            fgets(buf,sizeof buf,stdio(s.ptr(),"r"));
+            fgets(truth, stdio(files(index),"r"));
         } catch(const char *error) {
             continue;
         }
-        strbuf predicted;
-        predicted = buf;
+
+        iucstring s = base + ".txt";
+        iucstring predicted;
+        try {
+            fgets(predicted, stdio(s,"r"));
+        } catch(const char *error) {
+            continue;
+        }
 
         cleanup_for_eval(truth);
         cleanup_for_eval(predicted);
         nustring ntruth,npredicted;
-        nustring_convert(ntruth,truth);
-        nustring_convert(npredicted,predicted);
+        truth.toNustring(ntruth);
+        predicted.toNustring(npredicted);
         confusion = 0;
         edit_distance(confusion,ntruth,npredicted,1,1,1);
         if(confusion(from,to)>0) {
-            printf("%s.png\n",base.ptr());
+            printf("%s.png\n",base.c_str());
         }
     }
     return 0;
 }
 int main_evalfiles(int argc,char **argv) {
     if(argc!=3) throw "usage: ... file1 file2";
-    char buf[1000000];
-    buf[0] = 0;
-    fread(buf,1,sizeof buf,stdio(argv[1],"r"));
-    strbuf truth;
-    truth = buf;
-    fread(buf,1,sizeof buf,stdio(argv[2],"r"));
-    strbuf predicted;
-    predicted = buf;
+    iucstring truth;
+    fread(truth, stdio(argv[1],"r"));
+    iucstring predicted;
+    fread(predicted, stdio(argv[2],"r"));
 
     cleanup_for_eval(truth);
     cleanup_for_eval(predicted);
     nustring ntruth,npredicted;
-    nustring_convert(ntruth,truth);
-    nustring_convert(npredicted,predicted);
+    truth.toNustring(ntruth);
+    predicted.toNustring(npredicted);
+
     float dist = edit_distance(ntruth,npredicted);
     printf("dist %g tchars %d pchars %d\n",
            dist,truth.length(),predicted.length());
@@ -503,8 +450,8 @@ int main_evalfiles(int argc,char **argv) {
 
 int main_fsts2bestpaths(int argc,char **argv) {
     if(argc!=2) throw "usage: ... dir";
-    strbuf s;
-    s.format("%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst",argv[1]);
+    iucstring s;
+    sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst",argv[1]);
     Glob files(s);
     for(int index=0;index<files.length();index++) {
         if(index%1000==0)
@@ -514,14 +461,12 @@ int main_fsts2bestpaths(int argc,char **argv) {
         nustring str;
         try {
             fst->bestpath(str);
-            strbuf output;
-            nustring_convert(output,str);
-            debugf("transcript","%s\t%s\n",files(index),output.ptr());
-            strbuf base;
-            base = files(index);
-            base.truncate(-4);
+            iucstring output = str;
+            debugf("transcript","%s\t%s\n",files(index),output.c_str());
+            iucstring base = files(index);
+            base.erase(base.length()-4);
             base += ".txt";
-            fprintf(stdio(base,"w"),"%s",output.ptr());
+            fprintf(stdio(base,"w"),"%s",output.c_str());
         } catch(const char *error) {
             fprintf(stderr,"ERROR in bestpath: %s\n",error);
             if(abort_on_error) abort();
