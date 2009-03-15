@@ -8,9 +8,6 @@ namespace ocropus {
 
     void throw_fmt(const char *format, ...);
 
-    void strbuf_format(strbuf &str, const char *format, ...);
-    void code_to_strbuf(strbuf &s, int code);
-
 }
 
 #endif

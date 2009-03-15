@@ -33,11 +33,11 @@
 #include <typeinfo>
 #include "colib/narray.h"
 #include "colib/narray-util.h"
-#include "colib/strbuf.h"
 #include "colib/smartptr.h"
 #include "colib/misc.h"
 #include "colib/coords.h"
 #include "colib/nustring.h"
+#include "colib/iustring.h"
 #include "components.h"
 
 namespace ocropus {

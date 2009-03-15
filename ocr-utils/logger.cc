@@ -33,8 +33,8 @@ using namespace ocropus;
 
 namespace {
     struct Log {
-        narray<strbuf> enabled_logs;
-        strbuf dir;
+        narray<iucstring> enabled_logs;
+        iucstring dir;
         stdio file;
     };
 
@@ -102,7 +102,7 @@ namespace ocropus {
 
         fprintf(get_log()->file, "logging turned on for the following loggers:<BR /><UL>\n");
         for(int i = 0; i < get_log()->enabled_logs.length(); i++)
-            fprintf(get_log()->file, "    <LI>%s</LI>\n", (char *) get_log()->enabled_logs[i]);
+            fprintf(get_log()->file, "    <LI>%s</LI>\n", get_log()->enabled_logs[i].c_str());
         fprintf(get_log()->file, "</UL>\n");
 
         time_t rawtime;
@@ -112,51 +112,47 @@ namespace ocropus {
     }
 
     void Logger::putIndent() {
-        fprintf(get_log()->file, "[%s] ", (char *) name);
+        fprintf(get_log()->file, "[%s] ", name.c_str());
         for(int i = 0; i < indent_level; i++) {
             fprintf(get_log()->file, "&nbsp;&nbsp;");
         }
     }
 
     stdio Logger::logImage(const char *description, int w, int h) {
-        char buf[strlen(get_log()->dir) + 100];
-        sprintf(buf, "%s/ocropus-log-%d.png", (char*) get_log()->dir, image_counter);
+        iucstring imageFile = get_log()->dir + "/ocropus-log-" + image_counter + ".png";
         putIndent();
         fprintf(get_log()->file, "%s:<br> <a HREF=\"ocropus-log-%d.png\">"
                 "<IMG width=\"%d\" height=\"%d\" border=\"0\" SRC=\"ocropus-log-%d.png\">"
                 "</a><BR>\n", description, image_counter, w, h, image_counter);
         fflush(get_log()->file);
         image_counter++;
-        return stdio(buf, "wb");
+        return stdio(imageFile, "wb");
     }
     stdio Logger::logImageHtml() {
-        char buf[strlen(get_log()->dir) + 100];
-        sprintf(buf, "%s/ocropus-log-%d.png", (char *) get_log()->dir, image_counter);
+        iucstring imageFile = get_log()->dir + "/ocropus-log-" + image_counter + ".png";
         //putIndent();
         fprintf(get_log()->file, "<IMG SRC=\"ocropus-log-%d.png\">",image_counter);
         fflush(get_log()->file);
         image_counter++;
-        return stdio(buf, "wb");
+        return stdio(imageFile, "wb");
     }
     stdio Logger::logImageHtmlBorder() {
-        char buf[strlen(get_log()->dir) + 100];
-        sprintf(buf, "%s/ocropus-log-%d.png", (char *) get_log()->dir, image_counter);
+        iucstring imageFile = get_log()->dir + "/ocropus-log-" + image_counter + ".png";
         //putIndent();
         fprintf(get_log()->file, "<IMG hspace=\"4\" vspace=\"4\" style=\"border-color:#8888FF\" SRC=\"ocropus-log-%d.png\" border=\"1\">",image_counter);
         fflush(get_log()->file);
         image_counter++;
-        return stdio(buf, "wb");
+        return stdio(imageFile, "wb");
     }
 
     stdio Logger::logText(const char *description) {
-        char buf[strlen(get_log()->dir) + 100];
-        sprintf(buf, "%s/ocropus-log-%d.txt", (char *) get_log()->dir, image_counter);
+        iucstring textFile = get_log()->dir + "/ocropus-log-" + image_counter + ".txt";
         putIndent();
         fprintf(get_log()->file, "<A HREF=\"ocropus-log-%d.txt\">%s</A><BR>\n",
                 image_counter, description);
         fflush(get_log()->file);
         image_counter++;
-        return stdio(buf, "w");
+        return stdio(textFile, "w");
     }
 
 
@@ -185,7 +181,7 @@ namespace ocropus {
         }
 
         if(self_logging)
-            fprintf(get_log()->file, "[logger] `%s': %s<BR />\n", (char *) name, enabled ? "enabled": "disabled");
+            fprintf(get_log()->file, "[logger] `%s': %s<BR />\n", name, enabled ? "enabled": "disabled");
     }
 
     void Logger::format(const char *format, ...) {
@@ -356,7 +352,7 @@ namespace ocropus {
     }
 
     const char* get_logger_directory() {
-        return (char*) get_log()->dir;
+        return get_log()->dir.c_str();
     }
 
     int get_image_counter() {
@@ -373,22 +369,22 @@ namespace ocropus {
                     "log finished; switching to directory %s\n", path);
         }
         mkdir_if_necessary(path);
-        strbuf old_dir;
+        iucstring old_dir;
         if(get_log()->dir)
             old_dir = get_log()->dir;
         get_log()->dir = path;
-        strbuf html;
+        iucstring html;
         html = path;
         html += "/index.html";
         get_log()->file = fopen(html,"wt");
         if(!get_log()->file) {
             fprintf(stderr, "unable to open log file `%s' for writing\n",
-                    (char *) html);
+                    html.c_str());
         }
         fprintf(get_log()->file, "<HTML>\n<HEAD>\n<meta http-equiv=\"content-type\" "
                         "content=\"text/html\"; charset=UTF-8\">\n</HEAD>\n<BODY>\n");
         if(old_dir) {
-            fprintf(get_log()->file, "Log continued from %s<P>\n", (char *) old_dir);
+            fprintf(get_log()->file, "Log continued from %s<P>\n", old_dir.c_str());
         }
     }
 
