@@ -24,6 +24,7 @@
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include "colib/colib.h"
+#include "ocrinterfaces.h"
 
 using namespace colib;
 
