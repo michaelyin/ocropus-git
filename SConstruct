@@ -98,7 +98,7 @@ else:
 ### iulib
 
 env.Append(LIBPATH=["${iulib}/lib"])
-# env.Append(CPPPATH=["${iulib}/include","${iulib}/include/colib","${iulib}/include/iulib"])
+env.Append(CPPPATH=["${iulib}/include"])
 env.Append(LIBS=["iulib"])
 assert conf.CheckHeader("colib/colib.h",language="C++")
 assert conf.CheckLibWithHeader("iulib","iulib/iulib.h","C++");
