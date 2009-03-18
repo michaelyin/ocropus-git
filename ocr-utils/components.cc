@@ -61,6 +61,7 @@ namespace ocropus {
     }
 
     IComponent *component_construct(const char *name) {
+        if(!strcmp(name,"null")) return 0;
         IComponentConstructor *f = component_lookup(name);
         return (*f)();
     }

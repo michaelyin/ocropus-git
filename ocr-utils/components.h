@@ -19,8 +19,6 @@ using namespace iulib;
 #define NTHREADS omp_get_num_threads()
 #endif
 
-
-
 namespace ocropus {
 
     extern const char *global_verbose_params;
@@ -300,6 +298,7 @@ namespace ocropus {
 
     template <class T>
     T *make_component(const char *name) {
+        if(!strcmp(name,"null")) return 0;
         IComponent *component = component_construct(name);
         if(!component) throwf("%s: failed to instantiate component",name);
         T *result = dynamic_cast<T*>(component);
@@ -308,6 +307,31 @@ namespace ocropus {
             throwf("%s: yielded component of wrong type\n",name);
         }
         return result;
+    }
+
+    // convenience functions for pointers held by autodel
+
+    template <class T>
+    void make_component(autodel<T> &dest,const char *name) {
+        dest = make_component<T>(name);
+    }
+    template <class T>
+    void make_component(const char *name,autodel<T> &dest) {
+        dest = make_component<T>(name);
+    }
+    template <class T>
+    void save_component(FILE *stream,autodel<T> &dest) {
+        save_component(stream,dest.ptr());
+    }
+    template <class T>
+    void load_component(FILE *stream,autodel<T> &dest) {
+        T *result = dynamic_cast<T*>(load_component(stream));
+        if(!result) throwf("load failed: load component yielded wrong type");
+        dest = result;
+    }
+    template <class T>
+    void load_component(autodel<T> &dest,FILE *stream) {
+        load_component(stream,dest);
     }
 }
 
