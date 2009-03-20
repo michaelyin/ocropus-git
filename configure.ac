@@ -192,6 +192,26 @@ fi
 AM_CONDITIONAL([nosdl], [test "$nosdl" = 1])
 
 
+# --- OpenMP (optional for multi threading) ---
+# -- AC_OPENMP macro is new in autoconf 2.62 --
+#AC_OPENMP
+#CXXFLAGS="$OPENMP_CXXFLAGS $CXXFLAGS"
+#AC_SUBST(OPENMP_CXXFLAGS)
+AC_ARG_WITH(OpenMP,[  --without-OpenMP           disable OpenMP (Multi-Processing)],
+    [ac_cv_use_openmp=$withval], [ac_cv_use_openmp=yes])
+if test x$ac_cv_use_openmp != xno; then
+    AC_CHECK_LIB(gomp,GOMP_parallel_start,,AC_SUBST(noopenmp,1))
+else
+    AC_SUBST(noopenmp, 1)
+fi
+if  [[ "$noopenmp" != "1" ]]; then
+	LDFLAGS="$LDFLAGS -lgomp"
+	CXXFLAGS="$CXXFLAGS -fopenmp"
+fi
+AM_CONDITIONAL([noopenmp], [test "$noopenmp" = 1])
+
+
+
 # aspell is probably obsolete
 
 # --- aspell (optional, currently not used) ---
