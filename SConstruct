@@ -80,7 +80,10 @@ opts.Add(PathOption('leptonica', 'The installation root of leptonica', "/usr/loc
 opts.Add(BoolOption('test', "Run some tests after the build", "no"))
 opts.Add(BoolOption('style', 'Check style', "no"))
 
-env = Environment(options=opts, CXXFLAGS="-g ${opt} ${warn}")
+env = Environment(options=opts)
+env.Append(CXXFLAGS=["-g"])
+env.Append(CXXFLAGS=env["opt"])
+env.Append(CXXFLAGS=env["warn"])
 Help(opts.GenerateHelpText(env))
 conf = Configure(env)
 
@@ -147,6 +150,14 @@ elif conf.CheckLibWithHeader('lept', ['stdlib.h', 'stdio.h', 'liblept/allheaders
 else:
     # And this probably doesn't happen unless you manually specify the path.
     assert conf.CheckLibWithHeader('lept', ['stdlib.h', 'stdio.h', 'allheaders.h'], 'C')
+
+### gsl
+
+env.Append(LIBS=["gsl","blas"])
+
+if re.search("-O3",env["opt"]):
+    env.Append(LINKFLAGS=["-fopenmp"])
+    env.Append(CXXFLAGS=["-fopenmp"])
 
 conf.Finish()
 

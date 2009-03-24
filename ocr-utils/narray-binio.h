@@ -5,7 +5,7 @@
 
 #include <unistd.h>
 #include <sys/stat.h>
-#include "ocropus/ocropus.h"
+#include "ocropus.h"
 
 namespace narray_io {
     using namespace ocropus;
