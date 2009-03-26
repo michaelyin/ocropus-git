@@ -49,6 +49,7 @@ namespace ocropus {
 
     param_bool abort_on_error("abort_on_error",1,"abort recognition if there is an unexpected error");
     param_bool save_fsts("save_fsts",1,"save the fsts (set to 0 for eval-only in lines2fsts)");
+    param_bool retrain("retrain",0,"perform retraining");
     param_int nrecognize("nrecognize",1000000,"maximum number of lines to predict (for quick testing)");
     param_int ntrain("ntrain",10000000,"max number of training examples");
     param_string eval_flags("eval_flags","space","which features to ignore during evaluation");
@@ -187,8 +188,8 @@ namespace ocropus {
         if(argc!=3) throw "usage: ... model dir";
         dinit(512,512);
         autodel<IRecognizeLine> linerec;
-        strbuf pattern;
-        pattern.format("%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].png",argv[2]);
+        iucstring pattern;
+        sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].png",argv[2]);
         Glob files(pattern);
         int finished = 0;
         int nfiles = min(files.length(),nrecognize);
@@ -202,10 +203,10 @@ namespace ocropus {
                     linerec->load(stdio(argv[1],"r"));
                 }
             }
-            strbuf base;
+            iucstring base;
             base = files(index);
-            base[base.length()-4] = 0;
-            debugf("progress","line %s\n",(char*)base);
+            base.erase(base.length()-4);
+            debugf("progress","line %s\n",base.c_str());
             bytearray image;
             // FIXME output binary versions, intermediate results for debugging
             read_image_gray(image,files(index));
@@ -218,7 +219,7 @@ namespace ocropus {
                     linerec->recognizeLine(*result,image);
                 }
             } catch(BadTextLine &error) {
-                fprintf(stderr,"ERROR: %s (bad text line)\n",base.ptr());
+                fprintf(stderr,"ERROR: %s (bad text line)\n",base.c_str());
                 continue;
             } catch(const char *error) {
                 fprintf(stderr,"ERROR in recognizeLine: %s\n",error);
@@ -227,14 +228,14 @@ namespace ocropus {
             }
 
             if(save_fsts) {
-                strbuf s;
-                s.format("%s.fst",(char*)base);
+                iucstring s;
+                sprintf(s,"%s.fst",base.c_str());
                 result->save(s);
                 if(segmentation.length()>0) {
                     dsection("line_segmentation");
                     make_line_segmentation_white(segmentation);
-                    s.format("%s.rseg.png",(char*)base);
-                    write_image_packed(s.ptr(),segmentation);
+                    sprintf(s,"%s.rseg.png",base.c_str());
+                    write_image_packed(s.c_str(),segmentation);
                     dshowr(segmentation);
                     dwait();
                 }
@@ -247,10 +248,10 @@ namespace ocropus {
                 nustring_convert(predicted,str);
                 debugf("transcript","%s\t%s\n",files(index),predicted.c_str());
                 if(save_fsts) {
-                    strbuf s;
+                    iucstring s;
                     s = base;
                     s += ".txt";
-                    fprintf(stdio(s.ptr(),"w"),"%s",predicted.c_str());
+                    fprintf(stdio(s.c_str(),"w"),"%s",predicted.c_str());
                 }
             } catch(const char *error) {
                 fprintf(stderr,"ERROR in bestpath: %s\n",error);
@@ -259,11 +260,11 @@ namespace ocropus {
             }
 
             try {
-                strbuf s;
+                iucstring s;
                 s = base;
                 s += ".gt.txt";
                 char buf[100000];
-                fgets(buf,sizeof buf,stdio(s.ptr(),"r"));
+                fgets(buf,sizeof buf,stdio(s.c_str(),"r"));
                 iucstring truth;
                 truth = buf;
                 cleanup_for_eval(truth);
@@ -415,7 +416,7 @@ namespace ocropus {
                 debugf("info","%s (%d/%d)\n",files(index),index,files.length());
 
             iucstring base = files(index);
-            base.erase(base.length()-7);
+            base.erase(base.find("."));
 
             iucstring truth;
             try {
@@ -777,8 +778,8 @@ namespace ocropus {
         if(argc!=3) throw "usage: ... langmod dir";
         autodel<IGenericFst> langmod(make_OcroFST());
         langmod->load(argv[1]);
-        strbuf s;
-        s.format("%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst",argv[2]);
+        iucstring s;
+        sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst",argv[2]);
         Glob files(s);
         for(int index=0;index<files.length();index++) {
             autodel<IGenericFst> fst(make_OcroFST());
@@ -828,18 +829,25 @@ namespace ocropus {
         int total_chars = 0;
         int total_lines = 0;
         linerec.startTraining("");
-        strbuf pattern;
-        pattern.format("%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].cseg.gt.png",argv[2]);
-        debugf("info","%s\n",pattern.ptr());
+        iucstring pattern;
+        if(retrain) 
+            sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].cseg.png",argv[2]);
+        else
+            sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].cseg.gt.png",argv[2]);
+        debugf("info","%s\n",pattern.c_str());
         Glob files(pattern);
         if(files.length()<1) throw "no pages found";
         int next = 1000;
+        int space_warning = 0;
         for(int index=0;index<files.length();index++) {
             try {
                 strcpy(base,files(index));
                 chomp_extension(base);
                 strcpy(filename,base);
-                strcat(filename,".cseg.gt.png");
+                if(retrain)
+                    strcat(filename,".cseg.png");
+                else
+                    strcat(filename,".cseg.gt.png");
                 strcpy(current,filename);
                 read_line_segmentation(cseg,stdio(filename,"r"));
                 image.makelike(cseg);
@@ -847,14 +855,18 @@ namespace ocropus {
                     image.at1d(i) = 255*!cseg.at1d(i);
 
                 strcpy(filename,base);
-                strcat(filename,".gt.txt");
+                if(retrain)
+                    strcat(filename,".txt");
+                else
+                    strcat(filename,".gt.txt");
                 char transcript[10000];
                 stdio line(filename,"r");
                 CHECK_ARG(fgets(transcript,sizeof(transcript),line)>0);
                 line.close();
                 chomp(transcript);
                 if((int)strlen(transcript)!=max(cseg)) {
-                    debugf("info","removing spaces to make segmentations match\n");
+                    if(space_warning++==0)
+                        debugf("info","removing spaces to make segmentations match\n");
                     remove_spaces(transcript);
                 }
 
@@ -873,6 +885,10 @@ namespace ocropus {
                     total_lines++;
                 } catch(const char *s) {
                     fprintf(stderr,"ERROR: %s\n",s);
+                } catch(BadTextLine &err) {
+                    fprintf(stderr,"ERROR: BadTextLine\n");
+                } catch(...) {
+                    fprintf(stderr,"ERROR: (no details)\n");
                 }
             } catch(const char *msg) {
                 printf("%s: %s FIXME\n",filename,msg);
