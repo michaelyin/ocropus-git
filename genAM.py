@@ -11,6 +11,13 @@ extradirs = """
 # only add these files if tesseract is enabled
 tess = """
     ocr-tesseract/tesseract.cc
+    ocr-autoclean/ocr-orientation.cc
+    ocr-autoclean/ocr-thresholding.cc
+""".split()
+
+tessmains = """
+    ocr-autoclean/main-ocr-orientation.cc
+    ocr-autoclean/main-ocr-thresholding.cc
 """.split()
 
 # extra files which should not go to libocropus
@@ -93,9 +100,18 @@ word_DATA = $(srcdir)/data/words/*
 
 # optional stuff
 print
+print "noinst_PROGRAMS = "
+print
 print "if ! notesseract"
 print "    AM_CPPFLAGS += -I@tessheaders@ -DHAVE_TESSERACT"
 print "    libocropus_a_SOURCES +=" + s.join(" $(srcdir)/"+f for f in tess)
+print "    noinst_PROGRAMS += " + s.join(" " + os.path.basename(m)[:-3] for m in tessmains)
+for m in tessmains:
+    mName = os.path.basename(m)[:-3].replace('-','_')
+    print "    " + mName + "_SOURCES = $(srcdir)/" + m
+    print "    " + mName + "_LDADD = libocropus.a"
+print
+
 print "endif"
 print
 print "if use_leptonica"
@@ -114,8 +130,10 @@ print
 
 # gather all main-* files
 mains = glob.glob("*/main-*.cc")
+mains = [m for m in mains if not m in tessmains]
+
 # name the resulting binaries (strip folder and suffix)
-print "noinst_PROGRAMS = " + s.join(" " + os.path.basename(m)[:-3] for m in mains)
+print "noinst_PROGRAMS += " + s.join(" " + os.path.basename(m)[:-3] for m in mains)
 for m in mains:
     mName = os.path.basename(m)[:-3].replace('-','_')
     print mName + "_SOURCES = $(srcdir)/" + m
