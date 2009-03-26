@@ -128,6 +128,16 @@ for h in glob.glob("ocr-utils/*.h"):
 print
 print
 
+# binaries, which are also installed
+binaries = glob.glob("commands/*.cc")
+print "bin_PROGRAMS = " + s.join(" " + os.path.basename(b)[:-3] for b in binaries)
+for b in binaries:
+    bName = os.path.basename(b)[:-3].replace('-','_')
+    print bName + "_SOURCES = $(srcdir)/" + b
+# ATTENTION!!! FIXME Move -lgsls and -lblas out of here asap!
+    print bName + "_LDADD = libocropus.a -lgsl -lblas"
+print
+
 # gather all main-* files
 mains = glob.glob("*/main-*.cc")
 mains = [m for m in mains if not m in tessmains]
