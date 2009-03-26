@@ -64,6 +64,8 @@ ocropusincludedir=$(includedir)/ocropus
 AM_CPPFLAGS = -I$(srcdir)/include -I$(srcdir)/ocr-utils \
 -I@iulibheaders@ -I@tessheaders@
 
+AM_LDFLAGS =
+
 AM_CXXFLAGS = $(CXXFLAGS) -Wall -Wno-sign-compare -Wno-write-strings -Wno-deprecated
 
 lib_LIBRARIES = libocropus.a
@@ -102,6 +104,11 @@ word_DATA = $(srcdir)/data/words/*
 print
 print "noinst_PROGRAMS = "
 print
+print "if use_gsl"
+print "    AM_CPPFLAGS += -DHAVE_GSL"
+#print "    AM_LDFLAGS += -lgsl -lblas"
+print "endif"
+print
 print "if ! notesseract"
 print "    AM_CPPFLAGS += -I@tessheaders@ -DHAVE_TESSERACT"
 print "    libocropus_a_SOURCES +=" + s.join(" $(srcdir)/"+f for f in tess)
@@ -134,8 +141,7 @@ print "bin_PROGRAMS = " + s.join(" " + os.path.basename(b)[:-3] for b in binarie
 for b in binaries:
     bName = os.path.basename(b)[:-3].replace('-','_')
     print bName + "_SOURCES = $(srcdir)/" + b
-# ATTENTION!!! FIXME Move -lgsls and -lblas out of here asap!
-    print bName + "_LDADD = libocropus.a -lgsl -lblas"
+    print bName + "_LDADD = libocropus.a"
 print
 
 # gather all main-* files

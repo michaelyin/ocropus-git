@@ -178,6 +178,13 @@ if test x$use_leptonica != xno; then
 fi
 AM_CONDITIONAL([use_leptonica], [test x$use_leptonica == xyes])
 
+# --- GSL (optional for glinerec) ---
+AC_SUBST(use_gsl, "yes")
+AC_CHECK_LIB(gslcblas, abort,,AC_SUBST(use_gsl, "no"))
+AC_CHECK_LIB(gsl, gsl_error,,AC_SUBST(use_gsl, "no"))
+AC_CHECK_LIB(blas, exit,,AC_SUBST(use_gsl, "no"))
+AM_CONDITIONAL([use_gsl], [test x$use_gsl == xyes])
+
 
 # --- SDL (optional for graphical debugging) ---
 AC_ARG_WITH(SDL,[  --without-SDL           disable SDL (graphical debugging)],
