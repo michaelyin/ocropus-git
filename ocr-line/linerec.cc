@@ -264,9 +264,9 @@ namespace glinerec {
                                            descender_sink,ascender_rise,segmentation);
             debugf("detail","LineInfo %g %g %g %g %g\n",intercept,slope,xheight,descender_sink,ascender_rise);
             if(xheight<4) throw BadTextLine();
-            show_baseline(slope,intercept,xheight,line,"YYY");
+            show_baseline(slope,intercept,xheight,image,"YYY");
             bytearray baseline_image;
-            debug_baseline(baseline_image,slope,intercept,xheight,line);
+            debug_baseline(baseline_image,slope,intercept,xheight,image);
             logger.log("baseline\n",baseline_image);
         }
 
@@ -422,8 +422,17 @@ namespace glinerec {
                 }
                 match -= 1;         // segments are numbered starting at 1
                 int c = reject_class;
-                if(match>=0)
-                    c = transcript[match].ord();
+                if(match>=0) {
+                    if(match>=transcript.length()) {
+                        iucstring s;
+                        s.append(transcript);
+                        debugf("info","mismatch between transcript and cseg: \"%s\"\n",s.c_str());
+                        continue;
+                    } else {
+                        c = transcript[match].ord();
+                        debugf("debugmismatch","index %d position %d char %c [%d]\n",i,match,c,c);
+                    }
+                }
 
                 if(c==reject_class) junk++;
 
@@ -452,6 +461,7 @@ namespace glinerec {
             }
             debugf("detail","addTrainingLine trained %d chars, %d junk, %s total\n",total-junk,junk,
                     classifier->command("total"));
+            dwait();
         }
 
         enum { high_cost = 100 };
@@ -510,7 +520,7 @@ namespace glinerec {
                         debugf("spaces","space %d\n",grouper->pixelSpace(i));
                         grouper->setSpaceCost(i,1.0,5.0);
                     }
-                    dwait();
+                    // dwait();
                 }
             }
             grouper->getLattice(result);
