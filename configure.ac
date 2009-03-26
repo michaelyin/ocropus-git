@@ -153,7 +153,7 @@ AC_ARG_VAR(leptheaders, Location of leptonicas headers)
 AC_ARG_WITH(leptonica,[  --without-leptonica        disable use of Leptonica], [use_leptonica=$withval],[use_leptonica=yes])
 if test x$use_leptonica != xno; then
     if test x$leptheaders != x; then
-        AC_CHECK_HEADER($(leptheaders)/allheaders.h,,AC_SUBST(leptheaders,no))
+        AC_CHECK_HEADER($leptheaders/allheaders.h,,AC_SUBST(leptheaders,no))
     else
         AC_SUBST(leptheaders,no)
     fi
