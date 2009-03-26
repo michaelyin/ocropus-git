@@ -48,10 +48,9 @@ else
 
     if [[ x$tessheaders = x ]]; then
         tessheaders=$tesseract_prefix/include/tesseract
-    else
-        AC_CHECK_FILE($tessheaders/baseapi.h,,
-            AC_MSG_ERROR([Could not find tesseract! Choose --without-tesseract if you do not want to use it.]))
     fi
+    AC_CHECK_FILE($tessheaders/baseapi.h,,
+            AC_MSG_ERROR([Could not find tesseract! Choose --without-tesseract if you do not want to use it or specify the installation path with --with-tesseract=<path>]))
     if [[ x$tesslibs = x ]]; then
         tesslibs=$tesseract_prefix/lib
     fi

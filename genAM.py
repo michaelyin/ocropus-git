@@ -11,7 +11,6 @@ extradirs = """
 # only add these files if tesseract is enabled
 tess = """
     ocr-tesseract/tesseract.cc
-    ocr-layout/recognized-page.cc
 """.split()
 
 # extra files which should not go to libocropus
