@@ -114,7 +114,7 @@ namespace ocropus {
                     int zone_col = (column_num<<16) | zone_color | zone_num;
                     for(int x = r.x0, x1 = r.x1; x<x1; x++){
                         for(int y = r.y0, y1 = r.y1; y<y1; y++){
-                            if(!inputImage(x,y))
+                            if(!inputImage(x,y) && !outputImage(x,y))
                                 outputImage(x,y) = zone_col;
                         }
                     }
@@ -134,7 +134,7 @@ namespace ocropus {
                     zone_color | n_multicol_zones ;
                 for(int x = r.x0, x1 = r.x1; x<x1; x++){
                     for(int y = r.y0, y1 = r.y1; y<y1; y++){
-                        if(!inputImage(x,y))
+                        if(!inputImage(x,y) && !outputImage(x,y))
                             outputImage(x,y) = zone_col;
                     }
                 }

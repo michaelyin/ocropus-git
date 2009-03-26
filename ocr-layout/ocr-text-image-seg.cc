@@ -283,7 +283,7 @@ namespace ocropus {
 
         // get text/image probability map
         intarray tiseg_image;
-        autodel<ITextImageClassification> tiseg(make_TextImageSegByLogReg());
+        autodel<ITextImageClassification> tiseg(make_TextImageSegByLeptonica());
         tiseg->textImageProbabilities(tiseg_image,in_binary);
 
         // Cleanup
