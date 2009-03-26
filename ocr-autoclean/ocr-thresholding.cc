@@ -23,8 +23,6 @@
 
 #include <wctype.h>
 #include "ocr-thresholding.h"
-#include "iulib.h"
-#include "colib.h"
 #include "ocropus.h"
 #include <omp.h>
 

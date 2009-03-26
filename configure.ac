@@ -71,10 +71,9 @@ AC_ARG_VAR(colibheaders, Location of iulib's colib headers)
 AC_ARG_VAR(iuliblibs, Location of iulib)
 
 if [[ x$iulibheaders = x ]]; then
-    iulibheaders=$iulib_prefix/include/iulib
-    colibheaders=$iulib_prefix/include/colib
+    iulibheaders=$iulib_prefix/include
 fi
-AC_CHECK_FILE($iulibheaders/imgio.h,,
+AC_CHECK_FILE($iulibheaders/iulib/imgio.h,,
     AC_MSG_ERROR([please install iulib or specify a non-default location by '--with-iulib=...']))
 
 if [[ x$iuliblibs = x ]]; then
@@ -141,20 +140,21 @@ else
 fi
 AM_CONDITIONAL([nofst], [test "$nofst" = 1])
 
-# ocroscript is no longer an option
-
-# --- libedit (optional for ocroscript interactive mode) ---
-AC_CHECK_LIB(editline,readline,,AC_SUBST(noeditline,1))
-AM_CONDITIONAL([use_editline], [test "$noeditline" != 1])
+# ocroscript is now a separate project
 
 # --- leptonica (sometimes installed as 'liblept' sometimes as 'leptonica') ---
 AC_ARG_VAR(leptheaders, Location of leptonicas headers)
-AC_ARG_WITH(leptonica,[  --without-leptonica        disable use of Leptonica], [use_leptonica=$withval],[use_leptonica=yes])
+AC_ARG_WITH(leptonica,[  --without-leptonica        disable use of Leptonica], [use_leptonica=$withval], [use_leptonica=yes])
 if test x$use_leptonica != xno; then
     if test x$leptheaders != x; then
         AC_CHECK_HEADER($leptheaders/allheaders.h,,AC_SUBST(leptheaders,no))
     else
         AC_SUBST(leptheaders,no)
+    fi
+    if test x$use_leptonica != xyes; then
+        AC_CHECK_HEADER($use_leptonica/include/liblept/allheaders.h,
+            AC_SUBST(leptheaders,$use_leptonica/include/liblept),
+            AC_SUBST(leptheaders,no))
     fi
     if test x$leptheaders = xno; then
         AC_CHECK_HEADER(/usr/local/include/leptonica/allheaders.h,AC_SUBST(leptheaders,/usr/local/include/leptonica))
@@ -209,20 +209,6 @@ if  [[ "$noopenmp" != "1" ]]; then
 fi
 AM_CONDITIONAL([noopenmp], [test "$noopenmp" = 1])
 
-
-
-# aspell is probably obsolete
-
-# --- aspell (optional, currently not used) ---
-#AC_ARG_WITH(aspell,[  --without-aspell        disable aspell as dictionary],
-#    [ac_cv_use_aspell=$withval], [ac_cv_use_aspell=yes])
-#if test x$ac_cv_use_aspell != xno; then
-#    AC_CHECK_HEADER(aspell.h,,AC_SUBST(noaspell, 1))
-#    AC_CHECK_LIB(aspell, new_aspell_config,,AC_SUBST(noaspell, 1))
-#else
-#    AC_SUBST(noaspell, 1)
-#fi
-#AM_CONDITIONAL([noaspell], [test "$noaspell" = 1])
 
 AC_TYPE_INT64_T
 AC_TYPE_PID_T
