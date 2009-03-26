@@ -1,4 +1,4 @@
-// Copyright 2006-2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
+// Copyright 2006-2009 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
 //
 // You may not use this file except under the terms of the accompanying license.
@@ -35,29 +35,29 @@ class ocrthresholding : IComponent {
         int max_lines_to_compute;
         int max_lines_to_use;
         char* mode;
-                
-                ocrthresholding( const char* dictionary_file,
-                                int max_lines_to_compute = 10, 
+
+                ocrthresholding(const char* dictionary_file,
+                                int max_lines_to_compute = 10,
                                 int max_lines_to_use = 10,
                                 const char* mode = "sum");
                 ~ocrthresholding();
-        
+
         void    add_image(bytearray &in);
         void    get_image(bytearray &out);
         void    get_parameters(int&, float&);
-        
+
         const char* description();
         const char* name();
-    
+
     private:
         objlist< nustring >  dict;
         bytearray   in_image;
         bytearray   out_image;
-        
+
         nustring    alphabet;
         int         W;
         float       K;
-        
+
         bool    is_in_dict(nustring &s);
         void    extractwords(objlist< nustring > &tokens, nustring &s);
         float   score_line(nustring &line);
@@ -65,6 +65,8 @@ class ocrthresholding : IComponent {
         float   evaluate_binarization(bytearray &line_grey, int w, float k);
         void    estimate_all_thresholdings();
     };
+    
+    ocrthresholding *make_OCRAutoThresholding(const char* dict);
 }
 
 #endif
