@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright 2006-2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
+// Copyright 2006 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
 //
 // You may not use this file except under the terms of the accompanying license.
@@ -23,12 +23,46 @@
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
+#ifndef glinerec_h__
+#define glinerec_h__
+
+#include "colib/colib.h"
+#include "colib/checks.h"
+#include "colib/iarith.h"
+#include "iulib/iulib.h"
+#include "colib/rowarrays.h"
 #include "ocropus.h"
+#include "narray-binio.h"
 
-namespace ocropus {
-    extern int main_ocropus(int argc,char **argv);
+namespace glinerec {
+    struct BadTextLine {};
 }
 
-int main(int argc,char **argv) {
-    return ocropus::main_ocropus(argc,argv);
+namespace {
+    template <class T>
+    struct tempset {
+        T old;
+        T *location;
+        tempset(T &destination,T value) {
+            old = destination;
+            location = &destination;
+            destination = value;
+        }
+        ~tempset() {
+            *location = old;
+        }
+    };
 }
+
+#include "glutils.h"
+#include "gldataset.h"
+#include "glclass.h"
+#include "glcuts.h"
+#include "glfmaps.h"
+
+namespace glinerec {
+    void init_linerec();
+    void init_glclass();
+}
+
+#endif

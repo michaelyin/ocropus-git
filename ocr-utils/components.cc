@@ -23,25 +23,23 @@ namespace ocropus {
         // TODO/tmb rewrite this more cleanly in terms of iustring
         if(checked) return;
         checked = true;
-        strbuf prefix;
-        prefix = this->name();
+        iucstring prefix = this->name();
         prefix += "_";
         for(int i=0;environ[i];i++) {
-            if(!strncmp(prefix.ptr(),environ[i],strlen(prefix.ptr()))) {
-                strbuf entry;
-                entry = environ[i];
-                const char *p = strchr(entry.ptr(),'=');
-                if(!p) continue;
-                int where = p-&entry[0];
-                entry[where] = '\0';
-                if(!params.find(entry.ptr()+strlen(prefix.ptr()))) {
-                    if(fatal_unknown_params)
-                        throwf("%s: unknown environment variable for %s\n"
-                               "(set fatal_unknown_params=0 to disable this check)\n",
-                               entry.ptr(),name());
-                    else
-                        debugf("info","%s: unknown environment variable for %s\n",
-                               entry.ptr(),name());
+            iucstring entry = environ[i];
+            if(!entry.compare(0, prefix.length(), prefix)) {
+                int where = entry.find('=');
+                if(where >= 0) {
+                    entry.erase(where);
+                    if(!params.find(entry.substr(prefix.length()))) {
+                        if(fatal_unknown_params)
+                            throwf("%s: unknown environment variable for %s\n"
+                                   "(set fatal_unknown_params=0 to disable this check)\n",
+                                   entry.c_str(),name());
+                        else
+                            debugf("info","%s: unknown environment variable for %s\n",
+                                   entry.c_str(),name());
+                    }
                 }
             }
         }
@@ -63,6 +61,7 @@ namespace ocropus {
     }
 
     IComponent *component_construct(const char *name) {
+        if(!strcmp(name,"null")) return 0;
         IComponentConstructor *f = component_lookup(name);
         return (*f)();
     }

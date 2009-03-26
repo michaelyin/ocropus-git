@@ -92,7 +92,8 @@ namespace ocropus {
     ///
     /// This function copies the composition of two given FSTs.
     /// That causes expansion (storing all arcs explicitly).
-    void fst_expand_composition(IGenericFst &out, IGenericFst &, IGenericFst &);
+    void fst_expand_composition(IGenericFst &out, OcroFST &, OcroFST &);
+
 
     /// Randomly sample an FST, assuming any input.
     ///
@@ -188,7 +189,7 @@ namespace ocropus {
     /// This function uses A* on reversed FSTs separately,
     /// then uses the cost sum as a heuristic.
     /// No attempt to cache the heuristic is made.
-    bool a_star_in_composition(intarray &inputs,
+    /*bool a_star_in_composition(intarray &inputs,
                                intarray &vertices1,
                                intarray &vertices2,
                                intarray &vertices3,
@@ -197,7 +198,7 @@ namespace ocropus {
                                OcroFST &fst1,
                                OcroFST &fst2,
                                OcroFST &fst3);
-
+    */
     
     void beam_search(intarray &vertices1,
                      intarray &vertices2,

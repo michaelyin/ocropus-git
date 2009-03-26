@@ -25,15 +25,16 @@
 // Web Sites:
 
 
-// FIXME/faisal this should really work "word"-wise, centered on each word,
+// FIXME this should really work "word"-wise, centered on each word,
 // otherwise it does the wrong thing for non-deskewed lines
-// (it worked "word"-wise in the original version) --tmb
+// (it worked "word"-wise in the original version)
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include <ctype.h>
 #include "ocropus.h"
+#include "glcuts.h"
 
 using namespace ocropus;
 using namespace iulib;
@@ -48,6 +49,32 @@ namespace {
         for(int i = 0; i < dst.length1d(); i++)
             dst.at1d(i) += src.at1d(i) * n;
         renumber_labels(dst, 1);
+    }
+
+    void fix_diacritics(intarray &segmentation) {
+        narray<rectangle> bboxes;
+        bounding_boxes(bboxes,segmentation);
+        intarray assignments(bboxes.length());
+        for(int i=0;i<assignments.length();i++)
+            assignments(i) = i;
+        for(int i=0;i<bboxes.length();i++) {
+            for(int j=0;j<bboxes.length();j++) {
+                // j should overlap i in the x direction
+                if(bboxes[j].x1<bboxes[i].x0) continue;
+                if(bboxes[j].x0>bboxes[i].x1) continue;
+                // j should be above i
+                if(!(bboxes[j].y0>=bboxes[i].y1)) continue;
+#if 0
+                // j should be smaller than i
+                if(!(bboxes[j].area()<bboxes[i].area())) continue;
+#endif
+                // merge them
+                assignments(j) = i;
+            }
+        }
+        for(int i=0;i<segmentation.length();i++)
+            segmentation[i] = assignments(segmentation[i]);
+        renumber_labels(segmentation,1);
     }
 
     void local_min(floatarray &result,floatarray &data,int r) {
@@ -91,13 +118,11 @@ namespace {
                 x0s.push(bboxes(i).x0);
             }
         }
-        // dprint(x0s,1000); printf("\n");
         intarray permutation,rpermutation;
         quicksort(permutation,x0s);
         rpermutation.resize(permutation.length());
         for(int i=0;i<permutation.length();i++)
             rpermutation[permutation[i]] = i;
-        // dprint(rpermutation,1000); printf("\n");
         for(int i=0;i<segmentation.length1d();i++) {
             if(segmentation.at1d(i)==0) continue;
             segmentation.at1d(i) = rpermutation(segmentation.at1d(i));
@@ -171,28 +196,8 @@ namespace {
     }
 }
 
-namespace ocropus {
-    struct ICurvedCutSegmenter {
-        int down_cost;
-        int outside_diagonal_cost;
-        int inside_diagonal_cost;
-        int boundary_diagonal_cost;
-        int inside_weight;
-        int boundary_weight;
-        int outside_weight;
-        int min_range;
-        float min_thresh;
-        //virtual void params_for_chars() = 0;
-        virtual void params_for_lines() = 0;
-        virtual void findAllCuts() = 0;
-        virtual void findBestCuts() = 0;
-        // virtual void relabel_image(bytearray &image) = 0;
-        // virtual void relabel_image(intarray &image) = 0;
-        virtual void setImage(bytearray &image) = 0;
-        virtual ~ICurvedCutSegmenter() {}
-    };
-
-    struct CurvedCutSegmenterImpl : ICurvedCutSegmenter {
+namespace glinerec {
+    struct DpSegmenter : IDpSegmenter {
         // input
         intarray wimage;
         int where;
@@ -205,29 +210,35 @@ namespace ocropus {
 
         intarray bestcuts;
 
-        iucstring debug;
-        intarray dimage;
+        strbuf debug;
 
         narray< narray <point> > cuts;
         floatarray cutcosts;
 
-        CurvedCutSegmenterImpl() {
-            //params_for_chars();
-            params_for_lines();
-            //params_from_hwrec_c();
+        DpSegmenter() {
+            pdef("down_cost",0,"cost of down step");
+            pdef("outside_diagonal_cost",1,"cost of outside diagonal step");
+            pdef("inside_diagonal_cost",4,"cost of inside diagonal step");
+            pdef("outside_weight",0,"cost of outside pixel");
+            pdef("inside_weight",8,"cost of inside pixel");
+            pdef("cost_smooth",2.0,"smoothing parameter for costs");
+            pdef("min_range",1,"min range value");
+            pdef("min_thresh",80.0,"min threshold value");
+            pdef("component_segmentation",1,"also perform connected component segmentation");
+            pdef("fix_diacritics",1,"group dots above characters back with those characters");
         }
-
-        void params_for_lines() {
-            down_cost = 0;
-            outside_diagonal_cost = 4;
-            inside_diagonal_cost = 4;
-            boundary_diagonal_cost = 0;
-            outside_weight = 0;
-            boundary_weight = -1;
-            inside_weight = 4;
-            min_range = 3;
-            //min_thresh = -2.0;
-            min_thresh = 10.0;
+        const char *name() {
+            return "dpseg";
+        }
+        void setParams() {
+            down_cost = pgetf("down_cost");
+            outside_weight = pgetf("outside_weight");
+            inside_weight = pgetf("inside_weight");
+            outside_diagonal_cost = pgetf("outside_diagonal_cost");
+            inside_diagonal_cost = pgetf("inside_diagonal_cost");
+            cost_smooth = pgetf("cost_smooth");
+            min_range = pgetf("min_range");
+            min_thresh = pgetf("min_thresh");
         }
 
         // this function calculates the actual costs
@@ -251,10 +262,8 @@ namespace ocropus {
                 if(i>low) {
                     if(wimage(i,j)==0)
                         ncost = cost+wimage(i,j)+outside_diagonal_cost;
-                    else if(wimage(i,j)>0)
+                    else
                         ncost = cost+wimage(i,j)+inside_diagonal_cost;
-                    else if(wimage(i,j)<0)
-                        ncost = cost+wimage(i,j)+boundary_diagonal_cost;
                     if(costs(i-1,j+direction)>ncost) {
                         costs(i-1,j+direction) = ncost;
                         sources(i-1,j+direction) = i;
@@ -264,10 +273,8 @@ namespace ocropus {
                 if(i<high) {
                     if(wimage(i,j)==0)
                         ncost = cost+wimage(i,j)+outside_diagonal_cost;
-                    else if(wimage(i,j)>0)
+                    else
                         ncost = cost+wimage(i,j)+inside_diagonal_cost;
-                    else if(wimage(i,j)<0)
-                        ncost = cost+wimage(i,j)+boundary_diagonal_cost;
                     if(costs(i+1,j+direction)>ncost) {
                         costs(i+1,j+direction) = ncost;
                         sources(i+1,j+direction) = i;
@@ -342,7 +349,7 @@ namespace ocropus {
             for(int i=0;i<cutcosts.length();i++) ext(dimage,i,int(cutcosts(i)+10)) = 0xff0000;
             for(int i=0;i<cutcosts.length();i++) ext(dimage,i,int(min_thresh+10)) = 0x800000;
             floatarray temp;
-            gauss1d(temp,cutcosts,3.0);
+            gauss1d(temp,cutcosts,cost_smooth);
             cutcosts.move(temp);
             local_minima(bestcuts,cutcosts,min_range,min_thresh);
             for(int i=0;i<bestcuts.length();i++) {
@@ -353,7 +360,7 @@ namespace ocropus {
                 }
             }
             if(debug) write_image_packed(debug,dimage);
-            // dshow1d(cutcosts,"Y");
+            //dshow1d(cutcosts,"Y");
             //dshow(dimage,"Y");
         }
 
@@ -365,67 +372,21 @@ namespace ocropus {
             float s1 = 0.0, sy = 0.0;
             for(int i=1;i<w;i++) for(int j=0;j<h;j++) {
                     if(image(i,j)) { s1++; sy += j; }
-                    if(!image(i-1,j) && image(i,j)) wimage(i,j) = boundary_weight;
-                    else if(image(i,j)) wimage(i,j) = inside_weight;
+                    if(image(i,j)) wimage(i,j) = inside_weight;
                     else wimage(i,j) = outside_weight;
                 }
             where = int(sy/s1);
             for(int i=0;i<dimage.dim(0);i++) dimage(i,where) = 0x008000;
         }
-    };
 
-    class CurvedCutSegmenter : public ISegmentLine {
-    public:
-        autoref<CurvedCutSegmenterImpl> segmenter;
-        int small_merge_threshold;
-
-        CurvedCutSegmenter() {
-            small_merge_threshold = 1;
-        }
-
-        const char *name() {
-            return "curvedcut";
-        }
+        // ISegmentLine methods
 
         virtual const char *description() {
             return "curved cut segmenter";
         }
 
-        virtual void set(const char *key,const char *value) {
-            log_main.format("set parameter %s to sf", key, value);
-            if(!strcmp(key,"debug"))
-                segmenter->debug = value;
-            else
-                throw "unknown key";
-        }
-
-        virtual void set(const char *key,double value) {
-            log_main.format("set parameter %s to %f", key, value);
-            if(!strcmp(key,"down_cost"))
-                segmenter->down_cost = (int)value;
-            else if(!strcmp(key,"small_merge_threshold"))
-                small_merge_threshold = (int)value;
-            else if(!strcmp(key,"outside_diagonal_cost"))
-                segmenter->outside_diagonal_cost = (int)value;
-            else if(!strcmp(key,"inside_diagonal_cost"))
-                segmenter->inside_diagonal_cost = (int)value;
-            else if(!strcmp(key,"boundary_diagonal_cost"))
-                segmenter->boundary_diagonal_cost = (int)value;
-            else if(!strcmp(key,"outside_weight"))
-                segmenter->outside_weight = (int)value;
-            else if(!strcmp(key,"boundary_weight"))
-                segmenter->boundary_weight = (int)value;
-            else if(!strcmp(key,"inside_weight"))
-                segmenter->inside_weight = (int)value;
-            else if(!strcmp(key,"min_range"))
-                segmenter->min_range = (int)value;
-            else if(!strcmp(key,"min_thresh"))
-                segmenter->min_thresh = value;
-            else
-                throw "unknown key";
-        }
-
         virtual void charseg(intarray &segmentation,bytearray &raw) {
+            setParams();
             log_main("segmenting", raw);
             enum {PADDING = 3};
             optional_check_background_is_lighter(raw);
@@ -434,17 +395,21 @@ namespace ocropus {
             binarize_simple(image);
             invert(image);
 
-            segmenter->setImage(image);
-            segmenter->findAllCuts();
-            segmenter->findBestCuts();
+            setImage(image);
+            findAllCuts();
+            findBestCuts();
 
             intarray seg;
             seg.copy(image);
 
-            for(int r=0;r<segmenter->bestcuts.length();r++) {
+#ifndef PROPAGATE
+            seg = 255;
+#endif
+
+            for(int r=0;r<bestcuts.length();r++) {
                 int w = seg.dim(0);
-                int c = segmenter->bestcuts(r);
-                narray<point> &cut = segmenter->cuts(c);
+                int c = bestcuts(r);
+                narray<point> &cut = cuts(c);
                 for(int y=0;y<image.dim(1);y++) {
                     for(int i=-1;i<=1;i++) {
                         int x = cut(y).x;
@@ -456,10 +421,26 @@ namespace ocropus {
             label_components(seg);
             // dshowr(seg,"YY"); dwait();
             segmentation.copy(image);
+
+            for(int i=0;i<seg.length();i++)
+                if(!segmentation[i]) seg[i] = 0;
+
             propagate_labels_to(segmentation,seg);
 
+            if(pgetf("component_segmentation")) {
+                intarray ccseg;
+                ccseg.copy(image);
+                label_components(ccseg);
+                combine_segmentations(segmentation,ccseg);
+                if(pgetf("fix_diacritics")) {
+                    fix_diacritics(segmentation);
+                }
+            }
+
+#if 0
             line_segmentation_merge_small_components(segmentation,small_merge_threshold);
             line_segmentation_sort_x(segmentation);
+#endif
 
             make_line_segmentation_white(segmentation);
             // set_line_number(segmentation, 1);
@@ -467,130 +448,7 @@ namespace ocropus {
         }
     };
 
-    ISegmentLine *make_CurvedCutSegmenter1() {
-        return new CurvedCutSegmenter();
-    }
-
-// FIXME/faisal Messy implementation--get rid of this. --tmb
-
-    class CurvedCutSegmenterToISegmentLineAdapter : public ISegmentLine {
-    public:
-        autoref<CurvedCutSegmenterImpl> segmenter;
-        int small_merge_threshold;
-
-        CurvedCutSegmenterToISegmentLineAdapter() {
-            small_merge_threshold = 0;
-        }
-
-        const char *name() {
-            return "curvedcut";
-        }
-
-        virtual const char *description() {
-            return "curved cut segmenter";
-        }
-
-        virtual void set(const char *key,const char *value) {
-            log_main.format("set parameter %s to sf", key, value);
-            if(!strcmp(key,"debug"))
-                segmenter->debug = value;
-            else
-                throw "unknown key";
-        }
-
-        virtual void set(const char *key,double value) {
-            log_main.format("set parameter %s to %f", key, value);
-            if(!strcmp(key,"down_cost"))
-                segmenter->down_cost = (int)value;
-            else if(!strcmp(key,"small_merge_threshold"))
-                small_merge_threshold = (int)value;
-            else if(!strcmp(key,"outside_diagonal_cost"))
-                segmenter->outside_diagonal_cost = (int)value;
-            else if(!strcmp(key,"inside_diagonal_cost"))
-                segmenter->inside_diagonal_cost = (int)value;
-            else if(!strcmp(key,"boundary_diagonal_cost"))
-                segmenter->boundary_diagonal_cost = (int)value;
-            else if(!strcmp(key,"outside_weight"))
-                segmenter->outside_weight = (int)value;
-            else if(!strcmp(key,"boundary_weight"))
-                segmenter->boundary_weight = (int)value;
-            else if(!strcmp(key,"inside_weight"))
-                segmenter->inside_weight = (int)value;
-            else if(!strcmp(key,"min_range"))
-                segmenter->min_range = (int)value;
-            else if(!strcmp(key,"min_thresh"))
-                segmenter->min_thresh = value;
-            else
-                throw "unknown key";
-        }
-
-        virtual void charseg(intarray &result_segmentation,bytearray &orig_image) {
-            log_main("segmenting", orig_image);
-            enum {PADDING = 3};
-            bytearray image;
-            copy(image, orig_image);
-            optional_check_background_is_lighter(image);
-            binarize_simple(image);
-            invert(image);
-            pad_by(image, PADDING, PADDING);
-            intarray segmentation;
-            // pass image to segmenter
-            segmenter->setImage(image);
-            // find all cuts in the image
-            segmenter->findAllCuts();
-            // choose the best of all cuts
-            segmenter->findBestCuts();
-
-            segmentation.resize(image.dim(0),image.dim(1));
-            for(int i=0;i<image.dim(0);i++) for(int j=0;j<image.dim(1);j++)
-                                                segmentation(i,j) = image(i,j)?1:0;
-            for(int r=0;r<segmenter->bestcuts.length();r++) {
-                int c = segmenter->bestcuts(r);
-                narray<point> &cut = segmenter->cuts(c);
-                for(int y=0;y<image.dim(1);y++) {
-                    for(int x=cut(y).x;x<image.dim(0);x++)
-                        if(segmentation(x,y)) segmentation(x,y)++;
-                }
-            }
-            extract_subimage(result_segmentation,segmentation,PADDING,PADDING,
-                             segmentation.dim(0)-PADDING,segmentation.dim(1)-PADDING);
-
-            if(small_merge_threshold>0) {
-                line_segmentation_merge_small_components(result_segmentation,small_merge_threshold);
-                line_segmentation_sort_x(result_segmentation);
-            }
-
-            make_line_segmentation_white(result_segmentation);
-            // set_line_number(result_segmentation, 1);
-            log_main("resulting segmentation", result_segmentation);
-        }
-    };
-
-
-
-    ISegmentLine *make_CurvedCutSegmenter() {
-        return new CurvedCutSegmenterToISegmentLineAdapter();
-    }
-
-    struct CurvedCutSegmenterToISegmentLineAdapterWithCc:
-            CurvedCutSegmenterToISegmentLineAdapter {
-        virtual void charseg(intarray &result_segmentation,bytearray &orig_image) {
-            bytearray image;
-            copy(image, orig_image);
-            optional_check_background_is_lighter(image);
-            binarize_simple(image);
-            invert(image);
-
-            intarray ccseg;
-            copy(ccseg, image);
-            label_components(ccseg);
-
-            CurvedCutSegmenterToISegmentLineAdapter::charseg(result_segmentation, orig_image);
-            combine_segmentations(result_segmentation, ccseg);
-        }
-    };
-
-    ISegmentLine *make_CurvedCutWithCcSegmenter() {
-        return new CurvedCutSegmenterToISegmentLineAdapterWithCc();
+    IDpSegmenter *make_DpSegmenter() {
+        return new DpSegmenter();
     }
 }

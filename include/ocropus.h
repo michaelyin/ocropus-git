@@ -51,7 +51,7 @@ namespace ocropus {
 #include "ocr-tesseract.h"
 
 #ifdef HAVE_FST
-#include "ocr-openfst.h"
+//#include "ocr-openfst.h"
 #endif
 #include "ocr-pfst.h"
 

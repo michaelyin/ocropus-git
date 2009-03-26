@@ -19,8 +19,6 @@ using namespace iulib;
 #define NTHREADS omp_get_num_threads()
 #endif
 
-
-
 namespace ocropus {
 
     extern const char *global_verbose_params;
@@ -65,7 +63,7 @@ namespace ocropus {
         }
 
         /// misc information logged about the history of the component
-        strbuf object_history;
+        iucstring object_history;
 
         /// print longer info to stdout
         virtual void info(int depth=0,FILE *stream=stdout) {
@@ -83,7 +81,7 @@ namespace ocropus {
 
         /// parameter setting and loading
     private:
-        strhash<strbuf> params;
+        strhash<iucstring> params;
         strhash<bool> shown;
         bool checked;
     public:
@@ -101,31 +99,31 @@ namespace ocropus {
             if(name[0]=='%') throwf("pdef: %s must not start with %%",name);
             if(params.find(name)) throwf("pdefs: %s: parameter already defined");
             params(name) = value;
-            strbuf key;
+            iucstring key;
             key = this->name();
             key += "_";
             key += name;
             bool altered = false;
-            if(getenv(key.ptr())) {
-                const char *evalue = getenv(key.ptr());
+            if(getenv(key.c_str())) {
+                const char *evalue = getenv(key.c_str());
                 if(strcmp(evalue,value)) altered = true;
                 params(name) = evalue;
             }
-            if(!shown.find(key.ptr())) {
+            if(!shown.find(key.c_str())) {
                 if(altered && !strcmp(verbose_pattern,"?")) {
                     fprintf(stderr,"param altered %s=%s # %s\n",
-                            key.ptr(),params(name).ptr(),doc);
-                } else if(strstr(key.ptr(),verbose_pattern)!=0) {
+                            key.c_str(),params(name).c_str(),doc);
+                } else if(strstr(key.c_str(),verbose_pattern)!=0) {
                     fprintf(stderr,"param default %s=%s # %s\n",
-                            key.ptr(),params(name).ptr(),doc);
+                            key.c_str(),params(name).c_str(),doc);
                 }
-                shown(key.ptr()) = true;
+                shown(key.c_str()) = true;
             }
         }
         void pdef(const char *name,double value,const char *doc) {
-            strbuf svalue;
-            svalue.format("%g",value);
-            pdef(name,svalue.ptr(),doc);
+            iucstring svalue;
+            sprintf(svalue, "%g",value);
+            pdef(name,svalue.c_str(),doc);
         }
         void pdef(const char *name,int value,const char *doc) {
             pdef(name,double(value),doc);
@@ -148,9 +146,9 @@ namespace ocropus {
                 fprintf(stderr,"set %s_%s=%s\n",this->name(),name,value);
         }
         virtual void pset(const char *name,double value) {
-            strbuf svalue;
-            svalue.format("%g",value);
-            pset(name,svalue.ptr());
+            iucstring svalue;
+            sprintf(svalue, "%g",value);
+            pset(name,svalue.c_str());
         }
         void pset(const char *name,int value) {
             pset(name,double(value));
@@ -164,13 +162,13 @@ namespace ocropus {
         const char *pget(const char *name) {
             if(!checked) check_parameters_();
             if(!params.find(name)) throwf("pget: %s: no such parameter",name);
-            return params(name).ptr();
+            return params(name).c_str();
         }
         double pgetf(const char *name) {
             if(!checked) check_parameters_();
             double value;
             if(sscanf(pget(name),"%lg",&value)!=1)
-                throwf("pgetf: %s=%s: bad number format",name,params(name).ptr());
+                throwf("pgetf: %s=%s: bad number format",name,params(name).c_str());
             return value;
         }
         // Save the parameters to the string.  This should get called from save().
@@ -179,7 +177,7 @@ namespace ocropus {
             narray<const char *> keys;
             params.keys(keys);
             for(int i=0;i<keys.length();i++) {
-                fprintf(stream,"%s=%s\n",keys(i),params(keys(i)).ptr());
+                fprintf(stream,"%s=%s\n",keys(i),params(keys(i)).c_str());
             }
             fprintf(stream,"END_OF_PARAMETERS=HERE\n");
         }
@@ -203,7 +201,7 @@ namespace ocropus {
             params.keys(keys);
             for(int i=0;i<keys.length();i++) {
                 fprintf(stream,"%*s",depth,"");
-                fprintf(stream,"%s=%s\n",keys(i),params(keys(i)).ptr());
+                fprintf(stream,"%s=%s\n",keys(i),params(keys(i)).c_str());
             }
         }
 
@@ -300,6 +298,7 @@ namespace ocropus {
 
     template <class T>
     T *make_component(const char *name) {
+        if(!strcmp(name,"null")) return 0;
         IComponent *component = component_construct(name);
         if(!component) throwf("%s: failed to instantiate component",name);
         T *result = dynamic_cast<T*>(component);
@@ -308,6 +307,31 @@ namespace ocropus {
             throwf("%s: yielded component of wrong type\n",name);
         }
         return result;
+    }
+
+    // convenience functions for pointers held by autodel
+
+    template <class T>
+    void make_component(autodel<T> &dest,const char *name) {
+        dest = make_component<T>(name);
+    }
+    template <class T>
+    void make_component(const char *name,autodel<T> &dest) {
+        dest = make_component<T>(name);
+    }
+    template <class T>
+    void save_component(FILE *stream,autodel<T> &dest) {
+        save_component(stream,dest.ptr());
+    }
+    template <class T>
+    void load_component(FILE *stream,autodel<T> &dest) {
+        T *result = dynamic_cast<T*>(load_component(stream));
+        if(!result) throwf("load failed: load component yielded wrong type");
+        dest = result;
+    }
+    template <class T>
+    void load_component(autodel<T> &dest,FILE *stream) {
+        load_component(stream,dest);
     }
 }
 
