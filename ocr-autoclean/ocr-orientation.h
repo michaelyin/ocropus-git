@@ -1,4 +1,4 @@
-// Copyright 2006-2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
+// Copyright 2006-2009 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
 //
 // You may not use this file except under the terms of the accompanying license.
@@ -35,35 +35,36 @@ class ocrorientation : IComponent {
         int max_lines_to_compute;
         int max_lines_to_use;
         char* mode;
-                
+
                 ocrorientation( const char* dictionary_file,
-                                int max_lines_to_compute = 3, 
+                                int max_lines_to_compute = 3,
                                 int max_lines_to_use = 3,
                                 const char* mode = "max");
                 ~ocrorientation();
-        
+
         void    add_image(bytearray &in);
         void    get_image(bytearray &out);
         int     get_angle();
-        
+
         const char* description();
         const char* name();
-    
+
     private:
         objlist< nustring >  dict;
         bytearray   in_image;
         bytearray   out_image;
-        
-        bytearray   in_image_binarized;
+
         nustring    alphabet;
         int         angle;
-        
+
         bool    is_in_dict(nustring &s);
         void    extractwords(objlist< nustring > &tokens, nustring &s);
         float   score_line(nustring &line);
-        void    estimate_one_orientation_with_tess(floatarray &list_scores, bytearray &page_image, int orientation, int maxlines);
+        void    estimate_one_orientation_with_tess(floatarray &list_scores, bytearray &page_image, int orientation);
         void    estimate_all_orientations();
     };
+    
+    ocrorientation *make_OCRAutoOrientation(const char* dict);
 }
 
 #endif
