@@ -142,6 +142,26 @@ namespace ocropus {
         s += ".cseg.png";
         write_image_packed(s, cseg);
     }
+
+    // Read a line and make an FST out of it.
+    void read_transcript(IGenericFst &fst, const char *path) {
+        nustring gt;
+        read_utf8_line(gt, stdio(path, "r"));
+        fst_line(fst, gt);
+    }
+
+    // Reads a "ground truth" FST (with extra spaces) by basename
+    void read_gt(IGenericFst &fst, const char *base) {
+        strbuf gt_path;
+        gt_path = base;
+        gt_path += ".gt.txt";
+        
+        read_transcript(fst, gt_path);
+        for(int i = 0; i < fst.nStates(); i++)
+            fst.addTransition(i, i, 0, 0, ' ');
+    }
+
+
     
     // _______________________________________________________________________
 
@@ -915,6 +935,52 @@ namespace ocropus {
         return 0;
     }
 
+
+    int main_align(int argc,char **argv) {
+        if(argc!=2) throw "usage: ... dir";
+        iucstring s;
+        s = argv[1];
+        s += "/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst";
+        Glob files(s);
+        for(int index=0;index<files.length();index++) {
+            if(index%1000==0)
+                debugf("info","%s (%d/%d)\n",files(index),index,files.length());
+
+            iucstring base;
+            base = files(index);
+            base.erase(base.length()-4);
+
+            autodel<OcroFST> gt_fst(make_OcroFST());
+            read_gt(*gt_fst, base);
+
+            autodel<OcroFST> fst(make_OcroFST());
+            fst->load(files(index));
+            nustring str;
+            intarray v1;
+            intarray v2;
+            intarray in;
+            intarray out;
+            floatarray costs;
+            try {
+                beam_search(v1, v2, in, out, costs,
+                            *fst, *gt_fst, beam_width);
+                // recolor rseg to cseg
+            } catch(const char *error) {
+                fprintf(stderr,"ERROR in bestpath: %s\n",error);
+                if(abort_on_error) abort();
+            }
+            try {
+                rseg_to_cseg(base, in);
+                store_costs(base, costs);
+            } catch(const char *err) {
+                fprintf(stderr,"ERROR in cseg reconstruction: %s\n",err);
+                if(abort_on_error) abort();
+            }
+        }
+        return 0;
+    }
+
+
     int main_loadseg(int argc,char **argv) {
         if(argc!=3) throw "usage: ... model dir";
         dinit(512,512);
@@ -1082,6 +1148,8 @@ namespace ocropus {
         D("evaluate1 file1 file2",
                 "compute the edit distance between the two files");
         SECTION("training");
+        D("align dir",
+                "align fsts with ground truth transcripts");
         D("trainseg model dir",
                 "train a model for the ground truth in dir/...");
         D("saveseg dataset dir",
@@ -1133,6 +1201,7 @@ namespace ocropus {
             if(!strcmp(argv[1],"fsts2text")) return main_fsts2text(argc-1,argv+1);
             if(!strcmp(argv[1],"lines2fsts")) return main_lines2fsts(argc-1,argv+1);
             if(!strcmp(argv[1],"loadseg")) return main_loadseg(argc-1,argv+1);
+            if(!strcmp(argv[1],"align")) return main_align(argc-1,argv+1);
             if(!strcmp(argv[1],"page")) return main_page(argc-1,argv+1);
             if(!strcmp(argv[1],"pages2images")) return main_pages2images(argc-1,argv+1);
             if(!strcmp(argv[1],"pages2lines")) return main_pages2lines(argc-1,argv+1);
