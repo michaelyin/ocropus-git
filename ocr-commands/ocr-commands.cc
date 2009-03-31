@@ -96,6 +96,56 @@ namespace ocropus {
         str.toNustring(output);
     }
 
+    static void store_costs(const char *base, floatarray &costs) {
+        iucstring s;
+        s = base;
+        s.append(".costs");
+        text_write(stdio(s, "w"), costs);
+    }
+
+    static void rseg_to_cseg(intarray &cseg, intarray &rseg, intarray &ids) {
+        intarray map(max(rseg) + 1);
+        map.fill(0);
+        int color = 0;
+        for(int i = 0; i < ids.length(); i++) {
+            if(!ids[i]) continue;
+            color++;
+            int start = ids[i] >> 16;
+            int end = ids[i] & 0xFFFF;
+            printf("max(rseg) is %d\n", max(rseg));
+            printf("end = %d\n", end);
+            if(start > end)
+                throw "segmentation encoded in IDs looks seriously broken!\n";
+            if(start >= map.length() || end >= map.length())
+                throw "segmentation encoded in IDs doesn't fit!\n";
+            for(int j = start; j <= end; j++)
+                map[j] = color;
+        }
+        cseg.makelike(rseg);
+        for(int i = 0; i < cseg.length1d(); i++)
+            cseg.at1d(i) = map[rseg.at1d(i)];
+    }
+
+    static void rseg_to_cseg(const char *base, intarray &ids) {
+        iucstring s;
+        s = base;
+        s += ".rseg.png";
+        intarray rseg;
+        read_image_packed(rseg, s);
+        make_line_segmentation_black(rseg);
+        intarray cseg;
+
+        rseg_to_cseg(cseg, rseg, ids);
+
+        ::make_line_segmentation_white(cseg);
+        s = base;
+        s += ".cseg.png";
+        write_image_packed(s, cseg);
+    }
+    
+    // _______________________________________________________________________
+
+
     struct Glob {
         glob_t g;
         Glob(const char *pattern,int flags=0) {
@@ -112,6 +162,45 @@ namespace ocropus {
             return g.gl_pathv[i];
         }
     };
+
+    // _______________________________________________________________________
+
+    void hocr_dump_preamble(FILE *output) {
+        fprintf(output, "<!DOCTYPE html\n");
+        fprintf(output, "   PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\n");
+        fprintf(output, "   http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
+    }
+
+    void hocr_dump_head(FILE *output) {
+        fprintf(output, "<head>\n");
+        fprintf(output, "<meta name=\"ocr-capabilities\" content=\"ocr_line ocr_page\" />\n");
+        fprintf(output, "<meta name=\"ocr-langs\" content=\"en\" />\n");
+        fprintf(output, "<meta name=\"ocr-scripts\" content=\"Latn\" />\n");
+        fprintf(output, "<meta name=\"ocr-microformats\" content=\"\" />\n");
+        fprintf(output, "<title>OCR Output</title>\n");
+        fprintf(output, "</head>\n");
+    }
+
+    void hocr_dump_line(FILE *output, const char *path) {
+        fprintf(output, "<span class=\"ocr_line\">\n");
+        nustring s;
+        read_utf8_line(s, stdio(path, "r"));
+        write_utf8(output, s);
+        fprintf(output, "</span>");
+    }
+
+    void hocr_dump_page(FILE *output, const char *path) {
+        iucstring pattern;
+        sprintf(pattern,"%s/[0-9][0-9][0-9][0-9].txt",path);
+        Glob lines(pattern);
+        fprintf(output, "<div class=\"ocr_page\">\n");
+        for(int i = 0; i < lines.length(); i++) {
+            hocr_dump_line(output, path);
+        }
+        fprintf(output, "</div>\n");
+    }
+
+    // _______________________________________________________________________
 
     int main_book2lines(int argc,char **argv) {
         int pageno = 0;
@@ -776,23 +865,53 @@ namespace ocropus {
 
     int main_fsts2text(int argc,char **argv) {
         if(argc!=3) throw "usage: ... langmod dir";
-        autodel<IGenericFst> langmod(make_OcroFST());
+        autodel<OcroFST> langmod(make_OcroFST());
         langmod->load(argv[1]);
         iucstring s;
         sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst",argv[2]);
         Glob files(s);
+#pragma omp parallel for
         for(int index=0;index<files.length();index++) {
-            autodel<IGenericFst> fst(make_OcroFST());
+            if(index%1000==0)
+                debugf("info","%s (%d/%d)\n",files(index),index,files.length());
+            autodel<OcroFST> fst(make_OcroFST());
             fst->load(files(index));
             nustring str;
-            // FIXME add the language modeling here
-            throw Unimplemented();
-            fst->bestpath(str);
-            narray<char> output;
-            output.resize(10000);
-            str.utf8Encode(output);
-            debugf("info","%s\t%s\n",files(index),&output[0]);
+            try {
+                intarray v1;
+                intarray v2;
+                intarray in;
+                intarray out;
+                floatarray costs;
+                beam_search(v1, v2, in, out, costs,
+                            *fst, *langmod, beam_width);
+                double cost = sum(costs);
+                remove_epsilons(str, out);
+                if(cost < 1e10) {
+                    iucstring output;
+                    nustring_convert(output,str);
+                    debugf("transcript","%s\t%s\n",files(index), output.c_str());
+                    iucstring base;
+                    base = files(index);
+                    base.erase(base.length()-4);
+                    try {
+                        rseg_to_cseg(base, in);
+                        store_costs(base, costs);
+                    } catch(const char *err) {
+                        fprintf(stderr,"ERROR in cseg reconstruction: %s\n",err);
+                        if(abort_on_error) abort();
+                    }
+                    base += ".txt";
+                    fprintf(stdio(base,"w"),"%s\n",output.c_str());
+                } else {
+                    debugf("info","%s\t%f\n",files(index), cost);
+                }
+            } catch(const char *error) {
+                fprintf(stderr,"ERROR in bestpath: %s\n",error);
+                if(abort_on_error) abort();
+            }
         }
+
         return 0;
     }
 
@@ -913,9 +1032,23 @@ namespace ocropus {
             return 0;
         } else throw "oops";
     }
-
+    
     int main_buildhtml(int argc,char **argv) {
-        throw Unimplemented();
+        if(argc!=3) throw "usage: ... dir";
+        iucstring pattern;
+        sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]",argv[2]);
+        Glob pages(pattern);
+        FILE *output = stdout;
+        hocr_dump_preamble(output);
+        fprintf(output, "<html>\n");
+        hocr_dump_head(output);
+        fprintf(output, "<body>\n");
+        for(int i = 0; i < pages.length(); i++) {
+            hocr_dump_page(output, pages(i));
+        }
+        fprintf(output, "</body>\n");
+        fprintf(output, "</html>\n");
+        return 0;     
     }
 
     int main_cleanhtml(int argc,char **argv) {
@@ -969,10 +1102,10 @@ namespace ocropus {
                 "output the available parameters for the given component");
         D("cinfo model",
                 "load the classifier model and print information on it");
-#if 0
         SECTION("results");
         D("buildhtml dir",
                 "creates an HTML representation of the OCR output in dir/...");
+#if 0
         D("cleanhtml dir",
                 "removes all files from dir/... that aren't needed for the HTML output");
 #endif
