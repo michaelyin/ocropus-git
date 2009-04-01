@@ -112,8 +112,6 @@ namespace ocropus {
             color++;
             int start = ids[i] >> 16;
             int end = ids[i] & 0xFFFF;
-            printf("max(rseg) is %d\n", max(rseg));
-            printf("end = %d\n", end);
             if(start > end)
                 throw "segmentation encoded in IDs looks seriously broken!\n";
             if(start >= map.length() || end >= map.length())
@@ -131,7 +129,7 @@ namespace ocropus {
         s = base;
         s += ".rseg.png";
         intarray rseg;
-        read_image_packed(rseg, s);
+        read_image_packed(rseg, s.c_str());
         make_line_segmentation_black(rseg);
         intarray cseg;
 
@@ -197,12 +195,20 @@ namespace ocropus {
         fprintf(output, "<meta name=\"ocr-langs\" content=\"en\" />\n");
         fprintf(output, "<meta name=\"ocr-scripts\" content=\"Latn\" />\n");
         fprintf(output, "<meta name=\"ocr-microformats\" content=\"\" />\n");
+        fprintf(output, "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\" />");
         fprintf(output, "<title>OCR Output</title>\n");
         fprintf(output, "</head>\n");
     }
 
-    void hocr_dump_line(FILE *output, const char *path) {
-        fprintf(output, "<span class=\"ocr_line\">\n");
+    void hocr_dump_line(FILE *output, const char *path,
+                        RegionExtractor &r, int index, int h) {
+        fprintf(output, "<span class=\"ocr_line\"");
+        if(index > 0 && index < r.length()) {
+            fprintf(output, " title=\"bbox %d %d %d %d\"",
+                        r.x0(index), h - 1 - r.y0(index),
+                        r.x1(index), h - 1 - r.y1(index));
+        }
+        fprintf(output, ">\n");
         nustring s;
         read_utf8_line(s, stdio(path, "r"));
         write_utf8(output, s);
@@ -211,11 +217,26 @@ namespace ocropus {
 
     void hocr_dump_page(FILE *output, const char *path) {
         iucstring pattern;
+        
+        sprintf(pattern,"%s.seg.png",path);
+        intarray page_seg;
+        read_image_packed(page_seg, pattern);
+        int h = page_seg.dim(1);
+
+        RegionExtractor regions;
+        regions.setPageLines(page_seg);
+        rectarray bboxes;
+
         sprintf(pattern,"%s/[0-9][0-9][0-9][0-9].txt",path);
         Glob lines(pattern);
         fprintf(output, "<div class=\"ocr_page\">\n");
         for(int i = 0; i < lines.length(); i++) {
-            hocr_dump_line(output, path);
+            // we have to figure out line number from the path because
+            // the loop index is unreliable: it skips lines that didn't work
+            pattern = lines(i);
+            pattern.erase(pattern.length() - 4); // cut .txt
+            int line_index = atoi(pattern.substr(pattern.length() - 4));
+            hocr_dump_line(output, lines(i), regions, line_index, h);
         }
         fprintf(output, "</div>\n");
     }
@@ -344,7 +365,7 @@ namespace ocropus {
                     dsection("line_segmentation");
                     make_line_segmentation_white(segmentation);
                     sprintf(s,"%s.rseg.png",base.c_str());
-                    write_image_packed(s.c_str(),segmentation);
+                    write_image_packed(s,segmentation);
                     dshowr(segmentation);
                     dwait();
                 }
@@ -373,7 +394,7 @@ namespace ocropus {
                 s = base;
                 s += ".gt.txt";
                 char buf[100000];
-                fgets(buf,sizeof buf,stdio(s.c_str(),"r"));
+                fgets(buf,sizeof buf,stdio(s,"r"));
                 iucstring truth;
                 truth = buf;
                 cleanup_for_eval(truth);
@@ -450,6 +471,8 @@ namespace ocropus {
 
             intarray page_seg;
             segmenter->segment(page_seg,page_binary);
+            sprintf(s,"%s/%04d.seg.png",outdir,pageno);
+            write_image_packed(s, page_seg);
 
             RegionExtractor regions;
             regions.setPageLines(page_seg);
@@ -1100,9 +1123,9 @@ namespace ocropus {
     }
     
     int main_buildhtml(int argc,char **argv) {
-        if(argc!=3) throw "usage: ... dir";
+        if(argc!=2) throw "usage: ... dir";
         iucstring pattern;
-        sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]",argv[2]);
+        sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]",argv[1]);
         Glob pages(pattern);
         FILE *output = stdout;
         hocr_dump_preamble(output);
