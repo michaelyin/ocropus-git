@@ -821,6 +821,32 @@ namespace glinerec {
             nn_error = 1e30;
         }
 
+        void normalize(floatarray &v) {
+            float kind = pgetf(normalization);
+            if(kind<0) return;
+            if(kind==1) {
+                double total = 0.0;
+                for(int i=0;i<v.length();i++) total += fabs(v[i]);
+                for(int i=0;i<v.length();i++) v[i] /= total;
+            } else if(kind==2) {
+                double total = 0.0;
+                for(int i=0;i<v.length();i++) total += sqr(v[i]);
+                total = sqrt(total);
+                for(int i=0;i<v.length();i++) v[i] /= total;
+            } else if(kind<999) {
+                double total = 0.0;
+                for(int i=0;i<v.length();i++) total += pow(v[i],kind);
+                total = pow(total,1.0/kind);
+                for(int i=0;i<v.length();i++) v[i] /= total;
+            } else if(kind==999) {
+                double total = 0.0;
+                for(int i=0;i<v.length();i++) if(fabs(v[i])>total) total = fabs(v[i]);
+                for(int i=0;i<v.length();i++) v[i] /= total;
+            } else {
+                throw "bad normalization in mlp";
+            }
+        }
+
         void info(int depth,FILE *stream) {
             iprintf(stream,depth,"MLP\n");
             pprint(stream,depth);
