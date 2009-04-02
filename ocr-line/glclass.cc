@@ -804,7 +804,7 @@ namespace glinerec {
         MlpClassifier() {
             pdef("eta",0.5,"default learning rate");
             pdef("eta_init",0.5,"initial eta");
-            pdef("eta_varlog",0.5,"eta variance in lognormal");
+            pdef("eta_varlog",1.5,"eta variance in lognormal");
             pdef("hidden_varlog",1.2,"nhidden variance in lognormal");
             pdef("rounds",6,"number of training rounds");
             pdef("miters",5,"number of presentations in multiple of training set");
