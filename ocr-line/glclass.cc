@@ -802,7 +802,10 @@ namespace glinerec {
         bool crossvalidate;
 
         MlpClassifier() {
-            pdef("eta",0.1,"default learning rate");
+            pdef("eta",0.5,"default learning rate");
+            pdef("eta_init",0.5,"initial eta");
+            pdef("eta_varlog",0.5,"eta variance in lognormal");
+            pdef("hidden_varlog",1.2,"nhidden variance in lognormal");
             pdef("rounds",6,"number of training rounds");
             pdef("miters",5,"number of presentations in multiple of training set");
             pdef("nensemble",4,"number of mlps in ensemble");
@@ -1118,6 +1121,9 @@ namespace glinerec {
         }
 
         void trainBatch(IDataset &ds,IDataset &ts) {
+            float eta_init = pgetf("eta_init"); // 0.5
+            float eta_varlog = pgetf("eta_varlog"); // 1.5
+            float hidden_varlog = pgetf("hidden_varlog"); // 1.2
             int hidden_lo = pgetf("hidden_lo");
             int hidden_hi = pgetf("hidden_hi");
             int rounds = pgetf("rounds");
@@ -1147,7 +1153,7 @@ namespace glinerec {
             for(int i=0;i<nn;i++) {
                 // nets(i).init(data.dim(1),logspace(i,nn,hidden_lo,hidden_hi),nclasses);
                 nets(i).initData(ds,logspace(i,nn,hidden_lo,hidden_hi));
-                etas(i) = rlognormal(0.5,1.5);
+                etas(i) = rlognormal(eta_init,eta_varlog);
             }
 
             debugf("info","[mlp training n %d nc %d]\n",ds.nsamples(),nclasses);
@@ -1183,9 +1189,9 @@ namespace glinerec {
                         int j = i+nn/2;
                         nets(index(j)).copy(nets(index(i)));
                         int n = nets(index(j)).nhidden();
-                        int nn = min(max(hidden_min,int(rlognormal(n,1.2))),hidden_max);
+                        int nn = min(max(hidden_min,int(rlognormal(n,hidden_varlog))),hidden_max);
                         nets(index(j)).changeHidden(nn);
-                        etas(index(j)) = rlognormal(etas(index(i)),1.6);
+                        etas(index(j)) = rlognormal(etas(index(i)),eta_varlog);
                     }
                 }
                 if(debug("info")) {
