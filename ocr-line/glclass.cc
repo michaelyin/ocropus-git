@@ -822,7 +822,7 @@ namespace glinerec {
         }
 
         void normalize(floatarray &v) {
-            float kind = pgetf(normalization);
+            float kind = pgetf("normalization");
             if(kind<0) return;
             if(kind==1) {
                 double total = 0.0;
