@@ -127,6 +127,10 @@ namespace glinerec {
             pdef("cnorm","center","character normalization (center, abs, baseline)");
             pdef("abs_xhmul",1.5,"ascender multiplier for absolute rescaling");
             pdef("abs_truncate",0,"truncate character that are too big");
+            pdef("space_fractile",0.5,"fractile for space estimation");
+            pdef("space_multiplier",2,"multipler for space estimation");
+            pdef("space_min",0.2,"minimum space threshold (in xheight)");
+            pdef("space_max",1.1,"maximum space threshold (in xheight)");
             segmenter = make_DpSegmenter();
             grouper = make_SimpleGrouper();
             featuremap = dynamic_cast<IFeatureMap*>(component_construct(pget("fmap")));
@@ -471,6 +475,33 @@ namespace glinerec {
             recognizeLine(segmentation_,result,image);
         }
 
+        float space_threshold;
+
+        void estimateSpaceSize() {
+            intarray labels;
+            labels = segmentation;
+            label_components(labels);
+            rectarray boxes;
+            bounding_boxes(boxes,labels);
+            floatarray distances;
+            distances.resize(boxes.length()) = 99999;
+            for(int i=1;i<boxes.length();i++) {
+                rectangle b = boxes[i];
+                for(int j=1;j<boxes.length();j++) {
+                    rectangle n = boxes[j];
+                    int delta = n.x0 - b.x1;
+                    if(delta<0) continue;
+                    if(delta>=distances[i]) continue;
+                    distances[i] = delta;
+                }
+            }
+            float interchar = fractile(distances,pgetf("space_fractile"));
+            space_threshold = interchar*pgetf("space_multiplier");;
+            // impose some reasonable upper and lower bounds
+            space_threshold = max(space_threshold,pgetf("space_min")*xheight);
+            space_threshold = min(space_threshold,pgetf("space_max")*xheight);
+        }
+
         void recognizeLine(intarray &segmentation_,IGenericFst &result,bytearray &image_) {
             bool use_reject = pgetf("use_reject");
             bytearray image;
@@ -483,6 +514,9 @@ namespace glinerec {
             floatarray v,p,cp,ccosts,props;
             int ncomponents = grouper->length();
             rectangle b;
+
+            estimateSpaceSize();
+
 #pragma omp parallel for schedule(dynamic,10) private(p,v,b,props)
             for(int i=0;i<ncomponents;i++) {
 #if 0
@@ -516,7 +550,7 @@ namespace glinerec {
                             grouper->setClass(i,'#',(b.width()/xheight)*high_cost);
                         }
                     }
-                    if(grouper->pixelSpace(i)>xheight*.4) {
+                    if(grouper->pixelSpace(i)>space_threshold) {
                         debugf("spaces","space %d\n",grouper->pixelSpace(i));
                         grouper->setSpaceCost(i,1.0,5.0);
                     }
