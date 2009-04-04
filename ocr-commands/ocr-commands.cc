@@ -100,7 +100,10 @@ namespace ocropus {
         iucstring s;
         s = base;
         s.append(".costs");
-        text_write(stdio(s, "w"), costs);
+        stdio stream(s,"w");
+        for(int i=0;i<costs.length();i++) {
+            fprintf(stream,"%d %g\n",i,costs(i));
+        }
     }
 
     static void rseg_to_cseg(intarray &cseg, intarray &rseg, intarray &ids) {
