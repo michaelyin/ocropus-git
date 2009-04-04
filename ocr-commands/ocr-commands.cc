@@ -50,6 +50,7 @@ namespace ocropus {
     param_bool abort_on_error("abort_on_error",1,"abort recognition if there is an unexpected error");
     param_bool save_fsts("save_fsts",1,"save the fsts (set to 0 for eval-only in lines2fsts)");
     param_bool retrain("retrain",0,"perform retraining");
+    param_bool retrain_threshold("retrain_threshold",100,"only retrain on characters with a cost lower than this");
     param_int nrecognize("nrecognize",1000000,"maximum number of lines to predict (for quick testing)");
     param_int ntrain("ntrain",10000000,"max number of training examples");
     param_string eval_flags("eval_flags","space","which features to ignore during evaluation");
@@ -156,14 +157,14 @@ namespace ocropus {
         strbuf gt_path;
         gt_path = base;
         gt_path += ".gt.txt";
-        
+
         read_transcript(fst, gt_path);
         for(int i = 0; i < fst.nStates(); i++)
             fst.addTransition(i, i, 0, 0, ' ');
     }
 
 
-    
+
     // _______________________________________________________________________
 
 
@@ -220,7 +221,7 @@ namespace ocropus {
 
     void hocr_dump_page(FILE *output, const char *path) {
         iucstring pattern;
-        
+
         sprintf(pattern,"%s.seg.png",path);
         intarray page_seg;
         read_image_packed(page_seg, pattern);
@@ -1041,7 +1042,7 @@ namespace ocropus {
         int total_lines = 0;
         linerec.startTraining("");
         iucstring pattern;
-        if(retrain) 
+        if(retrain)
             sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].cseg.png",argv[2]);
         else
             sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].cseg.gt.png",argv[2]);
@@ -1050,10 +1051,12 @@ namespace ocropus {
         if(files.length()<1) throw "no pages found";
         int next = 1000;
         int space_warning = 0;
+        floatarray costs;
         for(int index=0;index<files.length();index++) {
             try {
                 strcpy(base,files(index));
                 chomp_extension(base);
+
                 strcpy(filename,base);
                 if(retrain)
                     strcat(filename,".cseg.png");
@@ -1065,31 +1068,75 @@ namespace ocropus {
                 for(int i=0;i<image.length1d();i++)
                     image.at1d(i) = 255*!cseg.at1d(i);
 
-                strcpy(filename,base);
-                if(retrain)
-                    strcat(filename,".txt");
-                else
-                    strcat(filename,".gt.txt");
-                char transcript[10000];
-                stdio line(filename,"r");
-                CHECK_ARG(fgets(transcript,sizeof(transcript),line)>0);
-                line.close();
-                chomp(transcript);
-                if((int)strlen(transcript)!=max(cseg)) {
-                    if(space_warning++==0)
-                        debugf("info","removing spaces to make segmentations match\n");
-                    remove_spaces(transcript);
+
+                // read the ground truth segmentation
+
+                nustring nutranscript;
+                {
+                    strcpy(filename,base);
+                    if(retrain)
+                        strcat(filename,".txt");
+                    else
+                        strcat(filename,".gt.txt");
+                    // FIXME this doesn't work with Unicode characters
+                    char transcript[10000];
+                    stdio line(filename,"r");
+                    CHECK_ARG(fgets(transcript,sizeof(transcript),line)>0);
+                    line.close();
+                    chomp(transcript);
+                    if((int)strlen(transcript)!=max(cseg)) {
+                        // account for the two different space conventions
+                        if(space_warning++==0)
+                            debugf("info","removing spaces to make segmentations match\n");
+                        remove_spaces(transcript);
+                    }
+                    nutranscript = transcript;
                 }
 
-                debugf("transcript","%s (%d) [%2d,%2d] %s\n",filename,total_chars,
-                        (int)strlen(transcript),max(cseg),transcript);
+                // for retraining, read the cost file
+
+                if(retrain) {
+                    strcpy(filename,base);
+                    strcat(filename,".costs");
+                    costs.resize(nutranscript.length()) = 1e38;
+                    stdio stream(filename,"r");
+                    int index;
+                    float cost;
+                    while(fscanf(stream,"%d %g\n",&index,&cost)==2) {
+                        costs(index) = cost;
+                    }
+                    // remove all segments whose costs are too high
+                    int old_length = nutranscript.length();
+                    for(int i=0;i<nutranscript.length();i++) {
+                        if(costs[i]>retrain_threshold)
+                            nutranscript[i] = nuchar(' ');
+                    }
+                    for(int i=0;i<cseg.length();i++) {
+                        if(costs(cseg[i])>retrain_threshold)
+                            cseg[i] = 0;
+                    }
+                    int delta = old_length - nutranscript.length();
+                    if(delta>0) {
+                        debugf("info","removed %d exceeding cost\n",delta);
+                    }
+                }
+
+                // let the user know about progress
+
+                {
+                    char *transcript = nutranscript.mallocUtf8Encode();
+                    debugf("transcript","%s (%d) [%2d,%2d] %s\n",filename,total_chars,
+                           nutranscript.length(),max(cseg),transcript);
+                    free(transcript);
+                }
                 if(total_chars>=next) {
                     debugf("info","loaded %d chars, %s total\n",
                             total_chars,linerec.command("total"));
                     next += 1000;
                 }
 
-                nustring nutranscript(transcript);
+                // now, actually add the segmented characters to the line recognizer
+
                 try {
                     linerec.addTrainingLine(cseg,image,nutranscript);
                     total_chars += max(cseg);
@@ -1124,7 +1171,7 @@ namespace ocropus {
             return 0;
         } else throw "oops";
     }
-    
+
     int main_buildhtml(int argc,char **argv) {
         if(argc!=2) throw "usage: ... dir";
         iucstring pattern;
@@ -1140,7 +1187,7 @@ namespace ocropus {
         }
         fprintf(output, "</body>\n");
         fprintf(output, "</html>\n");
-        return 0;     
+        return 0;
     }
 
     int main_cleanhtml(int argc,char **argv) {

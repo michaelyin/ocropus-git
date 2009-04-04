@@ -24,11 +24,16 @@
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
 #include "ocropus.h"
+#include <sys/time.h>
+#include <time.h>
 
 namespace ocropus {
     extern int main_ocropus(int argc,char **argv);
 }
 
 int main(int argc,char **argv) {
+    struct timeval t;
+    gettimeofday(&t,0);
+    srand(t.tv_sec+t.tv_usec);
     return ocropus::main_ocropus(argc,argv);
 }
