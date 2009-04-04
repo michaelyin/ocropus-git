@@ -111,11 +111,11 @@ namespace ocropus {
             }
             if(!shown.find(key.c_str())) {
                 if(altered && !strcmp(verbose_pattern,"?")) {
-                    fprintf(stderr,"param altered %s=%s # %s\n",
-                            key.c_str(),params(name).c_str(),doc);
+                    fprintf(stderr,"param altered %s_%s=%s # %s\n",
+                            this->name(),key.c_str(),params(name).c_str(),doc);
                 } else if(strstr(key.c_str(),verbose_pattern)!=0) {
-                    fprintf(stderr,"param default %s=%s # %s\n",
-                            key.c_str(),params(name).c_str(),doc);
+                    fprintf(stderr,"param default %s_%s=%s # %s\n",
+                            this->name(),key.c_str(),params(name).c_str(),doc);
                 }
                 shown(key.c_str()) = true;
             }
@@ -193,7 +193,7 @@ namespace ocropus {
                 }
                 params(key) = value;
             }
-            if(!ok) throw("paramters not properly terminated in save file");
+            if(!ok) throw("parameters not properly terminated in save file");
         }
         // Print the parameters in some human-readable format.
         void pprint(FILE *stream=stdout,int depth=0) {
@@ -201,7 +201,7 @@ namespace ocropus {
             params.keys(keys);
             for(int i=0;i<keys.length();i++) {
                 fprintf(stream,"%*s",depth,"");
-                fprintf(stream,"%s=%s\n",keys(i),params(keys(i)).c_str());
+                fprintf(stream,"%s_%s=%s\n",this->name(),keys(i),params(keys(i)).c_str());
             }
         }
 
