@@ -1,3 +1,4 @@
+// -*- C++ -*-
 // Copyright 2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
 //
@@ -75,11 +76,12 @@ namespace ocropus {
         colib::stdio logImageHtmlBorder();
         colib::stdio logText(const char *description);
 
+    public:
+        /// FIXME these violate the naming conventions for methods
         bool turned_on(const char *name);
         void init_logging();
         void start_logging();
 
-    public:
         bool enabled;
 
         void putIndent();
