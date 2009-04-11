@@ -261,11 +261,12 @@ namespace glinerec {
 
         SimpleFeatureMap() {
             // parameters affecting all features
-            pdef("ftypes","b","which feature types to extract (bgxyhejrt)");
-            pdef("csize",30,"target character size after rescaling");
-            pdef("context",1.0,"how much context to include");
+            pdef("ftypes","bejh","which feature types to extract (bgxyhejrt)");
+            pdef("csize",40,"target character size after rescaling");
+            pdef("context",1.3,"how much context to include");
             pdef("scontext",0.3,"value to multiply context pixels with (e.g., -1, 0, 1, 0.5)");
-            pdef("aa",0.1,"amount of anti aliasing (-1 = use other algorithm)");
+            pdef("aa",0.5,"amount of anti aliasing (-1 = use other algorithm)");
+
             // parameters specific to individual feature maps
             pdef("skel_pre_smooth",0.0,"smooth by this amount prior to skeletal extraction");
             pdef("skel_post_dilate",3.0,"how much to smooth after skeletal extraction");

@@ -112,13 +112,13 @@ namespace glinerec {
         int ntrained;
 
         LinerecExtracted() {
-            pdef("classifier","boosted","character classifier");
+            pdef("classifier","latin","character classifier");
             pdef("verbose",0,"verbose output from glinerec");
             pdef("mode","centered-scaled","line recognition mode");
             pdef("use_props",1,"use character properties (aspect ratio, etc.)");
             pdef("use_reject",1,"use a reject class (use posteriors only and train on junk chars)");
             pdef("njitter",1,"#repeat presentations (use with jitter in the feature map)");
-            pdef("csize",30,"target character size after rescaling");
+            pdef("csize",40,"target character size after rescaling");
             pdef("maxrange",5,"maximum number of components that are grouped together");
             pdef("context",1.5,"how much context to include (1.0=no context)");
             pdef("mdilate",2,"dilate the extraction mask by this much");

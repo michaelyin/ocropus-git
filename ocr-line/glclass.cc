@@ -806,8 +806,8 @@ namespace glinerec {
             pdef("eta_init",0.5,"initial eta");
             pdef("eta_varlog",1.5,"eta variance in lognormal");
             pdef("hidden_varlog",1.2,"nhidden variance in lognormal");
-            pdef("rounds",6,"number of training rounds");
-            pdef("miters",5,"number of presentations in multiple of training set");
+            pdef("rounds",12,"number of training rounds");
+            pdef("miters",10,"number of presentations in multiple of training set");
             pdef("nensemble",4,"number of mlps in ensemble");
             pdef("hidden_min",5,"minimum number of hidden units");
             pdef("hidden_lo",20,"minimum number of hidden units at start");
@@ -1661,10 +1661,10 @@ namespace glinerec {
 
         LatinClassifier() {
             pdef("junkclass","mlp","junk classifier");
-            pdef("charclass","boosted","character classifier");
-            pdef("ulclass","mlp","upper/lower classifier");
-            pdef("ul",0,"do upper/lower reclassification");
+            pdef("charclass","mappedmlp","character classifier");
             pdef("junk",1,"train a separate junk classifier");
+            pdef("ul",0,"do upper/lower reclassification");
+            pdef("ulclass","mlp","upper/lower classifier");
         }
         int nfeatures() {
             return charclass->nfeatures();
