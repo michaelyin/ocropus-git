@@ -54,6 +54,8 @@ namespace ocropus {
     param_int nrecognize("nrecognize",1000000,"maximum number of lines to predict (for quick testing)");
     param_int ntrain("ntrain",10000000,"max number of training examples");
     param_string eval_flags("eval_flags","space","which features to ignore during evaluation");
+    param_bool continue_partial("continue_partial",0,"don't compute outputs that already exist");
+    param_bool old_csegs("old_csegs",0,"use old csegs (spaces are not counted)");
 
     // these are used for the single page recognizer
     param_string classifier0("classifier0","full30.model","classifier for page recognition");
@@ -328,7 +330,7 @@ namespace ocropus {
         int finished = 0;
         int nfiles = min(files.length(),nrecognize);
         int eval_total=0,eval_tchars=0,eval_pchars=0,eval_lines=0,eval_no_ground_truth=0;
-#pragma omp parallel for private(linerec) shared(finished)
+#pragma omp parallel for private(linerec) shared(finished) schedule(dynamic,20)
         for(int index=0;index<nfiles;index++) {
 #pragma omp critical
             {
@@ -341,6 +343,20 @@ namespace ocropus {
             base = files(index);
             base.erase(base.length()-4);
             debugf("progress","line %s\n",base.c_str());
+            if(continue_partial) {
+                iucstring s;
+                sprintf(s,"%s.fst",base.c_str());
+                FILE *stream = fopen(s.c_str(),"r");
+                if(stream) {
+                    fclose(stream);
+                    // debugf("info","skipping line %s\n",base.c_str());
+#pragma omp atomic
+                    finished++;
+#pragma omp atomic
+                    eval_lines++;
+                    continue;
+                } 
+            }
             bytearray image;
             // FIXME output binary versions, intermediate results for debugging
             read_image_gray(image,files(index));
@@ -917,7 +933,7 @@ namespace ocropus {
         iucstring s;
         sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst",argv[2]);
         Glob files(s);
-#pragma omp parallel for
+#pragma omp parallel for schedule(dynamic,20)
         for(int index=0;index<files.length();index++) {
             if(index%1000==0)
                 debugf("info","%s (%d/%d)\n",files(index),index,files.length());
@@ -999,6 +1015,10 @@ namespace ocropus {
             try {
                 rseg_to_cseg(base, in);
                 store_costs(base, costs);
+                debugf("dcost","--------------------------------\n");
+                for(int i=0;i<out.length();i++) {
+                    debugf("dcost","%3d %10g %c\n",i,costs(i),out(i));
+                }
             } catch(const char *err) {
                 fprintf(stderr,"ERROR in cseg reconstruction: %s\n",err);
                 if(abort_on_error) abort();
@@ -1050,7 +1070,6 @@ namespace ocropus {
         Glob files(pattern);
         if(files.length()<1) throw "no pages found";
         int next = 1000;
-        int space_warning = 0;
         floatarray costs;
         for(int index=0;index<files.length();index++) {
             try {
@@ -1084,13 +1103,11 @@ namespace ocropus {
                     CHECK_ARG(fgets(transcript,sizeof(transcript),line)>0);
                     line.close();
                     chomp(transcript);
-                    if((int)strlen(transcript)!=max(cseg)) {
-                        // account for the two different space conventions
-                        if(space_warning++==0)
-                            debugf("info","removing spaces to make segmentations match\n");
-                        remove_spaces(transcript);
-                    }
+                    if(old_csegs) remove_spaces(transcript);
                     nutranscript = transcript;
+                    if(nutranscript.length()!=max(cseg))
+                        throwf("transcript doesn't agree with cseg (transcript %d, cseg %d)",
+                            nutranscript.length(),max(cseg));
                 }
 
                 // for retraining, read the cost file
@@ -1098,7 +1115,7 @@ namespace ocropus {
                 if(retrain) {
                     strcpy(filename,base);
                     strcat(filename,".costs");
-                    costs.resize(nutranscript.length()) = 1e38;
+                    costs.resize(10000) = 1e38;
                     stdio stream(filename,"r");
                     int index;
                     float cost;
@@ -1118,6 +1135,15 @@ namespace ocropus {
                     int delta = old_length - nutranscript.length();
                     if(delta>0) {
                         debugf("info","removed %d exceeding cost\n",delta);
+                    }
+                    debugf("dcost","--------------------------------\n");
+                    for(int i=0;i<nutranscript.length();i++) {
+                        debugf("dcost","%3d %10g %c\n",i,costs(i),nutranscript(i).ord());
+                    }
+                    {
+                        dsection("dcost");
+                        dshowr(cseg);
+                        dwait();
                     }
                 }
 

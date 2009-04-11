@@ -539,7 +539,8 @@ namespace glinerec {
                     int count = 0;
                     for(int j=0;j<p.length();j++) {
                         if(j==reject_class) continue;
-                        float pcost = p(j)>1e-6?-log(p(j)):1e6;
+                        float pcost = p(j)>1e-6?-log(p(j)):-log(1e-6);
+                        debugf("dcost","%3d %10g %c\n",j,pcost+ccost,(j>32?j:'_'));
                         grouper->setClass(i,j,pcost+ccost);
                         count++;
                     }
