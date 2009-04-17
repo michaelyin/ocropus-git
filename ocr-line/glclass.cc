@@ -1152,7 +1152,11 @@ namespace glinerec {
 
             for(int i=0;i<nn;i++) {
                 // nets(i).init(data.dim(1),logspace(i,nn,hidden_lo,hidden_hi),nclasses);
-                nets(i).initData(ds,logspace(i,nn,hidden_lo,hidden_hi));
+                if(w1.length()>0) {
+                    nets(i).copy(*this);
+                } else {
+                    nets(i).initData(ds,logspace(i,nn,hidden_lo,hidden_hi));
+                }
                 etas(i) = rlognormal(eta_init,eta_varlog);
             }
 
@@ -1713,15 +1717,6 @@ namespace glinerec {
             make_component(charclass,pget("charclass"));
             make_component(ulclass,pget("ulclass"));
 
-            if(pgetf("junk") && junkclass) {
-                debugf("info","training junk classifier\n");
-                intarray isjunk;
-                for(int i=0;i<ds.nsamples();i++)
-                    isjunk.push((ds.cls(i)=='~'));
-                MappedDataset junkds(ds,isjunk);
-                junkclass->train(junkds);
-            }
-
             debugf("info","training content classifier\n");
             if(pgetf("junk") && junkclass) {
                 intarray nonjunk;
@@ -1732,6 +1727,15 @@ namespace glinerec {
                 charclass->train(nonjunkds);
             } else {
                 charclass->train(ds);
+            }
+
+            if(pgetf("junk") && junkclass) {
+                debugf("info","training junk classifier\n");
+                intarray isjunk;
+                for(int i=0;i<ds.nsamples();i++)
+                    isjunk.push((ds.cls(i)=='~'));
+                MappedDataset junkds(ds,isjunk);
+                junkclass->train(junkds);
             }
 
             if(pgetf("ul") && ulclass) {

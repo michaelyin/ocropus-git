@@ -107,6 +107,9 @@ namespace glinerec {
         virtual void setModel(IModel *,int i) { throw "no submodels"; }
         virtual IComponent &getModel(int i) { throw "no submodels"; }
 
+        // update this model in place
+        virtual void copy(IModel &) { throw Unimplemented(); }
+
         // output of the classifier: should be posterior probabilities,
         // but some classifiers may just output discriminant values
         virtual float outputs(floatarray &result,floatarray &v) { throw Unimplemented(); }

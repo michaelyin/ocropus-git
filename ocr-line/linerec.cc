@@ -113,6 +113,7 @@ namespace glinerec {
 
         LinerecExtracted() {
             pdef("classifier","latin","character classifier");
+            pdef("cpreload","none","classifier to be loaded prior to training");
             pdef("verbose",0,"verbose output from glinerec");
             pdef("mode","centered-scaled","line recognition mode");
             pdef("use_props",1,"use character properties (aspect ratio, etc.)");
@@ -193,6 +194,12 @@ namespace glinerec {
         }
 
         void startTraining(const char *) {
+            const char *preload = pget("cpreload");
+            if(strcmp(preload,"none")) {
+                stdio stream(preload,"r");
+                classifier = dynamic_cast<IModel*>(load_component(stream));
+                debugf("info","preloaded classifier %s\n");
+            }
         }
 
         void finishTraining() {
