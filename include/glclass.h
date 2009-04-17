@@ -249,13 +249,15 @@ namespace glinerec {
         };
 
         void train(IDataset &ds) {
-            intarray raw_classes;
-            for(int i=0;i<ds.nsamples();i++)
-                raw_classes.push(ds.cls(i));
-            classmap(c2i,i2c,raw_classes);
-            intarray classes;
-            ctranslate(classes,raw_classes,c2i);
-            debugf("info","[mapped %d to %d classes]\n",c2i.length(),i2c.length());
+            if(c2i.length()<1) {
+                intarray raw_classes;
+                for(int i=0;i<ds.nsamples();i++)
+                    raw_classes.push(ds.cls(i));
+                classmap(c2i,i2c,raw_classes);
+                intarray classes;
+                ctranslate(classes,raw_classes,c2i);
+                debugf("info","[mapped %d to %d classes]\n",c2i.length(),i2c.length());
+            }
             MappedDataset mds(ds,c2i);
             cf->train(mds);
         }

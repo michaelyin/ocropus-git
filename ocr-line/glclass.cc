@@ -1713,9 +1713,9 @@ namespace glinerec {
         }
 
         void train(IDataset &ds) {
-            make_component(junkclass,pget("junkclass"));
-            make_component(charclass,pget("charclass"));
-            make_component(ulclass,pget("ulclass"));
+            if(!junkclass) make_component(junkclass,pget("junkclass"));
+            if(!charclass) make_component(charclass,pget("charclass"));
+            if(!ulclass) make_component(ulclass,pget("ulclass"));
 
             debugf("info","training content classifier\n");
             if(pgetf("junk") && junkclass) {

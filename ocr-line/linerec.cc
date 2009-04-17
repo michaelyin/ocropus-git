@@ -197,8 +197,9 @@ namespace glinerec {
             const char *preload = pget("cpreload");
             if(strcmp(preload,"none")) {
                 stdio stream(preload,"r");
-                classifier = dynamic_cast<IModel*>(load_component(stream));
+                load(stream);
                 debugf("info","preloaded classifier %s\n");
+                classifier->info();
             }
         }
 
