@@ -104,58 +104,6 @@ namespace ocropus {
     }
 
 
-    // FIXME/mezhirov comments --tmb
-
-    void boxes_height_histogram(floatarray &histogram, narray<rectangle> &bboxes,int max_height) {
-        int   i,d;
-        histogram.resize(max_height);
-        for(i=0;i<max_height;i++) histogram[i] = 0.0;
-
-        int len = bboxes.length();
-        for(i=0; i< len; i++){
-            d = (int) bboxes[i].y1 - (int) bboxes[i].y0;
-            if(d!=0 && d>=0 && d<max_height) histogram[d]++;
-        }
-    }
-
-    // FIXME/mezhirov add comments --tmb
-
-    float estimate_boxes_height(narray<rectangle> &bboxes,int h,int min_height,float smooth) {
-
-        int i;
-        int best_i;
-        float best_v;
-        floatarray histogram;
-
-        boxes_height_histogram(histogram, bboxes, h);
-        gauss1d(histogram,smooth);
-
-        best_i = -1;
-        best_v = -1.0;
-        for(i=min_height;i<h;i++) {
-            if(histogram[i]<best_v) continue;
-            best_i = i;
-            best_v = histogram[i];
-        }
-
-        if(best_i < min_height)
-            best_i = min_height;
-        return (float)best_i;
-    }
-
-
-    // FIXME/mezhirov add comments --tmb
-
-    float estimate_xheight(intarray &orig_seg, float slope) {
-        intarray seg;
-        copy(seg, orig_seg);
-        check_line_segmentation(seg);
-        make_line_segmentation_black(seg);
-        narray<rectangle> bboxes;
-        bounding_boxes(bboxes, seg);
-
-        return estimate_boxes_height(bboxes, seg.dim(1), 10, 4);
-    }
 
     void plot_hist(FILE *stream, floatarray &hist){
         if(!stream){
@@ -606,7 +554,7 @@ namespace ocropus {
     }
 
     /// Analogous to python's split().
-    void split_string(narray<strbuf> &components,
+    void split_string(narray<iucstring> &components,
                       const char *s,
                       const char *delimiters) {
         components.clear();
@@ -617,10 +565,7 @@ namespace ocropus {
                 p++;
             int len = p - s;
             if(len) {
-                strbuf &item = components.push();
-                item.ensure(len + 1);
-                strncpy(item, s, len);
-                item[len] = '\0';
+                components.push().append(s, len);
             }
             if(!*p) return;
             s = p + 1;
@@ -743,33 +688,6 @@ namespace ocropus {
                 for(int y=r.y0;y<r.y1;y++)
                     image(x,y) = color;
         }
-    }
-
-    void strbuf_format(strbuf &str, const char *format, ...) {
-        strbuf result;
-        int len = 1;
-        result.ensure(len);
-        va_list v;
-        va_start(v, format);
-        int written = vsnprintf(result, len + 1, format, v);
-        va_end(v);
-        if(written > len) {
-            len = written;
-            result.ensure(len);
-            va_start(v, format);
-            written = vsnprintf(result, len + 1, format, v);
-            va_end(v);
-        }
-        str = result;
-    }
-
-    void code_to_strbuf(strbuf &sb, int code) {
-        nuchar ch(code);
-        nustring ns(1);
-        ns[0] = ch;
-        char* buf = ns.newUtf8Encode();
-        sb = buf;
-        delete[] buf;
     }
 
     template<class T>

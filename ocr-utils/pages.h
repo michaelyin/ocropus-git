@@ -31,12 +31,12 @@
 namespace ocropus {
     struct Pages {
         colib::autodel<IBinarize> binarizer;
-        colib::narray<colib::strbuf> files;
+        colib::narray<colib::iucstring> files;
         bool want_gray;
         bool want_color;
 
         int current_index;
-        colib::strbuf current_file;
+        colib::iucstring current_file;
         bool has_gray;
         bool has_color;
         bool autoinv;

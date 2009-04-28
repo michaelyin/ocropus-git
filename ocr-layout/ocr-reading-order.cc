@@ -55,16 +55,26 @@ namespace ocropus {
         for(int i = 0; i<num_lines; i++){
             float new_start = 0;
             float new_end = image_width-1;
+            bool start_updated = false;
+            bool end_updated = false;
             for(int j = 0; j<num_wboxes; j++){
                 if(wbox_intersection(lines[i], wboxes[j])){
-                    if(wboxes[j].x0 <= lines[i].start)
+                    if(wboxes[j].x0 <= lines[i].start) {
                         new_start = (new_start > wboxes[j].x1) ? new_start : wboxes[j].x1;
-                    else
+                        start_updated = true;
+                    }
+                    else {
                         new_end = (new_end   < wboxes[j].x0) ? new_end   : wboxes[j].x0;
+                        end_updated = true;
+                    }
                 }
             }
             lines[i].start = (lines[i].start > new_start) ? new_start : lines[i].start;
             lines[i].end = (lines[i].end   < new_end  ) ? new_end   : lines[i].end  ;
+            if (start_updated)
+                lines[i].start = new_start;
+            if (end_updated)
+                lines[i].end = new_end;
             //printf("%.0f %.0f %.0f %.0f \n",lines[i].start,lines[i].top,lines[i].end,lines[i].bottom);
         }
     }

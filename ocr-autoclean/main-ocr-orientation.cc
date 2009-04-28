@@ -1,4 +1,4 @@
-// Copyright 2006-2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
+// Copyright 2006-2009 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
 //
 // You may not use this file except under the terms of the accompanying license.
@@ -33,13 +33,13 @@ int main(int argc, char *argv[]) {
         printf("Usage: %s [dictionary_file] [in_image]\n",argv[0]);
         printf("Usage: %s [dictionary_file] [in_image] [out_image]\n",argv[0]);
         exit(-1);
-    } 
+    }
     ocrorientation oo(argv[1]);
     bytearray in, out;
     read_image_gray(in, argv[2]);
     tesseract_init_with_language("dum");
     oo.add_image(in);
-    if (argc == 4) {    
+    if (argc == 4) {
         oo.get_image(out);
         write_image_gray(argv[3], out);
     } else {

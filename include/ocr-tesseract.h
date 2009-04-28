@@ -68,9 +68,9 @@ namespace ocropus {
         colib::narray<colib::nustring>   line_texts;
         colib::narray<colib::floatarray> line_costs;
         colib::narray<colib::rectarray> line_bboxes;
-        colib::strbuf desc;
+        colib::iucstring desc;
         int w, h;
-        colib::strbuf time_report;
+        colib::iucstring time_report;
     public:
         /// Get page width
         int width() {
