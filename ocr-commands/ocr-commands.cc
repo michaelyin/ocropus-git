@@ -876,14 +876,16 @@ namespace ocropus {
     }
 
     int main_recognize1(int argc,char **argv) {
-        if(argc<4) throwf("usage: %s %s logdir model image ...",command,argv[0]);
-        setenv("ocrolog","glr",1);
-        setenv("ocrologdir",argv[1],1);
+        if(argc<3) throwf("usage: %s %s model image ...",command,argv[0]);
+        if(!getenv("ocrolog"))
+            throwf("please set ocrolog=glr in the environment");
+        if(!getenv("ocrologdir"))
+            throwf("please set ocrologdir to the target directory for the log");
         Logger logger("glr");
         dinit(512,512);
         autodel<IRecognizeLine> linerecp(make_Linerec());
         IRecognizeLine &linerec = *linerecp;
-        stdio model(argv[2],"r");
+        stdio model(argv[1],"r");
         linerec.load(model);
         for(int i=3;i<argc;i++) {
             logger.html("<hr><br>");
