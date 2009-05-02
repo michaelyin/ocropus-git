@@ -30,6 +30,9 @@ using namespace colib;
 
 namespace ocropus {
 
+// FIXME this needs to be capitalized
+// FIXME this should conform to the Cleanup* interfaces
+
 class ocrorientation : IComponent {
     public:
         int max_lines_to_compute;

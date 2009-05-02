@@ -783,6 +783,7 @@ namespace ocropus {
     }
 
     int main_cinfo(int argc,char **argv) {
+        // FIXME use components to load/save line recognizers
         autodel<IRecognizeLine> linerec(make_Linerec());
         stdio model(argv[1],"r");
         if(!model) {
@@ -817,12 +818,14 @@ namespace ocropus {
     int main_components(int argc,char **argv) {
         narray<const char *> names;
         list_components(names);
-        printf("%-16s %-16s %s\n","# constructor","top instance","description (or C++ class id if none reported)");
-        printf("#\n");
         for(int i=0;i<names.length();i++) {
             autodel<IComponent> p;
             p = component_construct(names[i]);
-            printf("%-16s %-16s %s\n",names[i],p->name(),p->description());
+            iucstring desc(p->description());
+            int where = desc.find("\n");
+            if(where!=desc.npos) desc = desc.substr(0,where);
+            if(desc.length()>60) desc = desc.substr(0,60);
+            printf("%-32s %-32s\n    %s\n",names[i],p->name(),desc.c_str());
         }
         return 0;
     }
@@ -1284,6 +1287,7 @@ namespace ocropus {
     int main_ocropus(int argc,char **argv) {
         try {
             command = argv[0];
+            init_ocropus_components();
             init_glclass();
             init_glfmaps();
             init_linerec();

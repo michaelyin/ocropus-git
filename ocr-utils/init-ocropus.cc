@@ -23,9 +23,52 @@
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include "ocropus.h"
+#include "glcuts.h"
+#include "glfmaps.h"
+
+using namespace iulib;
+using namespace ocropus;
+using namespace glinerec;
 
 namespace ocropus {
-    void init_ocropus() {
+    void init_ocropus_components() {
+        static bool init = false;
+        if(init) return;
+        init = true;
+        component_register("DpSegmenter",make_DpSegmenter);
+        // component_register("SimpleFeatureMap",make_SimpleFeatureMap);
+        // component_register("RidgeFeatureMap",make_RidgeFeatureMap);
+        component_register("SimpleGrouper",make_SimpleGrouper);
+        component_register("StandardGrouper",make_StandardGrouper);
+        component_register("DocClean",make_DocClean);
+        // component_register("DocCleanConComp",make_DocCleanConComp);
+        component_register("PageFrameRAST",make_PageFrameRAST);
+        component_register("DeskewPageByRAST",make_DeskewPageByRAST);
+        component_register("DeskewGrayPageByRAST",make_DeskewGrayPageByRAST);
+        component_register("RemoveImageRegionsBinary",make_RemoveImageRegionsBinary);
+        component_register("RemoveImageRegionsGray",make_RemoveImageRegionsGray);
+        component_register("TextImageSegByLogReg",make_TextImageSegByLogReg);
+        component_register("TextImageSegByLeptonica",make_TextImageSegByLeptonica);
+        component_register("SegmentPageByMorphTrivial",make_SegmentPageByMorphTrivial);
+        component_register("SegmentPageBy1CP",make_SegmentPageBy1CP);
+        component_register("SegmentPageByRAST",make_SegmentPageByRAST);
+        component_register("SegmentPageByVORONOI",make_SegmentPageByVORONOI);
+        component_register("SegmentPageByXYCUTS",make_SegmentPageByXYCUTS);
+        component_register("SegmentWords",make_SegmentWords);
+        component_register("OcroFST",make_OcroFST);
+        component_register("TesseractRecognizeLine",make_TesseractRecognizeLine);
+        component_register("BinarizeByRange",make_BinarizeByRange);
+        component_register("BinarizeByOtsu",make_BinarizeByOtsu);
+        component_register("BinarizeBySauvola",make_BinarizeBySauvola);
+        component_register("SegmentLineByProjection",make_SegmentLineByProjection);
+        component_register("SegmentLineByCCS",make_SegmentLineByCCS);
+        component_register("ConnectedComponentSegmenter",make_ConnectedComponentSegmenter);
+        component_register("CurvedCutSegmenter",make_CurvedCutSegmenter);
+        component_register("CurvedCutWithCcSegmenter",make_CurvedCutWithCcSegmenter);
+        component_register("SkelSegmenter",make_SkelSegmenter);
+
+#if 0
+        // FIXME remove this when it's clear that it's not needed anymore
         component_register("binarize-otsu",make_BinarizeByOtsu);
         component_register("binarize-range",make_BinarizeByRange);
         component_register("binarize-sauvola",make_BinarizeBySauvola);
@@ -52,5 +95,6 @@ namespace ocropus {
         component_register("standard-grouper",make_StandardGrouper);
         component_register("textimage-leptonica",make_TextImageSegByLeptonica);
         component_register("textimage-logreg",make_TextImageSegByLogReg);
+#endif
     }
 }

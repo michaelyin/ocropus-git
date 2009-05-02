@@ -23,5 +23,5 @@
 // Web Sites: www.iupr.org, www.dfki.de
 
 namespace ocropus {
-    extern void init_ocropus();
+    extern void init_ocropus_components();
 }

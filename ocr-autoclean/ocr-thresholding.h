@@ -30,6 +30,9 @@ using namespace colib;
 
 namespace ocropus {
 
+// FIXME this needs to be capitalized
+// FIXME this needs to conform to the Cleanup* / binarize interfaces
+
 class ocrthresholding : IComponent {
     public:
         int max_lines_to_compute;

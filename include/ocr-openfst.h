@@ -40,6 +40,7 @@ namespace fst {
 namespace ocropus {
     using namespace colib;
 
+    // FIXME why are these still here?
     fst::StdVectorFst *fst_ignoring(intarray &a,int maxsymbol=128,int minsymbol=1);
     fst::StdVectorFst *fst_keeping(intarray &a,int maxsymbol=128,int minsymbol=1);
     fst::StdVectorFst *fst_edit_distance(float subst,float ins,float del,int maxymbol=128,int minsymbol=1);
@@ -47,6 +48,7 @@ namespace ocropus {
     fst::StdVectorFst *fst_insdel(float ins,float del,int maxymbol=128,int minsymbol=1);
     fst::StdVectorFst *fst_size_range(int minsize,int maxsize,int maxsymbol=128,int minsymbol=1);
 
+    // FIXME make these components
     struct UnigramModel {
         virtual void clear() = 0;
         virtual void addSymbol(int input,int output,float cost=0.0) = 0;
