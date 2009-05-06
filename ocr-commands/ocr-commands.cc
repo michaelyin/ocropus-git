@@ -65,8 +65,6 @@ namespace ocropus {
     param_string lmodel("lmodel",DEFAULT_DATA_DIR "default.fst","language model used for recognition");
 
     // these are used for the single page recognizer
-    param_string classifier0("classifier0","full30.model","classifier for page recognition");
-    param_string langmod0("langmod0","dict-case.fst","language model for page recognition");
     param_int beam_width("beam_width", 100, "number of nodes in a beam generation");
 
     void cleanup_for_eval(iucstring &s) {
@@ -863,10 +861,10 @@ namespace ocropus {
         // load the line recognizer
         autodel<IRecognizeLine> linerec;
         linerec = make_Linerec();
-        linerec->load(classifier0);
+        linerec->load(cmodel);
         // load the language model
         autodel<OcroFST> langmod(make_OcroFST());
-        langmod->load(langmod0);
+        langmod->load(lmodel);
         // now iterate through the pages
         for(int arg=1;arg<argc;arg++) {
             Pages pages;
