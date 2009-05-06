@@ -57,6 +57,11 @@ namespace ocropus {
     param_bool continue_partial("continue_partial",0,"don't compute outputs that already exist");
     param_bool old_csegs("old_csegs",0,"use old csegs (spaces are not counted)");
 
+#define DEFAULT_DATA_DIR "/usr/local/share/ocropus/models/"
+
+    param_string cmodel("cmodel",DEFAULT_DATA_DIR "default.model","character model used for recognition");
+    param_string lmodel("lmodel",DEFAULT_DATA_DIR "default.fst","language model used for recognition");
+
     // these are used for the single page recognizer
     param_string classifier0("classifier0","full30.model","classifier for page recognition");
     param_string langmod0("langmod0","dict-case.fst","language model for page recognition");
@@ -321,11 +326,11 @@ namespace ocropus {
     }
 
     int main_lines2fsts(int argc,char **argv) {
-        if(argc!=3) throw "usage: ... model dir";
+        if(argc!=2) throw "usage: cmodel=... ocropus lines2fsts dir";
         dinit(512,512);
         autodel<IRecognizeLine> linerec;
         iucstring pattern;
-        sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].png",argv[2]);
+        sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].png",argv[1]);
         Glob files(pattern);
         int finished = 0;
         int nfiles = min(files.length(),nrecognize);
@@ -336,7 +341,7 @@ namespace ocropus {
             {
                 if(!linerec) {
                     linerec = glinerec::make_Linerec();
-                    linerec->load(stdio(argv[1],"r"));
+                    linerec->load(stdio(cmodel,"r"));
                 }
             }
             iucstring base;
@@ -932,11 +937,11 @@ namespace ocropus {
     }
 
     int main_fsts2text(int argc,char **argv) {
-        if(argc!=3) throw "usage: ... langmod dir";
+        if(argc!=2) throw "usage: lmodel=... ocropus fsts2text dir";
         autodel<OcroFST> langmod(make_OcroFST());
-        langmod->load(argv[1]);
+        langmod->load(lmodel);
         iucstring s;
-        sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst",argv[2]);
+        sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst",argv[1]);
         Glob files(s);
 #pragma omp parallel for schedule(dynamic,20)
         for(int index=0;index<files.length();index++) {
@@ -1236,12 +1241,12 @@ namespace ocropus {
         D("pages2lines dir",
                 "convert the pages in dir/... into lines");
         SECTION("line recognition and language modeling")
-            D("lines2fsts model dir",
-                    "convert the lines in dir/... into fsts (lattices) by recognizing\n"
-                    "        them with the given model");
+        D("lines2fsts dir",
+                    "convert the lines in dir/... into fsts (lattices); cmodel=...")
         D("fsts2bestpaths dir",
                 "find the best interpretation of the fsts in dir/... without a language model");
-        P("    (use the ocrofst command to apply a language model)");
+        D("fsts2textdir",
+                "find the best interpretation of the fsts in dir/...; lmodel=...");
         SECTION("evaluation");
         D("evaluate dir",
                 "evaluate the quality of the OCR output in dir/...");
@@ -1264,7 +1269,7 @@ namespace ocropus {
         D("tesslines dir",
                 "apply the Tesseract recognizer to the book directory a line at a time");
         D("recognize1 logdir model line1 line2...",
-                "recognize images of individual lines of text given on the command line and log to logdir");
+                "recognize images of individual lines of text given on the command line; ocrolog=glr ocrologdir=...");
         D("page image.png",
                 "recognize a single page of text without adaptivity, but with a language model");
         SECTION("components");

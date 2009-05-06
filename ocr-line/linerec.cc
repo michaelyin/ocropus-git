@@ -132,6 +132,8 @@ namespace glinerec {
             pdef("space_multiplier",2,"multipler for space estimation");
             pdef("space_min",0.2,"minimum space threshold (in xheight)");
             pdef("space_max",1.1,"maximum space threshold (in xheight)");
+            pdef("maxheight",300,"maximum height of input line");
+            pdef("maxaspect",0.5,"maximum height/width ratio of input line");
             segmenter = make_DpSegmenter();
             grouper = make_SimpleGrouper();
             featuremap = dynamic_cast<IFeatureMap*>(component_construct(pget("fmap")));
@@ -397,6 +399,10 @@ namespace glinerec {
         }
 
         void addTrainingLine(intarray &cseg,bytearray &image,nustring &tr) {
+            if(image.dim(1)>pgetf("maxheight")) 
+                throwf("input line too high (%d x %d)",image.dim(0),image.dim(1));
+            if(image.dim(1)*1.0/image.dim(0)>pgetf("maxaspect")) 
+                throwf("input line has bad aspect ratio (%d x %d)",image.dim(0),image.dim(1));
             bool use_reject = pgetf("use_reject");
             dsection("training");
             CHECK(image.dim(0)==cseg.dim(0) && image.dim(1)==cseg.dim(1));
@@ -511,6 +517,10 @@ namespace glinerec {
         }
 
         void recognizeLine(intarray &segmentation_,IGenericFst &result,bytearray &image_) {
+            if(image_.dim(1)>pgetf("maxheight")) 
+                throwf("input line too high (%d x %d)",image_.dim(0),image_.dim(1));
+            if(image_.dim(1)*1.0/image_.dim(0)>pgetf("maxaspect")) 
+                throwf("input line has bad aspect ratio (%d x %d)",image_.dim(0),image_.dim(1));
             bool use_reject = pgetf("use_reject");
             bytearray image;
             image = image_;
