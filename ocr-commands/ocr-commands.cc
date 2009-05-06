@@ -56,6 +56,8 @@ namespace ocropus {
     param_string eval_flags("eval_flags","space","which features to ignore during evaluation");
     param_bool continue_partial("continue_partial",0,"don't compute outputs that already exist");
     param_bool old_csegs("old_csegs",0,"use old csegs (spaces are not counted)");
+    param_float maxheight("max_line_height",300,"maximum line height");
+    param_float maxaspect("max_line_aspect",0.5,"maximum line aspect ratio");
 
 #define DEFAULT_DATA_DIR "/usr/local/share/ocropus/models/"
 
@@ -368,6 +370,8 @@ namespace ocropus {
             autodel<IGenericFst> result(make_OcroFST());
             intarray segmentation;
             try {
+                CHECK_ARG(image.dim(1)<maxheight);
+                CHECK_ARG(image.dim(1)*1.0/image.dim(0)<maxaspect);
                 try {
                     linerec->recognizeLine(segmentation,*result,image);
                 } catch(Unimplemented unimplemented) {
@@ -378,6 +382,10 @@ namespace ocropus {
                 continue;
             } catch(const char *error) {
                 fprintf(stderr,"ERROR in recognizeLine: %s\n",error);
+                if(abort_on_error) abort();
+                continue;
+            } catch(...) {
+                fprintf(stderr,"ERROR in recognizeLine\n");
                 if(abort_on_error) abort();
                 continue;
             }
@@ -502,11 +510,24 @@ namespace ocropus {
             RegionExtractor regions;
             regions.setPageLines(page_seg);
             for(int lineno=1;lineno<regions.length();lineno++) {
-                bytearray line_image;
-                regions.extract(line_image,page_gray,lineno,1);
-                // TODO/mezhirov output log of coordinates here
-                sprintf(s,"%s/%04d/%04d.png",outdir,pageno,lineno);
-                write_image_gray(s,line_image);
+                try {
+                    bytearray line_image;
+                    regions.extract(line_image,page_gray,lineno,1);
+                    CHECK_ARG(line_image.dim(1)<maxheight);
+                    CHECK_ARG(line_image.dim(1)*1.0/line_image.dim(0)<maxaspect);
+                    // TODO/mezhirov output log of coordinates here
+                    sprintf(s,"%s/%04d/%04d.png",outdir,pageno,lineno);
+                    write_image_gray(s,line_image);
+                } catch(const char *s) {
+                    fprintf(stderr,"ERROR: %s\n",s);
+                    if(abort_on_error) abort();
+                } catch(BadTextLine &err) {
+                    fprintf(stderr,"ERROR: BadTextLine returned by recognizer\n");
+                    if(abort_on_error) abort();
+                } catch(...) {
+                    fprintf(stderr,"ERROR: (no details)\n");
+                    if(abort_on_error) abort();
+                }
             }
             debugf("info","#lines = %d\n",regions.length());
             // TODO/mezhirov output other blocks here

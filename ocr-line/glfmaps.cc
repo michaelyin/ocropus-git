@@ -266,6 +266,7 @@ namespace glinerec {
             pdef("context",1.3,"how much context to include");
             pdef("scontext",0.3,"value to multiply context pixels with (e.g., -1, 0, 1, 0.5)");
             pdef("aa",0.5,"amount of anti aliasing (-1 = use other algorithm)");
+            pdef("maxheight",300,"maximum height for feature extraction");
 
             // parameters specific to individual feature maps
             pdef("skel_pre_smooth",0.0,"smooth by this amount prior to skeletal extraction");
@@ -517,6 +518,8 @@ namespace glinerec {
             float scontext = pgetf("scontext");
             int csize = pgetf("csize");
             CHECK(mask.dim(0)==b.width() && mask.dim(1)==b.height());
+            CHECK_ARG(v.dim(1)<pgetf("maxheight"));
+            CHECK_ARG(b.height()<pgetf("maxheight"));
 
             floatarray sub(b.width(),b.height());
             get_rectangle(sub,source,b);

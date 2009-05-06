@@ -248,6 +248,7 @@ namespace glinerec {
 
         bytearray binarized;
         void setLine(bytearray &image) {
+            CHECK_ARG(image.dim(1)<pgetf("maxheight"));
             // initialize the feature map to the line image
             featuremap->setLine(image);
 
@@ -286,6 +287,7 @@ namespace glinerec {
 
         void extractFeatures(floatarray &v,int i) {
             const char *cnorm = pget("cnorm");
+            CHECK_ARG(v.dim(1)<pgetf("maxheight"));
             if(!strcmp(cnorm,"center")) extractFeaturesCenter(v,i);
             else if(!strcmp(cnorm,"abs")) extractFeaturesAbs(v,i);
             else throwf("%s: unknown cnorm",cnorm);
@@ -293,11 +295,13 @@ namespace glinerec {
 
         void extractFeaturesCenter(floatarray &v,int i) {
             dsection("featcenter");
+            CHECK_ARG(v.dim(1)<pgetf("maxheight"));
             rectangle b;
             bytearray mask;
             float context = pgetf("context");
             int mdilate = pgetf("mdilate");
             grouper->getMask(b,mask,i,0);
+            CHECK_ARG(b.height()<pgetf("maxheight"));
             if(mdilate>0) {
                 pad_by(mask,mdilate,mdilate);
                 b.pad_by(mdilate,mdilate);
@@ -343,11 +347,13 @@ namespace glinerec {
         }
 
         void extractFeaturesAbs(floatarray &v,int i) {
+            CHECK_ARG(v.dim(1)<pgetf("maxheight"));
             rectangle b;
             bytearray mask;
             float x=0,y=0;
             dsection("featabs");
             grouper->getMask(b,mask,i,0);
+            CHECK_ARG(b.height()<pgetf("maxheight"));
             dshown(mask,"b");
             centroid(x,y,mask);
             CHECK(x>=0 && y>=0);
