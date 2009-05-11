@@ -190,6 +190,7 @@ env.Install(datadir + '/words', glob('data/words/*'))
 for header in headers: env.Install(incdir,header)
 for file in glob('data/models/*.gz'):
     base = re.sub(r'\.gz$','',file)
+    base = re.sub(r'^[./]*data/','',base)
     base = datadir+"/"+base
     env.Command(base,file,"gunzip -9v < %s > %s" % (file,base))
     env.Alias('install',base)
