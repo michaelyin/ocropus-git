@@ -188,8 +188,11 @@ env.Install(libdir,libocropus)
 env.Install(datadir + '/models', glob('data/models/*'))
 env.Install(datadir + '/words', glob('data/words/*'))
 for header in headers: env.Install(incdir,header)
-env.Command(datadir + "/.decompressed",datadir+"/models",
-    "gunzip -f9v %s/models/*.gz && touch %s/.decompressed"%(datadir,datadir))
+for file in glob('data/models/*.gz'):
+    base = re.sub(r'\.gz$','',file)
+    base = datadir+"/"+base
+    env.Command(base,file,"gunzip -9v < %s > %s" % (file,base))
+    env.Alias('install',base)
 
 env.Alias('install',bindir)
 env.Alias('install',libdir)
