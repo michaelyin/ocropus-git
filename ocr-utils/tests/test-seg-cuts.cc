@@ -25,9 +25,9 @@
 // Web Sites: 
 
 
-#include "colib.h"
+#include "colib/colib.h"
 #include "segmentation.h"
-#include "imgio.h"
+#include "iulib/imgio.h"
 #include "ocr-utils.h"
 
 using namespace colib;

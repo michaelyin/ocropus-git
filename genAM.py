@@ -92,11 +92,11 @@ for d in extradirs:
 print """
 
 # folders for installing models and words
-#modeldir=${datadir}/ocropus/models
+modeldir=${datadir}/ocropus/models
 worddir=${datadir}/ocropus/words
 
 # install the data
-#model_DATA = $(srcdir)/data/models/*
+model_DATA = $(srcdir)/data/models/*
 word_DATA = $(srcdir)/data/words/*
 """
 
