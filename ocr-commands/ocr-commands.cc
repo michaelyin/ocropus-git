@@ -341,7 +341,13 @@ namespace ocropus {
             {
                 if(!linerec) {
                     linerec = glinerec::make_Linerec();
-                    linerec->load(stdio(cmodel,"r"));
+                    try {
+                        linerec->load(cmodel);
+                    } catch(const char *s) {
+                        throwf("%s: failed to load (%s)",(const char*)cmodel,s);
+                    } catch(...) {
+                        throwf("%s: failed to load character model",(const char*)cmodel);
+                    }
                 }
             }
             iucstring base;
@@ -861,10 +867,22 @@ namespace ocropus {
         // load the line recognizer
         autodel<IRecognizeLine> linerec;
         linerec = make_Linerec();
-        linerec->load(cmodel);
+        try {
+            linerec->load(cmodel);
+        } catch(const char *s) {
+            throwf("%s: failed to load (%s)",(const char*)cmodel,s);
+        } catch(...) {
+            throwf("%s: failed to load character model",(const char*)cmodel);
+        }
         // load the language model
         autodel<OcroFST> langmod(make_OcroFST());
-        langmod->load(lmodel);
+        try {
+            langmod->load(lmodel);
+        } catch(const char *s) {
+            throwf("%s: failed to load (%s)",(const char*)lmodel,s);
+        } catch(...) {
+            throwf("%s: failed to load language model",(const char*)lmodel);
+        }
         // now iterate through the pages
         for(int arg=1;arg<argc;arg++) {
             Pages pages;
@@ -958,7 +976,13 @@ namespace ocropus {
     int main_fsts2text(int argc,char **argv) {
         if(argc!=2) throw "usage: lmodel=... ocropus fsts2text dir";
         autodel<OcroFST> langmod(make_OcroFST());
-        langmod->load(lmodel);
+        try {
+            langmod->load(lmodel);
+        } catch(const char *s) {
+            throwf("%s: failed to load (%s)",(const char*)lmodel,s);
+        } catch(...) {
+            throwf("%s: failed to load language model",(const char*)lmodel);
+        }
         iucstring s;
         sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst",argv[1]);
         Glob files(s);
