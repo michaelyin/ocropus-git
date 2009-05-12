@@ -81,7 +81,7 @@ opts.Add(BoolOption('test', "Run some tests after the build", "no"))
 opts.Add(BoolOption('style', 'Check style', "no"))
 
 env = Environment(options=opts)
-env.Append(CXXFLAGS=["-g"])
+env.Append(CXXFLAGS=["-g","-fPIC"])
 env.Append(CXXFLAGS=env["opt"])
 env.Append(CXXFLAGS=env["warn"])
 Help(opts.GenerateHelpText(env))
@@ -108,12 +108,13 @@ assert conf.CheckLibWithHeader("iulib","iulib/iulib.h","C++");
 
 ### tesseract
 
-env.Append(CPPPATH=["${tesseract}/include/tesseract"])
-env.Append(LIBPATH=["${tesseract}/lib"])
-env.Append(LIBS=["libtesseract_full.a","pthread"])
-env.Append(CPPDEFINES=["HAVE_TESSERACT"])
-assert conf.CheckLibWithHeader('tesseract_full', 'tesseract/baseapi.h', 'C++')
-assert conf.CheckLib('pthread')
+if 0:
+    env.Append(CPPPATH=["${tesseract}/include/tesseract"])
+    env.Append(LIBPATH=["${tesseract}/lib"])
+    env.Append(LIBS=["libtesseract_full.a","pthread"])
+    env.Append(CPPDEFINES=["HAVE_TESSERACT"])
+    assert conf.CheckLibWithHeader('tesseract_full', 'tesseract/baseapi.h', 'C++')
+    assert conf.CheckLib('pthread')
 
 ### OpenFST
 

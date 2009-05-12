@@ -47,7 +47,7 @@ namespace ocropus {
     using namespace narray_ops;
     using namespace glinerec;
 
-    param_bool abort_on_error("abort_on_error",1,"abort recognition if there is an unexpected error");
+    param_bool abort_on_error("abort_on_error",0,"abort recognition if there is an unexpected error");
     param_bool save_fsts("save_fsts",1,"save the fsts (set to 0 for eval-only in lines2fsts)");
     param_bool retrain("retrain",0,"perform retraining");
     param_bool retrain_threshold("retrain_threshold",100,"only retrain on characters with a cost lower than this");
