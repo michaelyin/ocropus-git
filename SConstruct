@@ -108,7 +108,7 @@ assert conf.CheckLibWithHeader("iulib","iulib/iulib.h","C++");
 
 ### tesseract
 
-if 0:
+if 1:
     env.Append(CPPPATH=["${tesseract}/include/tesseract"])
     env.Append(LIBPATH=["${tesseract}/lib"])
     env.Append(LIBS=["libtesseract_full.a","pthread"])
