@@ -539,54 +539,6 @@ namespace ocropus {
         return 0;
     }
 
-    int main_tesslines(int argc,char **argv) {
-        if(argc!=2) throw "usage: ... dir";
-        dinit(1000,1000);
-        autodel<IRecognizeLine> linerec;
-        linerec = make_TesseractRecognizeLine();
-        iucstring pattern;
-        sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].png",argv[1]);
-        Glob files(pattern);
-        for(int index=0;index<files.length();index++) {
-            if(index%1000==0)
-                debugf("info","%s (%d/%d)\n",files(index),index,files.length());
-            iucstring base = files(index);
-            base.erase(base.length()-4);
-            debugf("progress","line %s\n",base.c_str());
-            bytearray image;
-            // TODO/mezhirov output binary versions, intermediate results for debugging
-            read_image_gray(image,files(index));
-            autodel<IGenericFst> result(make_OcroFST());
-            try {
-                linerec->recognizeLine(*result,image);
-            }
-#if 0
-            catch(BadTextLine &error) {
-                fprintf(stderr,"ERROR: %s (bad text line)\n",base.ptr());
-                continue;
-            }
-#endif
-            catch(const char *error) {
-                fprintf(stderr,"ERROR: %s\n",error);
-                if(abort_on_error) abort();
-                continue;
-            }
-            nustring str;
-            result->bestpath(str);
-            if(debug("ccoding")) {
-                debugf("ccoding","nustring:");
-                for(int i=0;i<str.length();i++)
-                    printf(" %d[%c]",str(i).ord(),str(i).ord());
-                printf("\n");
-            }
-            iucstring output = str;
-            iucstring s = base + ".txt";
-            fprintf(stdio(s,"w"),"%s\n",output.c_str());
-            debugf("transcript","%s\t%s\n",files(index),output.c_str());
-        }
-        return 0;
-    }
-
     int main_evaluate(int argc,char **argv) {
         if(argc!=2) throw "usage: ... dir";
         iucstring s;
@@ -1309,8 +1261,6 @@ namespace ocropus {
         D("loadseg model dataset",
                 "perform training on the dataset (saveseg + loadseg is the same as trainseg)");
         SECTION("other recognizers");
-        D("tesslines dir",
-                "apply the Tesseract recognizer to the book directory a line at a time");
         D("recognize1 logdir model line1 line2...",
                 "recognize images of individual lines of text given on the command line; ocrolog=glr ocrologdir=...");
         D("page image.png",
@@ -1361,7 +1311,6 @@ namespace ocropus {
             if(!strcmp(argv[1],"params")) return main_params(argc-1,argv+1);
             if(!strcmp(argv[1],"recognize1")) return main_recognize1(argc-1,argv+1);
             if(!strcmp(argv[1],"saveseg")) return main_trainseg_or_saveseg(argc-1,argv+1);
-            if(!strcmp(argv[1],"tesslines")) return main_tesslines(argc-1,argv+1);
             if(!strcmp(argv[1],"trainseg")) return main_trainseg_or_saveseg(argc-1,argv+1);
             usage(argv[0]);
         } catch(const char *s) {

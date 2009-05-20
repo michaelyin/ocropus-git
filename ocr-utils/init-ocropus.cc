@@ -56,7 +56,6 @@ namespace ocropus {
         component_register("SegmentPageByXYCUTS",make_SegmentPageByXYCUTS);
         component_register("SegmentWords",make_SegmentWords);
         component_register("OcroFST",make_OcroFST);
-        component_register("TesseractRecognizeLine",make_TesseractRecognizeLine);
         component_register("BinarizeByRange",make_BinarizeByRange);
         component_register("BinarizeByOtsu",make_BinarizeByOtsu);
         component_register("BinarizeBySauvola",make_BinarizeBySauvola);

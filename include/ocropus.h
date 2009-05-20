@@ -48,7 +48,6 @@ namespace ocropus {
 
 #include "ocr-layout.h"
 #include "line-info.h"
-#include "ocr-tesseract.h"
 
 #ifdef HAVE_FST
 //#include "ocr-openfst.h"
