@@ -72,7 +72,6 @@ opts.Add('warn', 'Compiler flags for warnings',
 ### path options
 opts.Add(PathOption('prefix', 'The installation root for OCRopus ', "/usr/local"))
 opts.Add(PathOption('iulib', 'The installation root of iulib', "/usr/local"))
-opts.Add(PathOption('tesseract', 'The installation root of tesseract', "/usr"))
 opts.Add(PathOption('leptonica', 'The installation root of leptonica', "/usr/local"))
 
 ### configuration options
@@ -105,16 +104,6 @@ env.Append(CPPPATH=["${iulib}/include"])
 env.Append(LIBS=["iulib"])
 assert conf.CheckHeader("colib/colib.h",language="C++")
 assert conf.CheckLibWithHeader("iulib","iulib/iulib.h","C++");
-
-### tesseract
-
-if 1:
-    env.Append(CPPPATH=["${tesseract}/include/tesseract"])
-    env.Append(LIBPATH=["${tesseract}/lib"])
-    env.Append(LIBS=["libtesseract_full.a","pthread"])
-    env.Append(CPPDEFINES=["HAVE_TESSERACT"])
-    assert conf.CheckLibWithHeader('tesseract_full', 'tesseract/baseapi.h', 'C++')
-    assert conf.CheckLib('pthread')
 
 ### OpenFST
 
