@@ -192,7 +192,7 @@ namespace ocropus {
             achieve(HAS_HEURISTICS);
         }
 
-        OcroFSTImpl(int max_size=10) : 
+        OcroFSTImpl(int max_size=0) : 
             m_targets(max_size),
             m_inputs(max_size),
             m_outputs(max_size),

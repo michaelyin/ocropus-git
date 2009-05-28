@@ -69,25 +69,6 @@ namespace ocropus {
     /// \param[in]      src     The FST to copy.
     void fst_copy_best_arcs_only(IGenericFst &dst, IGenericFst &src);
 
-    /// \brief Insert one FST into another.
-    ///
-    /// This operation copies all the vertices of source FST into
-    /// the destination, except for the start vertex, which is merged with
-    /// the given one.
-    ///
-    /// \param[in,out]  dst     the FST to insert into
-    /// \param[in]      src     the FST that will be inserted
-    /// \param[in]      start   the destination FST's vertex
-    ///                         that will be merged with the source FST's start
-    /// \param[in]      accept  if unspecified,
-    ///                         the source FST will just keep its accept costs,
-    ///                         otherwise the new vertices will connect to
-    ///                         the given vertex instead with their former
-    ///                         accept costs.
-    void fst_insert(IGenericFst &dst,
-                    IGenericFst &src,
-                    int start, int accept = -1);
-
     /// \brief Compose two FSTs.
     ///
     /// This function copies the composition of two given FSTs.
@@ -119,19 +100,7 @@ namespace ocropus {
     /// Make a Kleene closure.
     void fst_star(IGenericFst &result, IGenericFst &fst);
 
-    /// Set `dst' to the union of `dst' and `fst'.
-    inline void fst_union(IGenericFst &dst, IGenericFst &fst) {
-        fst_insert(dst, fst, dst.getStart());
-    }
-
     void fst_line(IGenericFst &fst, nustring &s);
-    void fst_insert_line(IGenericFst &fst, const char *line, int s, int e);
-    void fst_insert_line(IGenericFst &fst, nustring &line, int s, int e);
-
-    void fst_insert_bunch(IGenericFst &fst, nustring &s, int start, int end);
-    void fst_insert_bunch(IGenericFst &fst, intarray &s, int start, int end);
-    void fst_insert_bunch(IGenericFst &fst, const char *s, int start, int end);
-    
     void get_alphabet(intarray &alphabet, objlist<nustring> &dict);
 
     /// \brief Simplified interface for a_star().

@@ -288,35 +288,4 @@ namespace ocropus {
         composition->move1();
         composition->move2();
     }
-
-    void fst_insert(IGenericFst &dst, IGenericFst &src, int start, int accept) {
-        int k = src.nStates();
-        intarray states(k);
-        int src_start = src.getStart();
-        for(int i = 0; i < k; i++) {
-            if(i != src_start)
-                states[i] = dst.newState();
-            else
-                states[i] = start;
-        }
-
-        for(int i = 0; i < k; i++) {
-            intarray targets, outputs, inputs;
-            floatarray costs;
-            src.arcs(inputs, targets, outputs, costs, i);
-            for(int j = 0; j < inputs.length(); j++)
-                dst.addTransition(states[i], states[targets[j]],
-                                  outputs[j], costs[j], inputs[j]);
-            float accept_cost = src.getAcceptCost(i);
-            if(accept_cost < 1e37) {
-                if(accept >= 0) {
-                    dst.addTransition(states[i], accept,
-                                      0, src.getAcceptCost(i), 0);
-                } else {
-                    dst.setAccept(states[i], accept_cost);
-                }
-            }
-        }
-    }
-
 };

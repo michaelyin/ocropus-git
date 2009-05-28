@@ -116,38 +116,4 @@ namespace ocropus {
         fill(costs, 0);
         fst.setString(s, costs, inputs);
     }
-
-    void fst_insert_line(IGenericFst &fst, nustring &s, int start, int end) {
-        if(s.length() == 0)
-            fst.addTransition(start, end, 0, 0, 0);
-        else {
-            int last = start;
-            for(int i = 0; i < s.length() - 1; i++) {
-                int next = fst.newState();
-                fst.addTransition(last, next, s[i].ord(), 0, s[i].ord());
-            }
-            int c = s[s.length() - 1].ord();
-            fst.addTransition(last, end, c, 0, c);
-        }
-    }
-
-    void fst_insert_line(IGenericFst &fst, const char *line, int s, int e) {
-        nustring str(line);
-        fst_insert_line(fst, str, s, e);
-    }
-
-    void fst_insert_bunch(IGenericFst &fst, intarray &s, int start, int end) {
-        for(int i = 0; i < s.length(); i++)
-            fst.addTransition(start, end, s[i], 0, s[i]); 
-    }
-
-    void fst_insert_bunch(IGenericFst &fst, nustring &s, int start, int end) {
-        for(int i = 0; i < s.length(); i++)
-            fst.addTransition(start, end, s[i].ord(), 0, s[i].ord()); 
-    }
-
-    void fst_insert_bunch(IGenericFst &fst, const char *s, int start, int end) {
-        nustring str(s);
-        fst_insert_bunch(fst, str, start, end);
-    }
 }
