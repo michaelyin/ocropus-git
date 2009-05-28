@@ -29,22 +29,22 @@
 #include <string>  // otherwise `baseapi.h' will break CODE-OK--mezhirov
 
 // Tess includes
-#include "tordvars.h"
-#include "control.h"
-#include "tessvars.h"
-#include "tessbox.h"
-#include "tessedit.h"
-#include "imgs.h"
-#include "edgblob.h"
-#include "makerow.h"
-#include "wordseg.h"
-#include "output.h"
-#include "tstruct.h"
-#include "tessout.h"
-#include "tface.h"
-#include "adaptmatch.h"
-#include "baseapi.h"
-#include "globals.h"
+#include "tesseract/tordvars.h"
+#include "tesseract/control.h"
+#include "tesseract/tessvars.h"
+#include "tesseract/tessbox.h"
+#include "tesseract/tessedit.h"
+#include "tesseract/imgs.h"
+#include "tesseract/edgblob.h"
+#include "tesseract/makerow.h"
+#include "tesseract/wordseg.h"
+#include "tesseract/output.h"
+#include "tesseract/tstruct.h"
+#include "tesseract/tessout.h"
+#include "tesseract/tface.h"
+#include "tesseract/adaptmatch.h"
+#include "tesseract/baseapi.h"
+#include "tesseract/globals.h"
 
 #ifdef GOOGLE_INTERNAL
 #include "ccutil.h"
@@ -59,6 +59,7 @@ using namespace tesseract;
 
 // IUPR includes
 #include "ocropus.h"
+#include "ocr-tesseract.h"
 
 using namespace colib;
 using namespace iulib;

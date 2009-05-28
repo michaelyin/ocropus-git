@@ -117,10 +117,11 @@ assert conf.CheckLibWithHeader('SDL_gfx', 'SDL/SDL_gfxPrimitives.h', 'C')
 
 ### TIFF, JPEG, PNG
 
-env.Append(LIBS=["tiff","jpeg","png"])
+env.Append(LIBS=["tiff","jpeg","png","gif"])
 assert conf.CheckLib('tiff')
 assert conf.CheckLib('jpeg')
 assert conf.CheckLib('png')
+assert conf.CheckLib('gif')
 
 ### Leptonica
 
