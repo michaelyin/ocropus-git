@@ -426,10 +426,11 @@ namespace ocropus {
                 continue;
             }
 
-            try {
-                iucstring s;
-                s = base;
-                s += ".gt.txt";
+            iucstring s;
+            s = base;
+            s += ".gt.txt";
+            struct stat sb;
+            if(!stat(s,&sb)) try {
                 char buf[100000];
                 fgets(buf,sizeof buf,stdio(s,"r"));
                 iucstring truth;

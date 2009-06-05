@@ -314,11 +314,13 @@ namespace glinerec {
         floatarray vectors;
         intarray classes;
         int ndim;
+        float min_dist;
 
         KnnClassifier() {
             ncls = 0;
             ndim = -1;
             ncls = 0;
+            min_dist = -1;
             pdef("k",1,"number of nearest neighbors");
         }
         const char *name() {
@@ -394,7 +396,7 @@ namespace glinerec {
             NBest nbest(k);
             for(int i=0;i<vectors.dim(0);i++) {
                 double d = rowdist_euclidean(vectors,i,v);
-                if(fabs(d)<1e-6) continue; // training vectors...
+                if(fabs(d)<min_dist) continue;
                 nbest.add(i,-d);
             }
             result.resize(ncls);
@@ -414,6 +416,7 @@ namespace glinerec {
         }
         float crossValidatedError() {
             int errs = 0;
+            min_dist = 1e-6;
             for(int i=0;i<vectors.dim(0);i++) {
                 NBest nbest(1);
                 floatarray v;
@@ -427,6 +430,7 @@ namespace glinerec {
                 int c = classes(nbest[0]);
                 if(c!=classes(i)) errs++;
             }
+            min_dist = -1;
             return errs/float(vectors.dim(0));
         }
     };

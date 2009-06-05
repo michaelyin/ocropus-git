@@ -36,12 +36,9 @@
 # Please do not make significant modifications to this file
 # without talking to tmb first.
 
-print
-print "**********************************************"
-print "*** SConstruct is unsupported.             ***"
-print "*** The official build system is autoconf. ***"
-print "**********************************************"
-print
+import os
+if os.system("uname -a | egrep 'Ubuntu.*2009' > /dev/null")!=0:
+    print "WARNING: scons not supported on platforms other than Ubuntu 9.04"
 
 EnsureSConsVersion(0,97)
 from SCons.Script import *
@@ -147,8 +144,8 @@ else:
 env.Append(LIBS=["gsl","blas"])
 
 if re.search("-O3",env["opt"]):
-    env.Append(LINKFLAGS=["-fopenmp"])
     env.Append(CXXFLAGS=["-fopenmp"])
+env.Append(LINKFLAGS=["-fopenmp"])
 
 conf.Finish()
 

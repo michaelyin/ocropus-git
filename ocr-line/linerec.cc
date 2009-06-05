@@ -343,6 +343,7 @@ namespace glinerec {
                 dshown(temp,"c");
                 dwait();
             }
+            CHECK_ARG(b.height()<pgetf("maxheight"));
             featuremap->extractFeatures(v,b,mask);
         }
 
@@ -543,14 +544,19 @@ namespace glinerec {
 
 #pragma omp parallel for schedule(dynamic,10) private(p,v,b,props)
             for(int i=0;i<ncomponents;i++) {
+                try {
 #if 0
-                bytearray raw;
-                grouper->extract(raw,binarized,0,i);
-                floatarray v;
-                features->extract(v,raw);
+                    bytearray raw;
+                    grouper->extract(raw,binarized,0,i);
+                    floatarray v;
+                    features->extract(v,raw);
 #else
-                extractFeatures(v,i);
+                    extractFeatures(v,i);
 #endif
+                } catch(const char *msg) {
+                    debugf("info","WARNING: feature extraction failed [%d]: %s\n",i,msg);
+                    continue;
+                }
                 v.reshape(v.length());
                 pushProps(v,i);
                 float ccost = classifier->outputs(p,v);
