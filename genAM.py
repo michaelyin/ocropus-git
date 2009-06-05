@@ -8,25 +8,12 @@ import glob, os, sys, string as s
 extradirs = """
 """.split()
 
-# only add these files if tesseract is enabled
-tess = """
-    ocr-tesseract/tesseract.cc
-    ocr-autoclean/ocr-orientation.cc
-    ocr-autoclean/ocr-thresholding.cc
-""".split()
-
-tessmains = """
-    ocr-autoclean/main-ocr-orientation.cc
-    ocr-autoclean/main-ocr-thresholding.cc
-""".split()
-
 # extra files which should not go to libocropus
 exclude = """
-
 """.split()
 
 # optional files
-exclude += tess
+exclude = []
 
 def print_header():
     print """# Copyright 2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
@@ -62,7 +49,7 @@ SUBDIRS = .
 ocropusincludedir=$(includedir)/ocropus
 
 AM_CPPFLAGS = -I$(srcdir)/include -I$(srcdir)/ocr-utils \
--I@iulibheaders@ -I@tessheaders@
+-I@iulibheaders@ 
 
 AM_LDFLAGS =
 
@@ -109,18 +96,6 @@ print "    AM_CPPFLAGS += -DHAVE_GSL"
 #print "    AM_LDFLAGS += -lgsl -lblas"
 print "endif"
 print
-print "if ! notesseract"
-print "    AM_CPPFLAGS += -I@tessheaders@ -DHAVE_TESSERACT"
-print "    libocropus_a_SOURCES +=" + s.join(" $(srcdir)/"+f for f in tess)
-print "    noinst_PROGRAMS += " + s.join(" " + os.path.basename(m)[:-3] for m in tessmains)
-for m in tessmains:
-    mName = os.path.basename(m)[:-3].replace('-','_')
-    print "    " + mName + "_SOURCES = $(srcdir)/" + m
-    print "    " + mName + "_LDADD = libocropus.a"
-print
-
-print "endif"
-print
 print "if use_leptonica"
 print "    AM_CPPFLAGS += -I@leptheaders@ -DHAVE_LEPTONICA"
 print "endif"
@@ -146,7 +121,6 @@ print
 
 # gather all main-* files
 mains = glob.glob("*/main-*.cc")
-mains = [m for m in mains if not m in tessmains]
 
 # name the resulting binaries (strip folder and suffix)
 print "noinst_PROGRAMS += " + s.join(" " + os.path.basename(m)[:-3] for m in mains)
@@ -166,8 +140,7 @@ for t in tests:
     print tName + "_SOURCES = $(srcdir)/" + t
     print tName + "_LDADD = libocropus.a"
     print tName + "_CPPFLAGS = -I$(srcdir)/include -I$(srcdir)/ocr-utils \\"
-    print "-I@iulibheaders@ -I@colibheaders@",
-    print "-I@tessheaders@"
+    print "-I@iulibheaders@ -I@colibheaders@"
 
 # run all test-* binaries with make check
 print
