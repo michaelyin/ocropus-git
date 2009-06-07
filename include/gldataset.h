@@ -15,6 +15,11 @@ namespace glinerec {
         virtual void input(floatarray &v,int i) = 0;
         virtual int cls(int i) = 0;
         virtual int id(int i) = 0;
+        virtual void output(floatarray &v,int i) {
+            v.resize(nclasses());
+            v = 0;
+            v(cls(i)) = 1;
+        }
     };
 
     struct float8 {

@@ -1031,11 +1031,15 @@ namespace glinerec {
             int count = 0;
             for(int i=0;i<niters;i++) {
                 int row = i%ds.nsamples();
+#if 0
                 int cls = ds.cls(row);
                 if(cls<0) continue;
-                ds.input(x,row);
                 target = 0;
                 target(cls) = 1;
+#else
+                ds.output(target,row);
+#endif
+                ds.input(x,row);
                 trainOne(z,target,x,eta);
                 err += dist2squared(z,target);
                 if(dactive()) {
