@@ -352,7 +352,7 @@ namespace ocropus {
                     ext(dimage,p.x,p.y) = 0x00ff00;
                 }
             }
-            if(debug) write_image_packed(debug,dimage);
+            if(!debug.empty()) write_image_packed(debug,dimage);
             // dshow1d(cutcosts,"Y");
             //dshow(dimage,"Y");
         }

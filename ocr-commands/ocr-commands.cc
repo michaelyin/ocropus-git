@@ -885,7 +885,7 @@ namespace ocropus {
         IRecognizeLine &linerec = *linerecp;
         stdio model(argv[1],"r");
         linerec.load(model);
-        for(int i=3;i<argc;i++) {
+        for(int i=2;i<argc;i++) {
             logger.html("<hr><br>");
             logger.format("Recognizing %s",argv[i]);
             bytearray image;
