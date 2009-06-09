@@ -1,0 +1,5 @@
+recognizes, alignes and trains lines or words of a book from google 1000 books
+
+usage:
+    train-<lines|words>.sh <book-directory> <model-used-for-recognition> <output-director> <new-model>
+
