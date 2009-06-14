@@ -344,11 +344,16 @@ namespace ocropus {
                 if(!linerec) {
                     linerec = glinerec::make_Linerec();
                     try {
-                        linerec->load(cmodel);
-                    } catch(const char *s) {
-                        throwf("%s: failed to load (%s)",(const char*)cmodel,s);
+                        load_component(stdio(cmodel,"r"),linerec);
                     } catch(...) {
-                        throwf("%s: failed to load character model",(const char*)cmodel);
+                        debugf("info","warning: failed to load %s as a component",(const char*)cmodel);
+                        try {
+                            linerec->load(cmodel);
+                        } catch(const char *s) {
+                            throwf("%s: failed to load (%s)",(const char*)cmodel,s);
+                        } catch(...) {
+                            throwf("%s: failed to load character model",(const char*)cmodel);
+                        }
                     }
                 }
             }
@@ -1050,7 +1055,8 @@ namespace ocropus {
         linerec.finishTraining();
         fprintf(stderr,"saving %s\n",argv[1]);
         stdio stream(argv[1],"w");
-        linerec.save(stream);
+        // linerec.save(stream);
+        save_component(stream,&linerec);
         return 0;
     }
 
@@ -1193,7 +1199,8 @@ namespace ocropus {
                     total_chars,total_lines);
             fprintf(stderr,"saving %s\n",argv[1]);
             stdio stream(argv[1],"w");
-            linerec.save(stream);
+            // linerec.save(stream);
+            save_component(stream,&linerec);
             return 0;
         } else if(!strcmp(argv[0],"saveseg")) {
             fprintf(stderr,"saving %d characters, %d lines\n",
