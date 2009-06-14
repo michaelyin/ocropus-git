@@ -59,10 +59,12 @@ namespace ocropus {
     param_float maxheight("max_line_height",300,"maximum line height");
     param_float maxaspect("max_line_aspect",0.5,"maximum line aspect ratio");
 
-#define DEFAULT_DATA_DIR "/usr/local/share/ocropus/models/"
+#ifndef DATADIR
+#define DATADIR "/usr/local/share/ocropus/models"
+#endif
 
-    param_string cmodel("cmodel",DEFAULT_DATA_DIR "default.model","character model used for recognition");
-    param_string lmodel("lmodel",DEFAULT_DATA_DIR "default.fst","language model used for recognition");
+    param_string cmodel("cmodel",DATADIR "/models/default.model","character model used for recognition");
+    param_string lmodel("lmodel",DATADIR "/models/default.fst","language model used for recognition");
 
     // these are used for the single page recognizer
     param_int beam_width("beam_width", 100, "number of nodes in a beam generation");

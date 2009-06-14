@@ -76,7 +76,15 @@ opts.Add(PathOption('leptonica', 'The installation root of leptonica', "/usr/loc
 opts.Add(BoolOption('test', "Run some tests after the build", "no"))
 opts.Add(BoolOption('style', 'Check style', "no"))
 
+prefix = "${prefix}"
+incdir = prefix+"/include/ocropus"
+libdir = prefix+"/lib"
+datadir = prefix+"/share/ocropus"
+bindir = prefix+"/bin"
+scriptsdir = datadir + '/scripts'
+
 env = Environment(options=opts)
+env.Append(CXXFLAGS=["-DDATADIR='\""+datadir+"\"'"])
 env.Append(CXXFLAGS=["-g","-fPIC"])
 env.Append(CXXFLAGS=env["opt"])
 env.Append(CXXFLAGS=env["warn"])
@@ -164,13 +172,6 @@ env.Prepend(LIBS=[File("libocropus.a")])
 ################################################################
 ### install
 ################################################################
-
-prefix = "${prefix}"
-incdir = prefix+"/include/ocropus"
-libdir = prefix+"/lib"
-datadir = prefix+"/share/ocropus"
-bindir = prefix+"/bin"
-scriptsdir = datadir + '/scripts'
 
 env.Install(libdir,libocropus)
 env.Install(datadir + '/models', glob('data/models/*'))
