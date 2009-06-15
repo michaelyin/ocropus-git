@@ -70,12 +70,14 @@ opts.Add('warn', 'Compiler flags for warnings',
 opts.Add(PathOption('prefix', 'The installation root for OCRopus ', "/usr/local"))
 opts.Add(PathOption('iulib', 'The installation root of iulib', "/usr/local"))
 opts.Add(PathOption('leptonica', 'The installation root of leptonica', "/usr/local"))
+opts.Add(PathOption('destdir', 'Destination root directory', "/"))
 
 ### configuration options
 ### optional build steps
 opts.Add(BoolOption('test', "Run some tests after the build", "no"))
 opts.Add(BoolOption('style', 'Check style', "no"))
 
+destdir = "${destdir}"
 prefix = "${prefix}"
 incdir = prefix+"/include/ocropus"
 libdir = prefix+"/lib"
@@ -173,21 +175,21 @@ env.Prepend(LIBS=[File("libocropus.a")])
 ### install
 ################################################################
 
-env.Install(libdir,libocropus)
-env.Install(datadir + '/models', glob('data/models/*'))
-env.Install(datadir + '/words', glob('data/words/*'))
-for header in headers: env.Install(incdir,header)
+env.Install(destdir+libdir,libocropus)
+env.Install(destdir+datadir + '/models', glob('data/models/*'))
+env.Install(destdir+datadir + '/words', glob('data/words/*'))
+for header in headers: env.Install(destdir+incdir,header)
 for file in glob('data/models/*.gz'):
     base = re.sub(r'\.gz$','',file)
     base = re.sub(r'^[./]*data/','',base)
-    base = datadir+"/"+base
+    base = destdir+datadir+"/"+base
     env.Command(base,file,"gunzip -9v < %s > %s" % (file,base))
     env.Alias('install',base)
 
-env.Alias('install',bindir)
-env.Alias('install',libdir)
-env.Alias('install',incdir)
-env.Alias('install',datadir)
+env.Alias('install',destdir+bindir)
+env.Alias('install',destdir+libdir)
+env.Alias('install',destdir+incdir)
+env.Alias('install',destdir+datadir)
 
 ################################################################
 ### commands
@@ -195,7 +197,7 @@ env.Alias('install',datadir)
 
 for cmd in glob("commands/*.cc"): 
     env.Program(cmd)
-    env.Install(bindir,re.sub('.cc$','',cmd))
+    env.Install(destdir+bindir,re.sub('.cc$','',cmd))
 
 ################################################################
 ### unit tests
