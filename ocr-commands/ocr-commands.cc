@@ -157,7 +157,7 @@ namespace ocropus {
         try {
             load_component(stdio(cmodel,"r"),linerec);
         } catch(const char *s) {
-            debugf("info","%s: failed to load as component, trying as object\n",cmodel);
+            debugf("debug","%s: failed to load as component, trying as object\n",cmodel);
             try {
                 linerec->load(cmodel);
             } catch(const char *s) {
@@ -773,7 +773,6 @@ namespace ocropus {
     }
 
     int main_cinfo(int argc,char **argv) {
-        // FIXME use components to load/save line recognizers
         autodel<IRecognizeLine> linerec(make_Linerec());
         stdio model(argv[1],"r");
         if(!model) {
@@ -792,7 +791,6 @@ namespace ocropus {
     int main_params(int argc,char **argv) {
         if(argc<2) throwf("usage: %s classname\n",argv[0]);
         ocropus::global_verbose_params = "";
-        // FIXME why do we need the ocropus:: qualifier?
         autodel<IComponent> result;
         try {
             result = component_construct(argv[1]);

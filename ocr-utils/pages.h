@@ -107,7 +107,7 @@ namespace ocropus {
             if(current_image>=files.length()) return false;
             current_index++;
             current_subpage++;
-            if(current_subpage >= numSubpages(current_image)) {
+            if(current_image < 0 || current_subpage >= numSubpages(current_image)) {
                 current_subpage = 0;
                 current_image++;
             }
