@@ -32,11 +32,14 @@ namespace ocropus {
     struct Pages {
         colib::autodel<IBinarize> binarizer;
         colib::narray<colib::iucstring> files;
+        colib::intarray numSubpages;    /// number of (sub)pages within each image
         bool want_gray;
         bool want_color;
 
-        int current_index;
-        colib::iucstring current_file;
+        int current_index;    /// overall index of current page
+        int current_image;    /// index of current image
+        int current_subpage;  /// index of page within current image
+
         bool has_gray;
         bool has_color;
         bool autoinv;
@@ -45,14 +48,18 @@ namespace ocropus {
         colib::intarray color;
 
         Pages() {
-            current_index = -1;
+            rewind();
             autoinv = 1;
         }
         void clear() {
             files.clear();
         }
+        static bool isTiff(iucstring& filename) {
+            return re_search(filename, "\\.tif\\(f\\?\\)$") >= 0;
+        }
         void addFile(const char *file) {
             files.push() = file;
+            numSubpages.push(isTiff(files.last())?Tiff(file, "r").numPages():1);
         }
         void parseSpec(const char *spec) {
             current_index = -1;
@@ -86,18 +93,32 @@ namespace ocropus {
             return files.length();
         }
         void getPage(int index) {
+            current_index = 0;
+            current_image = 0;
+            while(current_index + numSubpages(current_image) <= index) {
+                current_index += numSubpages(current_image);
+                current_image++;
+            }
+            current_subpage = index - current_index;
             current_index = index;
-            current_file = files[index];
             loadImage();
         }
         bool nextPage() {
-            ++current_index;
-            if(current_index>=files.length()) return false;
-            getPage(current_index);
+            if(current_image>=files.length()) return false;
+            current_index++;
+            current_subpage++;
+            if(current_subpage >= numSubpages(current_image)) {
+                current_subpage = 0;
+                current_image++;
+            }
+            if(current_image>=files.length()) return false;
+            loadImage();
             return true;
         }
         void rewind() {
             current_index = -1;
+            current_image = -1;
+            current_subpage = -1;
         }
         void loadImage() {
             has_gray = false;
@@ -105,7 +126,15 @@ namespace ocropus {
             binary.clear();
             gray.clear();
             color.clear();
-            iulib::read_image_gray(gray,current_file);
+            colib::iucstring& current_file = files(current_image);
+            if(current_subpage > 0) {
+                if(!isTiff(current_file)) {
+                    throw "subpage requested but not a TIFF image";
+                }
+                Tiff(current_file, "r").getPage(gray, current_subpage);
+            } else {
+                iulib::read_image_gray(gray,current_file);
+            }
             if(autoinv) {
                 iulib::make_page_black(gray);
                 invert(gray);
@@ -124,7 +153,7 @@ namespace ocropus {
             }
         }
         const char *getFileName() {
-            return (const char *)current_file;
+            return files(current_image).c_str();
         }
         bool hasGray() {
             return true;
@@ -151,6 +180,8 @@ namespace ocropus {
             copy(dst,color);
         }
     private:
+        //FIXME already in ocr-utils/docproc.h / ocr-utils/ocr-utils.cc
+        //      can it be removed? --remat
         void invert(bytearray &a) {
             int n = a.length1d();
             for (int i = 0; i < n; i++) {
