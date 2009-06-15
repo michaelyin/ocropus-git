@@ -1,3 +1,28 @@
+// -*- C++ -*-
+
+// Copyright 2006-2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
+// or its licensors, as applicable.
+//
+// You may not use this file except under the terms of the accompanying license.
+//
+// Licensed under the Apache License, Version 2.0 (the "License"); you
+// may not use this file except in compliance with the License. You may
+// obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// Project: ocrpus extras
+// File: pageseg.cc
+// Purpose: training of archive.org books
+// Responsible: remat
+// Reviewer:
+// Primary Repository:
+// Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
+
 #include <colib.h>
 #include <iulib.h>
 #include <iustring.h>
@@ -16,41 +41,6 @@ typedef struct {
     rectarray charBBoxes;
     iuistring trans;
 } Line;
-
-template<class T>
-void drawBBox(narray<T>& image, rectangle& box) {
-    printf("%d, %d, %d, %d\n", box.x0, box.y0, box.x1, box.y1);
-    for(int x=box.x0; x<box.x1; x++) {
-        image(x,box.y0) = 255;
-        image(x,box.y1-1) = 255;
-    }
-    for(int y=box.y0; y<box.y1; y++) {
-        image(box.x0,y) = 255;
-        image(box.x1-1,y) = 255;
-    }
-}
-
-template<class T>
-void show(narray<T>& image, bool init = true, bool wait = true) {
-    if(init) {
-        dinit(image.dim(0), image.dim(1), 1);
-    }
-    dshow(image);
-    if(wait) {
-        dwait();
-    }
-}
-
-void showr(intarray& image, bool init = true, bool wait = true) {
-    if(init) {
-        dinit(image.dim(0), image.dim(1), 1);
-    }
-    dshowr(image);
-    if(wait) {
-        dwait();
-    }
-}
-
 
 void renumber(intarray& src) {
     intarray dst;

@@ -1,3 +1,9 @@
+if [ $# -ne 4 ]
+then
+  echo "Usage: `basename $0` <google-book-dir> <model-for-alignment> <output-dir-for-images> <new-model>"
+  exit -1
+fi
+
 element="ocr_cinfo"
 min_len=2
 max_len=20
