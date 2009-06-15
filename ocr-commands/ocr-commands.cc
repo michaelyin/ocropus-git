@@ -152,6 +152,22 @@ namespace ocropus {
         write_image_packed(s, cseg);
     }
 
+    void linerec_load(autodel<IRecognizeLine> &linerec,const char *cmodel) {
+        linerec = glinerec::make_Linerec();
+        try {
+            load_component(stdio(cmodel,"r"),linerec);
+        } catch(const char *s) {
+            debugf("info","%s: failed to load as component, trying as object\n",cmodel);
+            try {
+                linerec->load(cmodel);
+            } catch(const char *s) {
+                throwf("%s: failed to load (%s)",(const char*)cmodel,s);
+            } catch(...) {
+                throwf("%s: failed to load character model",(const char*)cmodel);
+            }
+        }
+    }
+
     // Read a line and make an FST out of it.
     void read_transcript(IGenericFst &fst, const char *path) {
         nustring gt;
@@ -339,16 +355,7 @@ namespace ocropus {
         for(int index=0;index<nfiles;index++) {
 #pragma omp critical
             {
-                if(!linerec) {
-                    linerec = glinerec::make_Linerec();
-                    try {
-                        linerec->load(cmodel);
-                    } catch(const char *s) {
-                        throwf("%s: failed to load (%s)",(const char*)cmodel,s);
-                    } catch(...) {
-                        throwf("%s: failed to load character model",(const char*)cmodel);
-                    }
-                }
+                if(!linerec) linerec_load(linerec,cmodel);
             }
             iucstring base;
             base = files(index);
@@ -773,7 +780,7 @@ namespace ocropus {
             fprintf(stderr,"%s: could not open\n",argv[1]);
             return 1;
         }
-        linerec->load(model);
+        linerec_load(linerec,argv[1]);
         if(!linerec) {
             fprintf(stderr,"%s: load failed\n",argv[1]);
         } else {
@@ -819,14 +826,7 @@ namespace ocropus {
         segmenter = make_SegmentPageByRAST();
         // load the line recognizer
         autodel<IRecognizeLine> linerec;
-        linerec = make_Linerec();
-        try {
-            linerec->load(cmodel);
-        } catch(const char *s) {
-            throwf("%s: failed to load (%s)",(const char*)cmodel,s);
-        } catch(...) {
-            throwf("%s: failed to load character model",(const char*)cmodel);
-        }
+        linerec_load(linerec,cmodel);
         // load the language model
         autodel<OcroFST> langmod(make_OcroFST());
         try {
