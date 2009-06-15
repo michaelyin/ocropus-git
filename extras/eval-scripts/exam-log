@@ -1,0 +1,38 @@
+#!/usr/bin/python
+
+import sys,os
+
+vars = {}
+results = []
+
+for file in sys.argv[1:]:
+    current = {}
+    for line in open(file).readlines():
+        f = line.split()
+        if len(f)>1 and f[0]=="pick":
+            key,value = f[1].split("=")
+            if len(value.split(":"))==2:
+                m,s = value.split(":")
+                current[key+"_m"] = m
+                vars[key+"_m"] = 1
+                current[key+"_s"] = s
+                vars[key+"_s"] = 1
+            else:
+                current[key] = value
+                vars[key] = 1
+        elif len(f)>4 and f[1]=="rate":
+            row = current.copy()
+            row["result"] = f[2]
+            results.append(row)
+
+vars = sorted(vars.keys())
+vars = [var for var in vars if var!="result"]
+print "result",
+for var in vars: print var,
+print
+
+for row in results:
+    print row["result"],
+    for var in vars:
+        print row.get(var,"NA"),
+    print

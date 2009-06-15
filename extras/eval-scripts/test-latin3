@@ -1,0 +1,34 @@
+#!/bin/bash
+
+base=$0.`date +%s`
+
+fixed() {
+    echo fixed $1=$2
+    eval export $1="$2"
+}
+pick() {
+    value=$(perl -e 'shift; print $ARGV[int((1+$#ARGV)*rand())]' "$@")
+    echo pick $1=$value
+    eval export $1="$value"
+}
+
+fixed verbose 1
+fixed verbose_params '?'
+fixed debug info
+fixed linerec_classifier latin
+fixed latin_junkclass mlp
+fixed latin_charclass mappedmlp
+fixed linerec_fmap sfmap
+fixed ntrain 50000
+fixed linerec_csize 40
+fixed linerec_correct_lineinfo 0
+fixed linerec_context 1.3
+fixed sfmap_ftypes bejh
+fixed sfmap_csize 40
+pick sfmap_aa 0.3 0.5 0.7
+pick sfmap_scontext -0.6 0.0 0.3 0.6
+fixed latin_ul 0
+fixed save_fsts 0
+
+ocroline trainseg $base.model book-10k8
+ocroline lines2fsts $base.model book-10k8-test

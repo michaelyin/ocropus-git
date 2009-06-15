@@ -1,0 +1,25 @@
+#!/bin/bash
+
+base=$0
+
+pick() {
+    value=$(perl -e 'shift; print $ARGV[int((1+$#ARGV)*rand())]' "$@")
+    echo pick $1=$value
+    eval export $1="$value"
+}
+
+pick verbose 1
+pick verbose_params '?'
+pick debug info
+pick linerec_classifier mappedmlp
+pick linerec_fmap sfmap
+pick ntrain 50000
+pick linerec_csize 40
+pick linerec_correct_lineinfo 0
+pick linrec_context 1.5
+pick sfmap_ftypes b
+pick sfmap_aa 0.5
+pick save_fsts 0
+
+ocropus trainseg $base.model book-10k8
+ocropus lines2fsts $base.model book-10k8-test

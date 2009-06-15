@@ -1,0 +1,25 @@
+#!/usr/bin/expect
+
+set logfile _output[getpid].log
+set repeats [lindex $argv 0]
+set logfile "[lindex $argv 1].[exec date +%s].log"
+set args [lrange $argv 1 end]
+
+log_file $logfile
+send_user "# [exec date]\n"
+send_user "# [exec hostname] [exec uname -a]\n"
+send_user "# $args\n"
+send_user "################################################################\n"
+send_user "\n"
+for {set i 0} {$i < $repeats} {incr i} {
+    send_user "### round $i ###\n"
+    eval spawn $args
+    interact {
+        "\003\003\003" {
+            send_user "***QUIT***\n"
+            exit 1
+        }
+    }
+}
+send_user "################################################################\n"
+send_user "FINISH: [exec date]\n"
