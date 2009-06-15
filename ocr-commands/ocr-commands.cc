@@ -885,7 +885,7 @@ namespace ocropus {
         IRecognizeLine &linerec = *linerecp;
         stdio model(argv[1],"r");
         linerec.load(model);
-        for(int i=3;i<argc;i++) {
+        for(int i=2;i<argc;i++) {
             logger.html("<hr><br>");
             logger.format("Recognizing %s",argv[i]);
             bytearray image;
@@ -1048,7 +1048,8 @@ namespace ocropus {
         linerec.finishTraining();
         fprintf(stderr,"saving %s\n",argv[1]);
         stdio stream(argv[1],"w");
-        linerec.save(stream);
+        // linerec.save(stream);
+        save_component(stream,&linerec);
         return 0;
     }
 
@@ -1191,7 +1192,8 @@ namespace ocropus {
                     total_chars,total_lines);
             fprintf(stderr,"saving %s\n",argv[1]);
             stdio stream(argv[1],"w");
-            linerec.save(stream);
+            // linerec.save(stream);
+            save_component(stream,&linerec);
             return 0;
         } else if(!strcmp(argv[0],"saveseg")) {
             fprintf(stderr,"saving %d characters, %d lines\n",
