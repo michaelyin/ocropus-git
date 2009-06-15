@@ -187,10 +187,6 @@ namespace ocropus {
     }
 
 
-
-    // _______________________________________________________________________
-
-
     struct Glob {
         glob_t g;
         Glob(const char *pattern,int flags=0) {
@@ -207,8 +203,6 @@ namespace ocropus {
             return g.gl_pathv[i];
         }
     };
-
-    // _______________________________________________________________________
 
     void hocr_dump_preamble(FILE *output) {
         fprintf(output, "<!DOCTYPE html\n");
@@ -242,6 +236,52 @@ namespace ocropus {
         fprintf(output, "</span>");
     }
 
+    struct FileIO {
+        ucstring prefix;
+
+        int npages;
+        void getpages() {
+            int npages = -1;
+            sprintf(pattern,"%s/[0-9][0-9][0-9][0-9].png",prefix,i);
+            Glob glob(pattern);
+            for(int i=0;i<glob.length();i++) {
+                int p;
+                sscanf(glob[i],"%*s/%d.png",&p);
+                if(p>npages) npages = p;
+            }
+            sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]",prefix,i);
+            Glob glob(pattern);
+            for(int i=0;i<glob.length();i++) {
+                int p;
+                sscanf(glob[i],"%*s/%d",&p);
+                if(p>npages) npages = p;
+            }
+            npages++;
+        }
+
+        int pageno;
+        intarray lines;
+        void getlines(int i) {
+            iucstring pattern;
+            pageno = i;
+            sprintf(pattern,"%s/%04d/[0-9][0-9][0-9][0-9].png",prefix,i);
+            Glob glob(pattern);
+            for(int i=0;i<glob.length();i++) {
+                int i = -1;
+                sscanf(glob[i],"%*s/%*04d/%d.png",&i);
+                CHECK_ARG(i>=0 && i<=9999);
+                lines.push(i);
+            }
+        }
+        int nlines(int i) {
+            if(i!=pageno) getlines(i);
+            return lines.length();
+        }
+        void getline(iucstring &file,int i,int j,const char *suffix) {
+            sprintf(file,"%s/%04d/%04d%s",prefix,i,j,suffix);
+        }
+    };
+
     void hocr_dump_page(FILE *output, const char *path) {
         iucstring pattern;
 
@@ -257,7 +297,7 @@ namespace ocropus {
         sprintf(pattern,"%s/[0-9][0-9][0-9][0-9].txt",path);
         Glob lines(pattern);
         fprintf(output, "<div class=\"ocr_page\">\n");
-        for(int i = 0; i < lines.length(); i++) {
+        for(int i=0;i<lines.length();i++) {
             // we have to figure out line number from the path because
             // the loop index is unreliable: it skips lines that didn't work
             pattern = lines(i);
