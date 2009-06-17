@@ -70,7 +70,7 @@ opts.Add('warn', 'Compiler flags for warnings',
 opts.Add(PathOption('prefix', 'The installation root for OCRopus ', "/usr/local"))
 opts.Add(PathOption('iulib', 'The installation root of iulib', "/usr/local"))
 opts.Add(PathOption('leptonica', 'The installation root of leptonica', "/usr/local"))
-opts.Add(PathOption('destdir', 'Destination root directory', "/"))
+opts.Add(PathOption('destdir', 'Destination root directory', "", PathOption.PathAccept))
 
 ### configuration options
 ### optional build steps
@@ -125,10 +125,10 @@ assert conf.CheckLibWithHeader('SDL_gfx', 'SDL/SDL_gfxPrimitives.h', 'C')
 ### TIFF, JPEG, PNG
 
 env.Append(LIBS=["tiff","jpeg","png","gif"])
+assert conf.CheckLib('gif')
 assert conf.CheckLib('tiff')
 assert conf.CheckLib('jpeg')
 assert conf.CheckLib('png')
-assert conf.CheckLib('gif')
 
 ### Leptonica
 
