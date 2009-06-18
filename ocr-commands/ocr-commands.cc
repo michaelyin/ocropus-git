@@ -59,7 +59,7 @@ namespace ocropus {
     param_bool old_csegs("old_csegs",0,"use old csegs (spaces are not counted)");
     param_float maxheight("max_line_height",300,"maximum line height");
     param_float maxaspect("max_line_aspect",0.5,"maximum line aspect ratio");
-    param_string bookstore_name("bookstore","OldBookStore","storage abstraction for book");
+    param_string cbookstore("bookstore","OldBookStore","storage abstraction for book");
 
 #define DEFAULT_DATA_DIR "/usr/local/share/ocropus/models/"
 
@@ -247,8 +247,6 @@ namespace ocropus {
         fprintf(output, "</div>\n");
     }
 
-    // _______________________________________________________________________
-
     int main_book2lines(int argc,char **argv) {
         int pageno = 0;
         autodel<ISegmentPage> segmenter;
@@ -325,56 +323,130 @@ namespace ocropus {
         if(argc!=2) throw "usage: cmodel=... ocropus lines2fsts dir";
         dinit(512,512);
         autodel<IRecognizeLine> linerec;
-        iucstring pattern;
-        sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].png",argv[1]);
-        Glob files(pattern);
+        autodel<IBookStore> bookstore;
+        make_component(bookstore,cbookstore);
+        bookstore->setPrefix(argv[1]);
         int finished = 0;
-        int nfiles = min(files.length(),nrecognize);
+        int nfiles = 0;
+        for(int page=0;page<bookstore->numberOfPages();page++)
+            nfiles += bookstore->linesOnPage(page);
         int eval_total=0,eval_tchars=0,eval_pchars=0,eval_lines=0,eval_no_ground_truth=0;
-#pragma omp parallel for private(linerec) shared(finished) schedule(dynamic,20)
-        for(int index=0;index<nfiles;index++) {
-            try {
-#pragma omp critical
+        for(int page=0;page<bookstore->numberOfPages();page++) {
+#pragma omp parallel for private(linerec) shared(finished) schedule(dynamic,4)
+            for(int j=0;j<bookstore->linesOnPage(page);j++) {
+                int line = bookstore->getLineId(page,j);
                 try {
-                    if(!linerec) linerec_load(linerec,cmodel);
-                } catch(...) {
-                    debugf("info","loading %s failed\n",(const char *)cmodel);
-                    abort(); // can't do much else in OpenMP
-                }
-                iucstring base;
-                base = files(index);
-                base.erase(base.length()-4);
-                debugf("progress","line %s\n",base.c_str());
-                if(continue_partial) {
-                    iucstring s;
-                    sprintf(s,"%s.fst",base.c_str());
-                    FILE *stream = fopen(s.c_str(),"r");
-                    if(stream) {
-                        fclose(stream);
-                        // debugf("info","skipping line %s\n",base.c_str());
+#pragma omp critical
+                    try {
+                        if(!linerec) linerec_load(linerec,cmodel);
+                    } catch(...) {
+                        debugf("info","loading %s failed\n",(const char *)cmodel);
+                        abort(); // can't do much else in OpenMP
+                    }
+                    debugf("progress","page %d line %d\n",page,line);
+                    if(continue_partial) {
+                        iucstring s;
+                        stdio stream(bookstore->open("r",page,line,0,"fst"));
+                        if(stream) {
 #pragma omp atomic
-                        finished++;
+                            finished++;
+#pragma omp atomic
+                            eval_lines++;
+                            continue;
+                        } 
+                    }
+                    bytearray image;
+                    // FIXME output binary versions, intermediate results for debugging
+                    bookstore->getLine(image,page,line);
+                    autodel<IGenericFst> result(make_OcroFST());
+                    intarray segmentation;
+                    try {
+                        CHECK_ARG(image.dim(1)<maxheight);
+                        CHECK_ARG(image.dim(1)*1.0/image.dim(0)<maxaspect);
+                        try {
+                            linerec->recognizeLine(segmentation,*result,image);
+                        } catch(Unimplemented unimplemented) {
+                            linerec->recognizeLine(*result,image);
+                        }
+                    } catch(BadTextLine &error) {
+                        fprintf(stderr,"ERROR: %s (bad text line)\n",(const char *)bookstore->path(page,line));
+                        continue;
+                    } catch(const char *error) {
+                        fprintf(stderr,"ERROR in recognizeLine: %s\n",error);
+                        if(abort_on_error) abort();
+                        continue;
+                    } catch(...) {
+                        fprintf(stderr,"ERROR in recognizeLine\n");
+                        if(abort_on_error) abort();
+                        continue;
+                    }
+
+                    if(save_fsts) {
+                        iucstring s;
+                        s = bookstore->path(page,line,0,"fst");
+                        result->save(s);
+                        if(segmentation.length()>0) {
+                            dsection("line_segmentation");
+                            make_line_segmentation_white(segmentation);
+                            s = bookstore->path(page,line,"rseg","png");
+                            write_image_packed(s,segmentation);
+                            dshowr(segmentation);
+                            dwait();
+                        }
+                    }
+
+                    nustring str;
+                    iucstring predicted;
+                    try {
+                        result->bestpath(str);
+                        nustring_convert(predicted,str);
+                        debugf("transcript","%04d %04d\t%s\n",page,line,predicted.c_str());
+                        if(save_fsts) bookstore->putLine(predicted,page,line);
+                    } catch(const char *error) {
+                        debugf("info","ERROR in bestpath: %s\n",error);
+                        if(abort_on_error) abort();
+                        continue;
+                    } catch(...) {
+                        debugf("info","ERROR in bestpath\n",error);
+                        if(abort_on_error) abort();
+                        continue;
+                    }
+
+                    iucstring truth;
+                    if(bookstore->getLine(truth,page,line,"gt")) try {
+                        cleanup_for_eval(truth);
+                        cleanup_for_eval(predicted);
+                        debugf("truth","%04d %04d\t%s\n",page,line,truth.c_str());
+                        nustring ntruth,npredicted;
+                        nustring_convert(ntruth,truth);
+                        nustring_convert(npredicted,predicted);
+                        float dist = edit_distance(ntruth,npredicted);
+#pragma omp atomic
+                        eval_total += dist;
+#pragma omp atomic
+                        eval_tchars += truth.length();
+#pragma omp atomic
+                        eval_pchars += predicted.length();
 #pragma omp atomic
                         eval_lines++;
-                        continue;
-                    } 
-                }
-                bytearray image;
-                // FIXME output binary versions, intermediate results for debugging
-                read_image_gray(image,files(index));
-                autodel<IGenericFst> result(make_OcroFST());
-                intarray segmentation;
-                try {
-                    CHECK_ARG(image.dim(1)<maxheight);
-                    CHECK_ARG(image.dim(1)*1.0/image.dim(0)<maxaspect);
-                    try {
-                        linerec->recognizeLine(segmentation,*result,image);
-                    } catch(Unimplemented unimplemented) {
-                        linerec->recognizeLine(*result,image);
+                    } catch(...) {
+#pragma omp atomic
+                        eval_no_ground_truth++;
                     }
-                } catch(BadTextLine &error) {
-                    fprintf(stderr,"ERROR: %s (bad text line)\n",base.c_str());
-                    continue;
+
+#pragma omp critical (finished_counter)
+                    {
+                        finished++;
+                        if(finished%100==0) {
+                            if(eval_total>0)
+                                debugf("info","finished %d/%d estimate %g errs %d ntrue %d npred %d lines %d nogt %d\n",
+                                        finished,nfiles,
+                                        eval_total/float(eval_tchars),eval_total,eval_tchars,eval_pchars,
+                                        eval_lines,eval_no_ground_truth);
+                            else
+                                debugf("info","finished %d/%d\n",finished,nfiles);
+                        }
+                    }
                 } catch(const char *error) {
                     fprintf(stderr,"ERROR in recognizeLine: %s\n",error);
                     if(abort_on_error) abort();
@@ -384,92 +456,6 @@ namespace ocropus {
                     if(abort_on_error) abort();
                     continue;
                 }
-
-                if(save_fsts) {
-                    iucstring s;
-                    sprintf(s,"%s.fst",base.c_str());
-                    result->save(s);
-                    if(segmentation.length()>0) {
-                        dsection("line_segmentation");
-                        make_line_segmentation_white(segmentation);
-                        sprintf(s,"%s.rseg.png",base.c_str());
-                        write_image_packed(s,segmentation);
-                        dshowr(segmentation);
-                        dwait();
-                    }
-                }
-
-                nustring str;
-                iucstring predicted;
-                try {
-                    result->bestpath(str);
-                    nustring_convert(predicted,str);
-                    debugf("transcript","%s\t%s\n",files(index),predicted.c_str());
-                    if(save_fsts) {
-                        iucstring s;
-                        s = base;
-                        s += ".txt";
-                        fprintf(stdio(s.c_str(),"w"),"%s",predicted.c_str());
-                    }
-                } catch(const char *error) {
-                    debugf("info","ERROR in bestpath: %s\n",error);
-                    if(abort_on_error) abort();
-                    continue;
-                } catch(...) {
-                    debugf("info","ERROR in bestpath\n",error);
-                    if(abort_on_error) abort();
-                    continue;
-                }
-
-                iucstring s;
-                s = base;
-                s += ".gt.txt";
-                if(file_exists(s)) try {
-                    char buf[100000];
-                    fgets(buf,sizeof buf,stdio(s,"r"));
-                    iucstring truth;
-                    truth = buf;
-                    cleanup_for_eval(truth);
-                    cleanup_for_eval(predicted);
-                    debugf("truth","%s\t%s\n",files(index),truth.c_str());
-                    nustring ntruth,npredicted;
-                    nustring_convert(ntruth,truth);
-                    nustring_convert(npredicted,predicted);
-                    float dist = edit_distance(ntruth,npredicted);
-#pragma omp atomic
-                    eval_total += dist;
-#pragma omp atomic
-                    eval_tchars += truth.length();
-#pragma omp atomic
-                    eval_pchars += predicted.length();
-#pragma omp atomic
-                    eval_lines++;
-                } catch(...) {
-#pragma omp atomic
-                    eval_no_ground_truth++;
-                }
-
-#pragma omp critical (finished_counter)
-                {
-                    finished++;
-                    if(finished%100==0) {
-                        if(eval_total>0)
-                            debugf("info","finished %d/%d estimate %g errs %d ntrue %d npred %d lines %d nogt %d\n",
-                                    finished,files.length(),
-                                    eval_total/float(eval_tchars),eval_total,eval_tchars,eval_pchars,
-                                    eval_lines,eval_no_ground_truth);
-                        else
-                            debugf("info","finished %d/%d\n",finished,files.length());
-                    }
-                }
-            } catch(const char *error) {
-                fprintf(stderr,"ERROR in recognizeLine: %s\n",error);
-                if(abort_on_error) abort();
-                continue;
-            } catch(...) {
-                fprintf(stderr,"ERROR in recognizeLine\n");
-                if(abort_on_error) abort();
-                continue;
             }
         }
 
@@ -1224,7 +1210,7 @@ namespace ocropus {
 
     int main_bookstore(int argc,char **argv) {
         autodel<IBookStore> bookstore;
-        make_component(bookstore,bookstore_name);
+        make_component(bookstore,cbookstore);
         bookstore->setPrefix(argv[1]);
         int npages = bookstore->numberOfPages();
         printf("#pages %d\n",npages);
