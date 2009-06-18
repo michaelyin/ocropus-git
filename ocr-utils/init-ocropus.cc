@@ -25,6 +25,7 @@
 #include "ocropus.h"
 #include "glcuts.h"
 #include "glfmaps.h"
+#include "bookstore.h"
 
 using namespace iulib;
 using namespace ocropus;
@@ -65,6 +66,7 @@ namespace ocropus {
         component_register("CurvedCutSegmenter",make_CurvedCutSegmenter);
         component_register("CurvedCutWithCcSegmenter",make_CurvedCutWithCcSegmenter);
         component_register("SkelSegmenter",make_SkelSegmenter);
+        component_register("OldBookStore",make_OldBookStore);
 
 #if 0
         // FIXME remove this when it's clear that it's not needed anymore

@@ -27,6 +27,9 @@
 #ifndef h_sysutil_
 #define h_sysutil_
 
+#include <glob.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 namespace ocropus {
 
@@ -68,6 +71,28 @@ inline int gettimeofday(timeval *time, timeval *temp) {
 #endif
 
     void mkdir_if_necessary(const char *path);
+
+    struct Glob {
+        glob_t g;
+        Glob(const char *pattern,int flags=0) {
+            glob(pattern,flags,0,&g);
+        }
+        ~Glob() {
+            globfree(&g);
+        }
+        int length() {
+            return g.gl_pathc;
+        }
+        const char *operator()(int i) {
+            CHECK(i>=0 && i<length());
+            return g.gl_pathv[i];
+        }
+    };
+
+    inline bool file_exists(const char *s) {
+        struct stat sb;
+        return !stat(s,&sb);
+    }
 }
 
 #endif

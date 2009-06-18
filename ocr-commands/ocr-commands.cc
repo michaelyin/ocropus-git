@@ -34,6 +34,7 @@
 #include "iulib/iulib.h"
 #include "ocropus.h"
 #include "glinerec.h"
+#include "bookstore.h"
 
 namespace glinerec {
     IRecognizeLine *make_Linerec();
@@ -58,6 +59,7 @@ namespace ocropus {
     param_bool old_csegs("old_csegs",0,"use old csegs (spaces are not counted)");
     param_float maxheight("max_line_height",300,"maximum line height");
     param_float maxaspect("max_line_aspect",0.5,"maximum line aspect ratio");
+    param_string bookstore_name("bookstore","OldBookStore","storage abstraction for book");
 
 #define DEFAULT_DATA_DIR "/usr/local/share/ocropus/models/"
 
@@ -187,29 +189,6 @@ namespace ocropus {
     }
 
 
-
-    // _______________________________________________________________________
-
-
-    struct Glob {
-        glob_t g;
-        Glob(const char *pattern,int flags=0) {
-            glob(pattern,flags,0,&g);
-        }
-        ~Glob() {
-            globfree(&g);
-        }
-        int length() {
-            return g.gl_pathc;
-        }
-        const char *operator()(int i) {
-            CHECK(i>=0 && i<length());
-            return g.gl_pathv[i];
-        }
-    };
-
-    // _______________________________________________________________________
-
     void hocr_dump_preamble(FILE *output) {
         fprintf(output, "<!DOCTYPE html\n");
         fprintf(output, "   PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\n");
@@ -257,7 +236,7 @@ namespace ocropus {
         sprintf(pattern,"%s/[0-9][0-9][0-9][0-9].txt",path);
         Glob lines(pattern);
         fprintf(output, "<div class=\"ocr_page\">\n");
-        for(int i = 0; i < lines.length(); i++) {
+        for(int i=0;i<lines.length();i++) {
             // we have to figure out line number from the path because
             // the loop index is unreliable: it skips lines that didn't work
             pattern = lines(i);
@@ -445,8 +424,7 @@ namespace ocropus {
                 iucstring s;
                 s = base;
                 s += ".gt.txt";
-                struct stat sb;
-                if(!stat(s,&sb)) try {
+                if(file_exists(s)) try {
                     char buf[100000];
                     fgets(buf,sizeof buf,stdio(s,"r"));
                     iucstring truth;
@@ -1244,6 +1222,18 @@ namespace ocropus {
         throw Unimplemented();
     }
 
+    int main_bookstore(int argc,char **argv) {
+        autodel<IBookStore> bookstore;
+        make_component(bookstore,bookstore_name);
+        bookstore->setPrefix(argv[1]);
+        int npages = bookstore->numberOfPages();
+        printf("#pages %d\n",npages);
+        for(int i=0;i<npages;i++) {
+            int nlines = bookstore->linesOnPage(i);
+            printf("%d %d\n",i,nlines);
+        }
+    }
+
     void usage(const char *program) {
         fprintf(stderr,"usage:\n");
 #define D(s,s2) {fprintf(stderr,"    %s %s\n",program,s); fprintf(stderr,"        %s\n",s2); }
@@ -1331,6 +1321,7 @@ namespace ocropus {
             if(!strcmp(argv[1],"recognize1")) return main_recognize1(argc-1,argv+1);
             if(!strcmp(argv[1],"saveseg")) return main_trainseg_or_saveseg(argc-1,argv+1);
             if(!strcmp(argv[1],"trainseg")) return main_trainseg_or_saveseg(argc-1,argv+1);
+            if(!strcmp(argv[1],"bookstore")) return main_bookstore(argc-1,argv+1);
             usage(argv[0]);
         } catch(const char *s) {
             fprintf(stderr,"FATAL: %s\n",s);
