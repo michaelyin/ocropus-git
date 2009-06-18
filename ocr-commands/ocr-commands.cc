@@ -59,7 +59,9 @@ namespace ocropus {
     param_bool old_csegs("old_csegs",0,"use old csegs (spaces are not counted)");
     param_float maxheight("max_line_height",300,"maximum line height");
     param_float maxaspect("max_line_aspect",0.5,"maximum line aspect ratio");
+
     param_string cbookstore("bookstore","OldBookStore","storage abstraction for book");
+    param_string csegmenter("psegmenter","SegmentPageByRAST","segmenter to use at the page level");
 
 #define DEFAULT_DATA_DIR "/usr/local/share/ocropus/models/"
 
@@ -234,6 +236,7 @@ namespace ocropus {
         rectarray bboxes;
 
         sprintf(pattern,"%s/[0-9][0-9][0-9][0-9].txt",path);
+        // FIXME pathname dependency; replace with IBookStore object
         Glob lines(pattern);
         fprintf(output, "<div class=\"ocr_page\">\n");
         for(int i=0;i<lines.length();i++) {
@@ -332,8 +335,9 @@ namespace ocropus {
             nfiles += bookstore->linesOnPage(page);
         int eval_total=0,eval_tchars=0,eval_pchars=0,eval_lines=0,eval_no_ground_truth=0;
         for(int page=0;page<bookstore->numberOfPages();page++) {
+            int nlines = bookstore->linesOnPage(page);
 #pragma omp parallel for private(linerec) shared(finished) schedule(dynamic,4)
-            for(int j=0;j<bookstore->linesOnPage(page);j++) {
+            for(int j=0;j<nlines;j++) {
                 int line = bookstore->getLineId(page,j);
                 try {
 #pragma omp critical
@@ -346,17 +350,20 @@ namespace ocropus {
                     debugf("progress","page %d line %d\n",page,line);
                     if(continue_partial) {
                         iucstring s;
-                        stdio stream(bookstore->open("r",page,line,0,"fst"));
+                        stdio stream;
+#pragma omp critical
+                        stream = bookstore->open("r",page,line,0,"fst");
                         if(stream) {
 #pragma omp atomic
                             finished++;
 #pragma omp atomic
                             eval_lines++;
                             continue;
-                        } 
+                        }
                     }
                     bytearray image;
                     // FIXME output binary versions, intermediate results for debugging
+#pragma omp critical
                     bookstore->getLine(image,page,line);
                     autodel<IGenericFst> result(make_OcroFST());
                     intarray segmentation;
@@ -401,6 +408,7 @@ namespace ocropus {
                         result->bestpath(str);
                         nustring_convert(predicted,str);
                         debugf("transcript","%04d %04d\t%s\n",page,line,predicted.c_str());
+#pragma omp critical
                         if(save_fsts) bookstore->putLine(predicted,page,line);
                     } catch(const char *error) {
                         debugf("info","ERROR in bestpath: %s\n",error);
@@ -413,6 +421,7 @@ namespace ocropus {
                     }
 
                     iucstring truth;
+#pragma omp critical
                     if(bookstore->getLine(truth,page,line,"gt")) try {
                         cleanup_for_eval(truth);
                         cleanup_for_eval(predicted);
@@ -474,57 +483,59 @@ namespace ocropus {
         dinit(1000,1000);
         const char *outdir = argv[1];
         autodel<ISegmentPage> segmenter;
-        segmenter = make_SegmentPageByRAST();
-        iucstring s;
-        sprintf(s,"%s/[0-9][0-9][0-9][0-9].png",outdir);
-        Glob files(s);
-        if(files.length()<1)
-            throw "no pages found";
-        for(int index=0;index<files.length();index++) {
-            char buf[1000];
-            int pageno=9999;
 
-            CHECK(sscanf(files(index),"%[^/]/%d.png",buf,&pageno)==2);
-            debugf("info","page %d\n",pageno);
+        autodel<IBookStore> bookstore;
+        make_component(bookstore,cbookstore);
+        bookstore->setPrefix(outdir);
+        int npages = bookstore->numberOfPages();
 
-            sprintf(s,"%s/%04d",outdir,pageno);
-            mkdir(s,0777);          // ignore errors
-
-            bytearray page_gray;
-            read_image_gray(page_gray,files(index));
-            bytearray page_binary;
-            sprintf(s,"%s/%04d.bin.png",outdir,pageno);
-            read_image_binary(page_binary,s);
+        debugf("info","found %d pages\n",npages);
+        if(npages<1) throw "no pages found";
+#pragma omp parallel for private(segmenter)
+        for(int pageno=0;pageno<npages;pageno++) {
+            bytearray page_gray,page_binary;
+#pragma omp critical
+            {
+                if(!segmenter) segmenter = make_SegmentPageByRAST();
+                if(!bookstore->getPage(page_gray,pageno)) {
+                    debugf("info","%d: page not found\n",pageno);
+                }
+                if(!bookstore->getPage(page_binary,pageno,"bin")) {
+                    page_binary = page_gray;
+                }
+            }
+            if(page_gray.length()<1) continue;
 
             intarray page_seg;
             segmenter->segment(page_seg,page_binary);
-            sprintf(s,"%s/%04d.seg.png",outdir,pageno);
-            write_image_packed(s, page_seg);
 
-            RegionExtractor regions;
-            regions.setPageLines(page_seg);
-            for(int lineno=1;lineno<regions.length();lineno++) {
-                try {
-                    bytearray line_image;
-                    regions.extract(line_image,page_gray,lineno,1);
-                    CHECK_ARG(line_image.dim(1)<maxheight);
-                    CHECK_ARG(line_image.dim(1)*1.0/line_image.dim(0)<maxaspect);
-                    // TODO/mezhirov output log of coordinates here
-                    sprintf(s,"%s/%04d/%04d.png",outdir,pageno,lineno);
-                    write_image_gray(s,line_image);
-                } catch(const char *s) {
-                    fprintf(stderr,"ERROR: %s\n",s);
-                    if(abort_on_error) abort();
-                } catch(BadTextLine &err) {
-                    fprintf(stderr,"ERROR: BadTextLine returned by recognizer\n");
-                    if(abort_on_error) abort();
-                } catch(...) {
-                    fprintf(stderr,"ERROR: (no details)\n");
-                    if(abort_on_error) abort();
+#pragma omp critical
+            {
+                bookstore->putPage(page_seg,pageno,"pseg");
+                RegionExtractor regions;
+                regions.setPageLines(page_seg);
+                for(int lineno=1;lineno<regions.length();lineno++) {
+                    try {
+                        bytearray line_image;
+                        regions.extract(line_image,page_gray,lineno,1);
+                        CHECK_ARG(line_image.dim(1)<maxheight);
+                        CHECK_ARG(line_image.dim(1)*1.0/line_image.dim(0)<maxaspect);
+                        // TODO/mezhirov output log of coordinates here
+                        bookstore->putLine(line_image,pageno,lineno);
+                    } catch(const char *s) {
+                        fprintf(stderr,"ERROR: %s\n",s);
+                        if(abort_on_error) abort();
+                    } catch(BadTextLine &err) {
+                        fprintf(stderr,"ERROR: BadTextLine returned by recognizer\n");
+                        if(abort_on_error) abort();
+                    } catch(...) {
+                        fprintf(stderr,"ERROR: (no details)\n");
+                        if(abort_on_error) abort();
+                    }
                 }
+                debugf("info","%4d: #lines = %d\n",pageno,regions.length());
+                // TODO/mezhirov output other blocks here
             }
-            debugf("info","#lines = %d\n",regions.length());
-            // TODO/mezhirov output other blocks here
         }
         return 0;
     }

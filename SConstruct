@@ -60,22 +60,22 @@ headers = glob("include/*.h") + glob("ocr-utils/*.h")
 ### command line options
 ################################################################
 
-opts = Options('custom.py')
+opts = Variables('custom.py')
 opts.Add('opt', 'Compiler flags for optimization/debugging', "-O3")
 opts.Add('warn', 'Compiler flags for warnings',
          "-Wall -Wno-sign-compare -Wno-write-strings"+
          " -D__warn_unused_result__=__far__"+
          " -D_BACKWARD_BACKWARD_WARNING_H=1")
 ### path options
-opts.Add(PathOption('prefix', 'The installation root for OCRopus ', "/usr/local"))
-opts.Add(PathOption('iulib', 'The installation root of iulib', "/usr/local"))
-opts.Add(PathOption('leptonica', 'The installation root of leptonica', "/usr/local"))
-opts.Add(PathOption('destdir', 'Destination root directory', "", PathOption.PathAccept))
+opts.Add(PathVariable('prefix', 'The installation root for OCRopus ', "/usr/local"))
+opts.Add(PathVariable('iulib', 'The installation root of iulib', "/usr/local"))
+opts.Add(PathVariable('leptonica', 'The installation root of leptonica', "/usr/local"))
+opts.Add(PathVariable('destdir', 'Destination root directory', "", PathOption.PathAccept))
 
 ### configuration options
 ### optional build steps
-opts.Add(BoolOption('test', "Run some tests after the build", "no"))
-opts.Add(BoolOption('style', 'Check style', "no"))
+opts.Add(BoolVariable('test', "Run some tests after the build", "no"))
+opts.Add(BoolVariable('style', 'Check style', "no"))
 
 destdir = "${destdir}"
 prefix = "${prefix}"
