@@ -1218,6 +1218,7 @@ namespace ocropus {
             int nlines = bookstore->linesOnPage(i);
             printf("%d %d\n",i,nlines);
         }
+        return 0;
     }
 
     void usage(const char *program) {
