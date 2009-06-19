@@ -1,0 +1,137 @@
+#include <colib/colib.h>
+#include <iulib/iulib.h>
+#include <ocropus/ocropus.h>
+#include "bookstore.h"
+
+using namespace colib;
+using namespace iulib;
+using namespace ocropus;
+
+namespace ocropus {
+    struct OldBookStore : IBookStore {
+        iucstring prefix;
+        int npages;
+        int pageno;
+        intarray lines;
+
+        void setPrefix(const char *s) {
+            prefix = s;
+            npages = -1;
+            pageno = -2;
+        }
+
+        iucstring path(int page,int line=-1,const char *variant=0,const char *extension=0) {
+            iucstring file;
+            sprintf(file,"%s/%04d",(const char *)prefix,page);
+            if(line>=0) sprintf_append(file,"/%04d",line);
+            if(variant) sprintf_append(file,".%s",variant);
+            if(extension) sprintf_append(file,".%s",extension);
+            return file;
+        }
+
+        FILE *open(const char *mode,int page,int line,const char *variant=0,const char *extension=0) {
+            iucstring s = path(page,line,variant,extension);
+            return fopen(s,mode);
+        }
+
+        bool getPage(bytearray &image,int page,const char *variant=0) {
+            stdio stream(open("r",page,-1,variant,"png"));
+            if(!stream) return false;
+            read_image_gray(image,stream);
+            return true;
+        }
+
+        void putPage(bytearray &image,int page,const char *variant=0) {
+            throw "not implemented";
+        }
+
+        bool getLine(bytearray &image,int page,int line,const char *variant=0) {
+            FILE *stream = open("r",page,line,variant,"png");
+            if(!stream) return false;
+            read_image_gray(image,stream);
+            fclose(stream);
+            return true;
+        }
+
+        void putLine(bytearray &image,int page,int line,const char *variant=0) {
+            stdio stream(open("r",page,line,variant,"png"));
+            if(!stream) throwf("cannot write output file");
+            write_image_gray(stream,image,"png");
+        }
+
+        bool getLine(iucstring &s,int page,int line,const char *variant=0) {
+            FILE *stream = open("r",page,line,variant,"txt");
+            if(!stream) return false;
+            fread(s,stream);
+            fclose(stream);
+            return true;
+        }
+
+        void putLine(iucstring &s,int page,int line,const char *variant=0) {
+            stdio stream(open("r",page,line,variant,"png"));
+            if(!stream) throwf("cannot write output file");
+            fwrite(s,stream);
+        }
+
+        int numberOfPages() {
+            if(npages<0) getPages();
+            return npages;
+        }
+
+        void getPages() {
+            npages = -1;
+            iucstring pattern;
+            if(1) {
+                sprintf(pattern,"%s/[0-9][0-9][0-9][0-9].png",(const char *)prefix);
+                Glob glob(pattern);
+                for(int i=0;i<glob.length();i++) {
+                    int p = -1;
+                    int c = iucstring(glob(i)).rfind("/");
+                    CHECK(c>=0);
+                    CHECK(sscanf(glob(i)+c+1,"%d.png",&p)==1);
+                    if(p>npages) npages = p;
+                    debugf("bookstore","%s [%d]\n",glob(i),npages);
+                }
+            }
+            sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]",(const char *)prefix);
+            Glob glob(pattern);
+            for(int i=0;i<glob.length();i++) {
+                int p = -1;
+                int c = iucstring(glob(i)).rfind("/");
+                CHECK(c>=0);
+                CHECK(sscanf(glob(i)+c+1,"%d",&p)==1);
+                if(p>npages) npages = p;
+                debugf("bookstore","%s [%d]\n",glob(i),npages);
+            }
+            npages++;
+        }
+
+        void getLinesOfPage(int i) {
+            iucstring pattern;
+            pageno = i;
+            sprintf(pattern,"%s/%04d/[0-9][0-9][0-9][0-9].png",(const char *)prefix,i);
+            lines.clear();
+            Glob glob(pattern);
+            for(int i=0;i<glob.length();i++) {
+                int k = -1;
+                int c = iucstring(glob(i)).rfind("/");
+                CHECK(c>=0);
+                sscanf(glob(i)+c+1,"%d.png",&k);
+                CHECK_ARG(k>=0 && k<=9999);
+                lines.push(k);
+            }
+        }
+        int linesOnPage(int i) {
+            if(i!=pageno) getLinesOfPage(i);
+            return lines.length();
+        }
+        int getLineId(int i,int j) {
+            if(i!=pageno) getLinesOfPage(i);
+            return lines(j);
+        }
+    };
+
+    IBookStore *make_OldBookStore() {
+        return new OldBookStore();
+    }
+}
