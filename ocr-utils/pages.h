@@ -29,10 +29,11 @@
 #include "ocropus.h"
 
 namespace ocropus {
-    struct Pages {
-        colib::autodel<IBinarize> binarizer;
-        colib::narray<colib::iucstring> files;
-        colib::intarray numSubpages;    /// number of (sub)pages within each image
+
+    struct Pages : IComponent {
+        autodel<IBinarize> binarizer;
+        narray<iucstring> files;
+        intarray numSubpages;    /// number of (sub)pages within each image
         bool want_gray;
         bool want_color;
 
@@ -43,13 +44,74 @@ namespace ocropus {
         bool has_gray;
         bool has_color;
         bool autoinv;
-        colib::bytearray binary;
-        colib::bytearray gray;
-        colib::intarray color;
+        bytearray binary;
+        bytearray gray;
+        intarray color;
 
         Pages() {
             rewind();
             autoinv = 1;
+            pdef("binarizer","BinarizeBySauvola","binarizer used for pages");
+            pdef("grayclean1",0,"grayscale page cleanup 1");
+            pdef("grayclean2",0,"grayscale page cleanup 2");
+            pdef("grayclean3",0,"grayscale page cleanup 3");
+            pdef("binclean1",0,"grayscale page cleanup 1");
+            pdef("binclean2",0,"grayscale page cleanup 2");
+            pdef("binclean3",0,"grayscale page cleanup 3");
+            make_component(binarizer,pget("binarizer"));
+        }
+
+        void gray_clean(bytearray &image) {
+            bytearray temp;
+            if(pget("cgrayclean1")) {
+                autodel<ICleanupGray> cleaner;
+                load_component(cleaner,stdio(pget("cgrayclean1"),"r"));
+                cleaner->cleanup(temp,image);
+                temp.move(image);
+            }
+            if(pget("cgrayclean2")) {
+                autodel<ICleanupGray> cleaner;
+                load_component(cleaner,stdio(pget("cgrayclean2"),"r"));
+                cleaner->cleanup(temp,image);
+                temp.move(image);
+            }
+            if(pget("cgrayclean3")) {
+                autodel<ICleanupGray> cleaner;
+                load_component(cleaner,stdio(pget("cgrayclean3"),"r"));
+                cleaner->cleanup(temp,image);
+                temp.move(image);
+            }
+        }
+
+        void bin_clean(bytearray &image) {
+            bytearray temp;
+            if(pget("cbinclean1")) {
+                autodel<ICleanupBinary> cleaner;
+                load_component(cleaner,stdio(pget("cbinclean1"),"r"));
+                cleaner->cleanup(temp,image);
+                temp.move(image);
+            }
+            if(pget("cbinclean2")) {
+                autodel<ICleanupBinary> cleaner;
+                load_component(cleaner,stdio(pget("cbinclean2"),"r"));
+                cleaner->cleanup(temp,image);
+                temp.move(image);
+            }
+            if(pget("cbinclean3")) {
+                autodel<ICleanupBinary> cleaner;
+                load_component(cleaner,stdio(pget("cbinclean3"),"r"));
+                cleaner->cleanup(temp,image);
+                temp.move(image);
+            }
+        }
+
+
+        void info(int depth,FILE *stream) {
+            iprintf(stream,depth,"Pages data structure");
+            pprint(stream,depth);
+        }
+        const char *name() {
+            return "pages";
         }
         void clear() {
             files.clear();
@@ -66,7 +128,7 @@ namespace ocropus {
             clear();
             if(spec[0]=='@') {
                 char buf[9999];
-                colib::stdio stream(spec+1,"r");
+                stdio stream(spec+1,"r");
                 for(;;) {
                     if(!fgets(buf,sizeof buf,stream)) break;
                     int n = strlen(buf);
@@ -126,7 +188,7 @@ namespace ocropus {
             binary.clear();
             gray.clear();
             color.clear();
-            colib::iucstring& current_file = files(current_image);
+            iucstring& current_file = files(current_image);
             if(current_subpage > 0) {
                 if(!isTiff(current_file)) {
                     throw "subpage requested but not a TIFF image";
@@ -147,7 +209,7 @@ namespace ocropus {
                 for(int i=0;i<gray.length1d();i++)
                     binary.at1d(i) = (gray.at1d(i) > threshold) ? 255:0;
             } else {
-                colib::floatarray temp;
+                floatarray temp;
                 copy(temp,gray);
                 binarizer->binarize(binary,temp);
             }
@@ -161,22 +223,22 @@ namespace ocropus {
         bool hasColor() {
             return false;
         }
-        colib::bytearray &getBinary() {
+        bytearray &getBinary() {
             return binary;
         }
-        colib::bytearray &getGray() {
+        bytearray &getGray() {
             return gray;
         }
-        colib::bytearray &getColor() {
+        bytearray &getColor() {
             throw "unimplemented";
         }
-        void getBinary(colib::bytearray &dst) {
+        void getBinary(bytearray &dst) {
             copy(dst,binary);
         }
-        void getGray(colib::bytearray &dst) {
+        void getGray(bytearray &dst) {
             copy(dst,gray);
         }
-        void getColor(colib::intarray &dst) {
+        void getColor(intarray &dst) {
             copy(dst,color);
         }
     private:

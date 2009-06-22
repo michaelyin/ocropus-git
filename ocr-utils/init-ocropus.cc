@@ -15,9 +15,9 @@
 // limitations under the License.
 //
 // Project: iulib -- image understanding library
-// File: 
-// Purpose: 
-// Responsible: 
+// File:
+// Purpose:
+// Responsible:
 // Reviewer:
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de
@@ -67,6 +67,7 @@ namespace ocropus {
         component_register("CurvedCutWithCcSegmenter",make_CurvedCutWithCcSegmenter);
         component_register("SkelSegmenter",make_SkelSegmenter);
         component_register("OldBookStore",make_OldBookStore);
+        component_register<Pages>("Pages");
 
 #if 0
         // FIXME remove this when it's clear that it's not needed anymore

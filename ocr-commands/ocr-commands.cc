@@ -61,6 +61,7 @@ namespace ocropus {
     param_float maxaspect("max_line_aspect",0.5,"maximum line aspect ratio");
 
     param_string cbookstore("bookstore","OldBookStore","storage abstraction for book");
+    param_string cbinarizer("binarizer","","binarization component to use");
     param_string csegmenter("psegmenter","SegmentPageByRAST","segmenter to use at the page level");
 
 #define DEFAULT_DATA_DIR "/usr/local/share/ocropus/models/"
@@ -227,7 +228,7 @@ namespace ocropus {
         iucstring pattern;
 
         sprintf(pattern,"%s.pseg.png",path);
-        if(!file_exists(pattern)) 
+        if(!file_exists(pattern))
             sprintf(pattern,"%s.seg.png",path); // temporary backwards compatibility
         intarray page_seg;
         read_image_packed(page_seg, pattern);
@@ -252,54 +253,21 @@ namespace ocropus {
         fprintf(output, "</div>\n");
     }
 
-    int main_book2lines(int argc,char **argv) {
-        int pageno = 0;
-        autodel<ISegmentPage> segmenter;
-        segmenter = make_SegmentPageByRAST();
-        const char *outdir = argv[1];
-        if(mkdir(outdir,0777)) {
-            fprintf(stderr,"error creating OCR working directory\n");
-            perror(outdir);
-            exit(1);
-        }
-        iucstring s;
-        for(int arg=2;arg<argc;arg++) {
-            Pages pages;
-            pages.parseSpec(argv[arg]);
-            while(pages.nextPage()) {
-                pageno++;
-                debugf("info","page %d\n",pageno);
-                sprintf(s,"%s/%04d",outdir,pageno);
-                mkdir(s,0777);
-                bytearray page_binary,page_gray;
-                pages.getBinary(page_binary);
-                pages.getGray(page_gray);
-                intarray page_seg;
-                segmenter->segment(page_seg,page_binary);
-                RegionExtractor regions;
-                regions.setPageLines(page_seg);
-                for(int lineno=1;lineno<regions.length();lineno++) {
-                    bytearray line_image;
-                    regions.extract(line_image,page_gray,lineno,1);
-                    // MAYBE output log of coordinates here
-                    sprintf(s,"%s/%04d/%04d.png",outdir,pageno,lineno);
-                    write_image_gray(s,line_image);
-                }
-                debugf("info","#lines = %d\n",regions.length());
-                // MAYBE output images here
-            }
-        }
-        return 0;
-    }
-
     int main_book2pages(int argc,char **argv) {
         int pageno = 0;
         const char *outdir = argv[1];
+
+        autodel<IBookStore> bookstore;
+        make_component(bookstore,cbookstore);
+
         if(mkdir(outdir,0777)) {
             fprintf(stderr,"error creating OCR working directory\n");
             perror(outdir);
             exit(1);
         }
+
+        bookstore->setPrefix(outdir);
+
         iucstring s;
         for(int arg=2;arg<argc;arg++) {
             Pages pages;
@@ -309,15 +277,10 @@ namespace ocropus {
                 debugf("info","page %d\n",pageno);
                 mkdir(s,0777);
                 bytearray page_binary,page_gray;
-
-                // TODO/mezhirov make binarizer settable
-                sprintf(s,"%s/%04d.png",outdir,pageno);
                 pages.getGray(page_gray);
-                write_image_gray(s,page_gray);
-
+                bookstore->putPage(page_gray,pageno);
                 pages.getBinary(page_binary);
-                sprintf(s,"%s/%04d.bin.png",outdir,pageno);
-                write_image_binary(s,page_binary);
+                bookstore->putPage(page_binary,pageno,"bin");
             }
         }
         return 0;
@@ -500,7 +463,8 @@ namespace ocropus {
             {
                 if(!segmenter) segmenter = make_SegmentPageByRAST();
                 if(!bookstore->getPage(page_gray,pageno)) {
-                    debugf("info","%d: page not found\n",pageno);
+                    if(pageno>0)
+                        debugf("info","%d: page not found\n",pageno);
                 }
                 if(!bookstore->getPage(page_binary,pageno,"bin")) {
                     page_binary = page_gray;
@@ -1299,7 +1263,6 @@ namespace ocropus {
             init_glfmaps();
             init_linerec();
             if(argc<2) usage(argv[0]);
-            if(!strcmp(argv[1],"book2lines")) return main_pages2lines(argc-1,argv+1);
             if(!strcmp(argv[1],"book2pages")) return main_book2pages(argc-1,argv+1);
             if(!strcmp(argv[1],"buildhtml")) return main_buildhtml(argc-1,argv+1);
             if(!strcmp(argv[1],"cinfo")) return main_cinfo(argc-1,argv+1);
