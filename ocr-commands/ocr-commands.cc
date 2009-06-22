@@ -160,7 +160,7 @@ namespace ocropus {
         linerec = glinerec::make_Linerec();
         try {
             load_component(stdio(cmodel,"r"),linerec);
-        } catch(const char *s) {
+        } catch(...) {
             debugf("debug","%s: failed to load as component, trying as object\n",cmodel);
             try {
                 linerec->load(cmodel);

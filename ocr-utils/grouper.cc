@@ -26,6 +26,10 @@
 #include <stdio.h>
 #include "ocropus.h"
 
+namespace {
+    param_int maxclass("maxclass",1024,"maximum # classes (0...maxclass-1)");
+}
+
 namespace ocropus {
     using namespace iulib;
     using namespace colib;
@@ -104,7 +108,7 @@ namespace ocropus {
         narray<rectangle> boxes;
         objlist<intarray> segments;
         narray<rectangle> rboxes;
-        floatarray classifications;
+        floatarray classifications; // FIXME this should become a sparse array
         floatarray spaces;
         bool fullheight;
 
@@ -362,11 +366,9 @@ namespace ocropus {
             extractSlicedWithBackground(out,source,dflt,index,grow);
         }
 
-        // FIXME/mezhirov add comment --tmb
-
         void maybeInit() {
             if(classifications.length1d()==0) {
-                classifications.resize(boxes.length(),256); // FIXME/tmb limited size
+                classifications.resize(boxes.length(),maxclass);
                 classifications.fill(INFINITY);
                 spaces.resize(boxes.length(),2);
                 spaces.fill(INFINITY);
@@ -377,6 +379,10 @@ namespace ocropus {
 
         void setClass(int index,int cls,float cost) {
             maybeInit();
+            if(cls>=classifications.dim(1)) {
+                throwf("class label %d >= maxclass %d ; please increase maxclass",
+                    cls,classifications.dim(1));
+            }
             classifications(index,cls) = cost;
         }
 

@@ -132,8 +132,12 @@ namespace glinerec {
             pdef("space_multiplier",2,"multipler for space estimation");
             pdef("space_min",0.2,"minimum space threshold (in xheight)");
             pdef("space_max",1.1,"maximum space threshold (in xheight)");
+            pdef("space_yes",1.0,"cost of inserting a space");
+            pdef("space_no",5.0,"cost of not inserting a space");
             pdef("maxheight",300,"maximum height of input line");
             pdef("maxaspect",0.5,"maximum height/width ratio of input line");
+            pdef("maxcost",20.0,"maximum cost of a character to be added to the output");
+            pdef("minclass",32,"minimum output class to be added (default=unicode space)");
             segmenter = make_DpSegmenter();
             grouper = make_SimpleGrouper();
             featuremap = dynamic_cast<IFeatureMap*>(component_construct(pget("fmap")));
@@ -539,6 +543,10 @@ namespace glinerec {
             floatarray v,p,cp,ccosts,props;
             int ncomponents = grouper->length();
             rectangle b;
+            int minclass = pgetf("minclass");
+            float space_yes = pgetf("space_yes");
+            float space_no = pgetf("space_no");
+            float maxcost = pgetf("maxcost");
 
             estimateSpaceSize();
 
@@ -567,12 +575,15 @@ namespace glinerec {
                         p /= sum(p);
                     }
                     int count = 0;
-                    for(int j=0;j<p.length();j++) {
+                    for(int j=minclass;j<p.length();j++) {
                         if(j==reject_class) continue;
                         float pcost = p(j)>1e-6?-log(p(j)):-log(1e-6);
                         debugf("dcost","%3d %10g %c\n",j,pcost+ccost,(j>32?j:'_'));
-                        grouper->setClass(i,j,pcost+ccost);
-                        count++;
+                        double total_cost = pcost+ccost;
+                        if(total_cost<maxcost) {
+                            grouper->setClass(i,j,total_cost);
+                            count++;
+                        }
                     }
                     if(count==0) {
                         if(b.height()<xheight/2 && b.width()<xheight/2) {
@@ -583,7 +594,7 @@ namespace glinerec {
                     }
                     if(grouper->pixelSpace(i)>space_threshold) {
                         debugf("spaces","space %d\n",grouper->pixelSpace(i));
-                        grouper->setSpaceCost(i,1.0,5.0);
+                        grouper->setSpaceCost(i,space_yes,space_no);
                     }
                     // dwait();
                 }
