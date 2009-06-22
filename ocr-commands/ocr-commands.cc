@@ -226,7 +226,9 @@ namespace ocropus {
     void hocr_dump_page(FILE *output, const char *path) {
         iucstring pattern;
 
-        sprintf(pattern,"%s.seg.png",path);
+        sprintf(pattern,"%s.pseg.png",path);
+        if(!file_exists(pattern)) 
+            sprintf(pattern,"%s.seg.png",path); // temporary backwards compatibility
         intarray page_seg;
         read_image_packed(page_seg, pattern);
         int h = page_seg.dim(1);
