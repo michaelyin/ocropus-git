@@ -1,15 +1,7 @@
-if [ $# -ne 4 ]
-then
-  echo "Usage: `basename $0` <google-book-dir> <model-for-alignment> <output-dir-for-images> <new-model>"
-  exit -1
-fi
-
-element="ocr_line"
-min_len=10
-max_len=100
-cmodel=$2
-./hocr-extract-g1000 $1/hOCR.html "$1/Image_????.JPEG" "$3/%04d/%04d"
-ocropus lines2fsts $3
-ocropus align $3
-ocropus trainseg $4 $3
+export element="ocr_line"
+export min_len=10
+export max_len=100
+export old_csegs=1
+export beam_width=200
+./train.sh $@
 

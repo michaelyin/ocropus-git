@@ -82,11 +82,11 @@ if dictfile:
     stream.close()
     dict = {}
     for word in words: dict[word.lower()] = 1
-    # print "[read %d words from %s]\n"%(len(words),dictfile)
+    print "[read %d words from %s]\n"%(len(words),dictfile)
 
 def check_dict(dict,s):
     if not dict: return 1
-    words = re.split(r'\W+',s)
+    words = re.split(r'\s+',s)
     for word in words:
         if word=="": continue
         if not dict.get(word.lower()): return 0
