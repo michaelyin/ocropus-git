@@ -100,6 +100,15 @@ namespace ocropus {
             return true;
         }
 
+        bool getPage(intarray &image,int page,const char *variant=0) {
+            try {
+                read_image_packed(image,path(page,-1,variant,"png").c_str());
+            } catch(...) { // FIXME do better checking here
+                return false;
+            }
+            return true;
+        }
+
         void putPage(bytearray &image,int page,const char *variant=0) {
             write_image_gray(path(page,-1,variant,"png").c_str(),image);
         }
@@ -127,6 +136,12 @@ namespace ocropus {
             maybeMakeDirectory(page);
             stdio stream(open("w",page,line,variant,"png"));
             write_image_gray(stream,image,"png");
+        }
+
+        void putLine(intarray &image,int page,int line,const char *variant=0) {
+            maybeMakeDirectory(page);
+            stdio stream(open("w",page,line,variant,"png"));
+            write_image_packed(stream,image,"png");
         }
 
         bool getLine(iucstring &s,int page,int line,const char *variant=0) {
