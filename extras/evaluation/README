@@ -1,3 +1,6 @@
+NB: These scripts are older (pre-0.4) and need to be updated to run
+with current versions of OCRopus.
+
 === pageeval-run [directory] > eval.log ===
 
 Runs OCR on each PNG file in the given directory (default:
