@@ -1,0 +1,6 @@
+cuts off lines or words of a book from the google 100 books project
+then recognizes, alignes and trains these lines or words
+
+usage:
+    train-<lines|words>.sh <google-book-dir> <model-for-alignment> <output-dir-for-images> <new-model>
+
