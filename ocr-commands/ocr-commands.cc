@@ -35,6 +35,7 @@
 #include "ocropus.h"
 #include "glinerec.h"
 #include "bookstore.h"
+#include "linesegs.h"
 
 namespace glinerec {
     IRecognizeLine *make_Linerec();
@@ -54,7 +55,6 @@ namespace ocropus {
     param_bool retrain_threshold("retrain_threshold",100,"only retrain on characters with a cost lower than this");
     param_int nrecognize("nrecognize",1000000,"maximum number of lines to predict (for quick testing)");
     param_int ntrain("ntrain",10000000,"max number of training examples");
-    param_string eval_flags("eval_flags","space","which features to ignore during evaluation");
     param_bool continue_partial("continue_partial",0,"don't compute outputs that already exist");
     param_bool old_csegs("old_csegs",0,"use old csegs (spaces are not counted)");
     param_float maxheight("max_line_height",300,"maximum line height");
@@ -69,8 +69,8 @@ namespace ocropus {
     param_string cmodel("cmodel",DEFAULT_DATA_DIR "default.model","character model used for recognition");
     param_string lmodel("lmodel",DEFAULT_DATA_DIR "default.fst","language model used for recognition");
 
-    // these are used for the single page recognizer
-    param_int beam_width("beam_width", 100, "number of nodes in a beam generation");
+
+    param_string eval_flags("eval_flags","space","which features to ignore during evaluation");
 
     void cleanup_for_eval(iucstring &s) {
         bool space = strflag(eval_flags,"space");
@@ -89,6 +89,9 @@ namespace ocropus {
         }
         s = result;
     }
+
+    // these are used for the single page recognizer
+    param_int beam_width("beam_width", 100, "number of nodes in a beam generation");
 
     void chomp_extension(char *s) {
         char *p = s+strlen(s);
@@ -109,54 +112,6 @@ namespace ocropus {
         str.toNustring(output);
     }
 
-    static void store_costs(const char *base, floatarray &costs) {
-        iucstring s;
-        s = base;
-        s.append(".costs");
-        stdio stream(s,"w");
-        for(int i=0;i<costs.length();i++) {
-            fprintf(stream,"%d %g\n",i,costs(i));
-        }
-    }
-
-    static void rseg_to_cseg(intarray &cseg, intarray &rseg, intarray &ids) {
-        intarray map(max(rseg) + 1);
-        map.fill(0);
-        int color = 0;
-        for(int i = 0; i < ids.length(); i++) {
-            if(!ids[i]) continue;
-            color++;
-            int start = ids[i] >> 16;
-            int end = ids[i] & 0xFFFF;
-            if(start > end)
-                throw "segmentation encoded in IDs looks seriously broken!\n";
-            if(start >= map.length() || end >= map.length())
-                throw "segmentation encoded in IDs doesn't fit!\n";
-            for(int j = start; j <= end; j++)
-                map[j] = color;
-        }
-        cseg.makelike(rseg);
-        for(int i = 0; i < cseg.length1d(); i++)
-            cseg.at1d(i) = map[rseg.at1d(i)];
-    }
-
-    static void rseg_to_cseg(const char *base, intarray &ids) {
-        iucstring s;
-        s = base;
-        s += ".rseg.png";
-        intarray rseg;
-        read_image_packed(rseg, s.c_str());
-        make_line_segmentation_black(rseg);
-        intarray cseg;
-
-        rseg_to_cseg(cseg, rseg, ids);
-
-        ::make_line_segmentation_white(cseg);
-        s = base;
-        s += ".cseg.png";
-        write_image_packed(s, cseg);
-    }
-
     void linerec_load(autodel<IRecognizeLine> &linerec,const char *cmodel) {
         linerec = glinerec::make_Linerec();
         try {
@@ -171,86 +126,6 @@ namespace ocropus {
                 throwf("%s: failed to load character model",(const char*)cmodel);
             }
         }
-    }
-
-    // Read a line and make an FST out of it.
-    void read_transcript(IGenericFst &fst, const char *path) {
-        nustring gt;
-        read_utf8_line(gt, stdio(path, "r"));
-        fst_line(fst, gt);
-    }
-
-    // Reads a "ground truth" FST (with extra spaces) by basename
-    void read_gt(IGenericFst &fst, const char *base) {
-        strbuf gt_path;
-        gt_path = base;
-        gt_path += ".gt.txt";
-
-        read_transcript(fst, gt_path);
-        for(int i = 0; i < fst.nStates(); i++)
-            fst.addTransition(i, i, 0, 0, ' ');
-    }
-
-
-    void hocr_dump_preamble(FILE *output) {
-        fprintf(output, "<!DOCTYPE html\n");
-        fprintf(output, "   PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\n");
-        fprintf(output, "   http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
-    }
-
-    void hocr_dump_head(FILE *output) {
-        fprintf(output, "<head>\n");
-        fprintf(output, "<meta name=\"ocr-capabilities\" content=\"ocr_line ocr_page\" />\n");
-        fprintf(output, "<meta name=\"ocr-langs\" content=\"en\" />\n");
-        fprintf(output, "<meta name=\"ocr-scripts\" content=\"Latn\" />\n");
-        fprintf(output, "<meta name=\"ocr-microformats\" content=\"\" />\n");
-        fprintf(output, "<meta http-equiv=\"Content-Type\" content=\"text/html;charset=utf-8\" />");
-        fprintf(output, "<title>OCR Output</title>\n");
-        fprintf(output, "</head>\n");
-    }
-
-    void hocr_dump_line(FILE *output, const char *path,
-                        RegionExtractor &r, int index, int h) {
-        fprintf(output, "<span class=\"ocr_line\"");
-        if(index > 0 && index < r.length()) {
-            fprintf(output, " title=\"bbox %d %d %d %d\"",
-                        r.x0(index), h - 1 - r.y0(index),
-                        r.x1(index), h - 1 - r.y1(index));
-        }
-        fprintf(output, ">\n");
-        nustring s;
-        read_utf8_line(s, stdio(path, "r"));
-        write_utf8(output, s);
-        fprintf(output, "</span>");
-    }
-
-    void hocr_dump_page(FILE *output, const char *path) {
-        iucstring pattern;
-
-        sprintf(pattern,"%s.pseg.png",path);
-        if(!file_exists(pattern))
-            sprintf(pattern,"%s.seg.png",path); // temporary backwards compatibility
-        intarray page_seg;
-        read_image_packed(page_seg, pattern);
-        int h = page_seg.dim(1);
-
-        RegionExtractor regions;
-        regions.setPageLines(page_seg);
-        rectarray bboxes;
-
-        sprintf(pattern,"%s/[0-9][0-9][0-9][0-9].txt",path);
-        // FIXME pathname dependency; replace with IBookStore object
-        Glob lines(pattern);
-        fprintf(output, "<div class=\"ocr_page\">\n");
-        for(int i=0;i<lines.length();i++) {
-            // we have to figure out line number from the path because
-            // the loop index is unreliable: it skips lines that didn't work
-            pattern = lines(i);
-            pattern.erase(pattern.length() - 4); // cut .txt
-            int line_index = atoi(pattern.substr(pattern.length() - 4));
-            hocr_dump_line(output, lines(i), regions, line_index, h);
-        }
-        fprintf(output, "</div>\n");
     }
 
     int main_book2pages(int argc,char **argv) {
@@ -374,7 +249,7 @@ namespace ocropus {
                         nustring_convert(predicted,str);
                         debugf("transcript","%04d %04d\t%s\n",page,line,predicted.c_str());
 #pragma omp critical
-                        if(save_fsts) bookstore->putLine(predicted,page,line);
+                        if(save_fsts) bookstore->putLine(str,page,line);
                     } catch(const char *error) {
                         debugf("info","ERROR in bestpath: %s\n",error);
                         if(abort_on_error) abort();
@@ -385,9 +260,12 @@ namespace ocropus {
                         continue;
                     }
 
-                    iucstring truth;
+                    nustring nutruth;
 #pragma omp critical
-                    if(bookstore->getLine(truth,page,line,"gt")) try {
+                    if(bookstore->getLine(nutruth,page,line,"gt")) try {
+                        // FIXME not unicode clean
+                        iucstring truth;
+                        nustring_convert(truth,nutruth);
                         cleanup_for_eval(truth);
                         cleanup_for_eval(predicted);
                         debugf("truth","%04d %04d\t%s\n",page,line,truth.c_str());
@@ -506,276 +384,6 @@ namespace ocropus {
         return 0;
     }
 
-    int main_evaluate(int argc,char **argv) {
-        if(argc!=2) throw "usage: ... dir";
-        iucstring s;
-        sprintf(s, "%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
-        Glob files(s);
-        float total = 0.0, tchars = 0, pchars = 0, lines = 0;
-        for(int index=0;index<files.length();index++) {
-            if(index%1000==0)
-                debugf("info","%s (%d/%d)\n",files(index),index,files.length());
-
-            iucstring base = files(index);
-            base.erase(base.find("."));
-
-            iucstring truth;
-            try {
-                fgets(truth, stdio(files(index),"r"));
-            } catch(const char *error) {
-                continue;
-            }
-
-            iucstring s = base + ".txt";
-            iucstring predicted;
-            try {
-                fgets(predicted, stdio(s,"r"));
-            } catch(const char *error) {
-                continue;
-            }
-
-            cleanup_for_eval(truth);
-            cleanup_for_eval(predicted);
-            nustring ntruth,npredicted;
-            truth.toNustring(ntruth);
-            predicted.toNustring(npredicted);
-            float dist = edit_distance(ntruth,npredicted);
-
-            total += dist;
-            tchars += truth.length();
-            pchars += predicted.length();
-            lines++;
-
-            debugf("transcript",
-                    "%g\t%s\t%s\t%s\n",
-                    dist,
-                    files(index),
-                    truth.c_str(),
-                    predicted.c_str());
-        }
-        printf("rate %g total_error %g true_chars %g predicted_chars %g lines %g\n",
-                total/float(tchars),total,tchars,pchars,lines);
-        return 0;
-    }
-
-    int main_evalconf(int argc,char **argv) {
-        if(argc!=2) throw "usage: ... dir";
-        iucstring s;
-        sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
-        Glob files(s);
-        float total = 0.0, tchars = 0, pchars = 0, lines = 0;
-        intarray confusion(256,256); // FIXME/tmb limited to 256x256, replace with int2hash
-        confusion = 0;
-        for(int index=0;index<files.length();index++) {
-            if(index%1000==0)
-                debugf("info","%s (%d/%d)\n",files(index),index,files.length());
-
-            iucstring base = files(index);
-            base.erase(base.length()-7);
-
-            iucstring truth;
-            try {
-                fgets(truth, stdio(files(index),"r"));
-            } catch(const char *error) {
-                continue;
-            }
-
-            iucstring s = base + ".txt";
-            iucstring predicted;
-            try {
-                fgets(predicted, stdio(s,"r"));
-            } catch(const char *error) {
-                continue;
-            }
-
-            cleanup_for_eval(truth);
-            cleanup_for_eval(predicted);
-            nustring ntruth,npredicted;
-            truth.toNustring(ntruth);
-            predicted.toNustring(npredicted);
-            float dist = edit_distance(confusion,ntruth,npredicted,1,1,1);
-
-            total += dist;
-            tchars += truth.length();
-            pchars += predicted.length();
-            lines++;
-
-            debugf("transcript",
-                    "%g\t%s\t%s\t%s\n",
-                    dist,
-                    files(index),
-                    truth.c_str(),
-                    predicted.c_str());
-        }
-        intarray list(65536,3); // FIXME/tmb replace with hash table when we move to Unicode
-        int row = 0;
-        for(int i=0;i<confusion.dim(0);i++) {
-            for(int j=0;j<confusion.dim(1);j++) {
-                if(confusion(i,j)==0) continue;
-                if(i==j) continue;
-                list(row,0) = confusion(i,j);
-                list(row,1) = i;
-                list(row,2) = j;
-                row++;
-            }
-        }
-        intarray perm;
-        rowsort(perm,list);
-        for(int k=0;k<perm.length();k++) {
-            int index = perm(k);
-            int count = list(index,0);
-            int i = list(index,1);
-            int j = list(index,2);
-            if(count==0) continue;
-            printf("%6d   %3d %3d   %c %c\n",
-                    count,i,j,
-                    i==0?'_':(i>32&&i<128)?i:'?',
-                    j==0?'_':(j>32&&j<128)?j:'?');
-        }
-        return 0;
-    }
-
-    int main_findconf(int argc,char **argv) {
-        if(argc!=4) throw "usage: ... dir from to";
-        int from,to;
-        if(sscanf(argv[2],"%d",&from)<1) {
-            char c;
-            sscanf(argv[2],"%c",&c);
-            from = c;
-        }
-        if(sscanf(argv[3],"%d",&to)<1) {
-            char c;
-            sscanf(argv[3],"%c",&c);
-            to = c;
-        }
-        iucstring s;
-        sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
-        Glob files(s);
-        intarray confusion(256,256);
-        for(int index=0;index<files.length();index++) {
-            iucstring base = files(index);
-            base.erase(base.length()-7);
-
-
-            iucstring truth;
-            try {
-                fgets(truth, stdio(files(index),"r"));
-            } catch(const char *error) {
-                continue;
-            }
-
-            iucstring s = base + ".txt";
-            iucstring predicted;
-            try {
-                fgets(predicted, stdio(s,"r"));
-            } catch(const char *error) {
-                continue;
-            }
-
-            cleanup_for_eval(truth);
-            cleanup_for_eval(predicted);
-            nustring ntruth,npredicted;
-            truth.toNustring(ntruth);
-            predicted.toNustring(npredicted);
-            confusion = 0;
-            edit_distance(confusion,ntruth,npredicted,1,1,1);
-            if(confusion(from,to)>0) {
-                printf("%s.png\n",base.c_str());
-            }
-        }
-        return 0;
-    }
-    int main_evalfiles(int argc,char **argv) {
-        if(argc!=3) throw "usage: ... file1 file2";
-        iucstring truth;
-        fread(truth, stdio(argv[1],"r"));
-        iucstring predicted;
-        fread(predicted, stdio(argv[2],"r"));
-
-        cleanup_for_eval(truth);
-        cleanup_for_eval(predicted);
-        nustring ntruth,npredicted;
-        truth.toNustring(ntruth);
-        predicted.toNustring(npredicted);
-
-        float dist = edit_distance(ntruth,npredicted);
-        printf("dist %g tchars %d pchars %d\n",
-                dist,truth.length(),predicted.length());
-        return 0;
-    }
-
-    int main_fsts2bestpaths(int argc,char **argv) {
-        if(argc!=2) throw "usage: ... dir";
-        iucstring s;
-        sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst",argv[1]);
-        Glob files(s);
-        for(int index=0;index<files.length();index++) {
-            if(index%1000==0)
-                debugf("info","%s (%d/%d)\n",files(index),index,files.length());
-            autodel<IGenericFst> fst(make_OcroFST());
-            fst->load(files(index));
-            nustring str;
-            try {
-                fst->bestpath(str);
-                iucstring output = str;
-                debugf("transcript","%s\t%s\n",files(index),output.c_str());
-                iucstring base = files(index);
-                base.erase(base.length()-4);
-                base += ".txt";
-                fprintf(stdio(base,"w"),"%s",output.c_str());
-            } catch(const char *error) {
-                fprintf(stderr,"ERROR in bestpath: %s\n",error);
-                if(abort_on_error) abort();
-            }
-        }
-        return 0;
-    }
-
-    int main_cinfo(int argc,char **argv) {
-        autodel<IRecognizeLine> linerec(make_Linerec());
-        stdio model(argv[1],"r");
-        if(!model) {
-            fprintf(stderr,"%s: could not open\n",argv[1]);
-            return 1;
-        }
-        linerec_load(linerec,argv[1]);
-        if(!linerec) {
-            fprintf(stderr,"%s: load failed\n",argv[1]);
-        } else {
-            linerec->info();
-        }
-        return 0;
-    }
-
-    int main_params(int argc,char **argv) {
-        if(argc<2) throwf("usage: %s classname\n",argv[0]);
-        ocropus::global_verbose_params = "";
-        autodel<IComponent> result;
-        try {
-            result = component_construct(argv[1]);
-            printf("\n");
-            printf("name=%s\n",result->name());
-            printf("description=%s\n",result->description());
-        } catch(const char *err) {
-            fprintf(stderr,"%s: %s\n",argv[1],err);
-        }
-        return 0;
-    }
-
-    int main_components(int argc,char **argv) {
-        narray<const char *> names;
-        list_components(names);
-        for(int i=0;i<names.length();i++) {
-            autodel<IComponent> p;
-            p = component_construct(names[i]);
-            iucstring desc(p->description());
-            int where = desc.find("\n");
-            if(where!=desc.npos) desc = desc.substr(0,where);
-            if(desc.length()>60) desc = desc.substr(0,60);
-            printf("%-32s %-32s\n    %s\n",names[i],p->name(),desc.c_str());
-        }
-        return 0;
-    }
 
     int main_page(int argc,char **argv) {
         // create the segmenter
@@ -883,114 +491,6 @@ namespace ocropus {
         return 0;
     }
 
-    int main_fsts2text(int argc,char **argv) {
-        if(argc!=2) throw "usage: lmodel=... ocropus fsts2text dir";
-        autodel<OcroFST> langmod(make_OcroFST());
-        try {
-            langmod->load(lmodel);
-        } catch(const char *s) {
-            throwf("%s: failed to load (%s)",(const char*)lmodel,s);
-        } catch(...) {
-            throwf("%s: failed to load language model",(const char*)lmodel);
-        }
-        iucstring s;
-        sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst",argv[1]);
-        Glob files(s);
-#pragma omp parallel for schedule(dynamic,20)
-        for(int index=0;index<files.length();index++) {
-            if(index%1000==0)
-                debugf("info","%s (%d/%d)\n",files(index),index,files.length());
-            autodel<OcroFST> fst(make_OcroFST());
-            fst->load(files(index));
-            nustring str;
-            try {
-                intarray v1;
-                intarray v2;
-                intarray in;
-                intarray out;
-                floatarray costs;
-                beam_search(v1, v2, in, out, costs,
-                            *fst, *langmod, beam_width);
-                double cost = sum(costs);
-                remove_epsilons(str, out);
-                if(cost < 1e10) {
-                    iucstring output;
-                    nustring_convert(output,str);
-                    debugf("transcript","%s\t%s\n",files(index), output.c_str());
-                    iucstring base;
-                    base = files(index);
-                    base.erase(base.length()-4);
-                    try {
-                        rseg_to_cseg(base, in);
-                        store_costs(base, costs);
-                    } catch(const char *err) {
-                        fprintf(stderr,"ERROR in cseg reconstruction: %s\n",err);
-                        if(abort_on_error) abort();
-                    }
-                    base += ".txt";
-                    fprintf(stdio(base,"w"),"%s\n",output.c_str());
-                } else {
-                    debugf("info","%s\t%f\n",files(index), cost);
-                }
-            } catch(const char *error) {
-                fprintf(stderr,"ERROR in bestpath: %s\n",error);
-                if(abort_on_error) abort();
-            }
-        }
-
-        return 0;
-    }
-
-
-    int main_align(int argc,char **argv) {
-        if(argc!=2) throw "usage: ... dir";
-        iucstring s;
-        s = argv[1];
-        s += "/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst";
-        Glob files(s);
-        for(int index=0;index<files.length();index++) {
-            if(index%1000==0)
-                debugf("info","%s (%d/%d)\n",files(index),index,files.length());
-
-            iucstring base;
-            base = files(index);
-            base.erase(base.length()-4);
-
-            autodel<OcroFST> gt_fst(make_OcroFST());
-            read_gt(*gt_fst, base);
-
-            autodel<OcroFST> fst(make_OcroFST());
-            fst->load(files(index));
-            nustring str;
-            intarray v1;
-            intarray v2;
-            intarray in;
-            intarray out;
-            floatarray costs;
-            try {
-                beam_search(v1, v2, in, out, costs,
-                            *fst, *gt_fst, beam_width);
-                // recolor rseg to cseg
-            } catch(const char *error) {
-                fprintf(stderr,"ERROR in bestpath: %s\n",error);
-                if(abort_on_error) abort();
-            }
-            try {
-                rseg_to_cseg(base, in);
-                store_costs(base, costs);
-                debugf("dcost","--------------------------------\n");
-                for(int i=0;i<out.length();i++) {
-                    debugf("dcost","%3d %10g %c\n",i,costs(i),out(i));
-                }
-            } catch(const char *err) {
-                fprintf(stderr,"ERROR in cseg reconstruction: %s\n",err);
-                if(abort_on_error) abort();
-            }
-        }
-        return 0;
-    }
-
-
     int main_loadseg(int argc,char **argv) {
         if(argc!=3) throw "usage: ... model dir";
         dinit(512,512);
@@ -1015,72 +515,59 @@ namespace ocropus {
         dinit(512,512);
         autodel<IRecognizeLine> linerecp(make_Linerec());
         IRecognizeLine &linerec = *linerecp;
-        struct stat sbuf;
-        if(argv[1][0]!='.' && !stat(argv[1],&sbuf))
-            throw "output model file already exists; please remove first";
-        stdio lines(argv[2],"r");
-        char base[10000],filename[10000],current[10000];
+        autodel<IBookStore> bookstore;
+        make_component(bookstore,cbookstore);
+        bookstore->setPrefix(argv[2]);
         intarray cseg;
         bytearray image;
         int total_chars = 0;
         int total_lines = 0;
         linerec.startTraining("");
-        iucstring pattern;
-        if(retrain)
-            sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].cseg.png",argv[2]);
-        else
-            sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].cseg.gt.png",argv[2]);
-        debugf("info","%s\n",pattern.c_str());
-        Glob files(pattern);
-        if(files.length()<1) throw "no pages found";
+        iucstring cseg_variant = "cseg.gt";
+        iucstring text_variant = "gt";
+        if(retrain) {
+            cseg_variant = "cseg";
+            text_variant = "";
+        }
         int next = 1000;
         floatarray costs;
-        for(int index=0;index<files.length();index++) {
+        for(int pageno=0;pageno<bookstore->numberOfPages();pageno++) for(int lineno=0;lineno<bookstore->linesOnPage(pageno);lineno++) {
             try {
-                strcpy(base,files(index));
-                chomp_extension(base);
-
-                strcpy(filename,base);
-                if(retrain)
-                    strcat(filename,".cseg.png");
-                else
-                    strcat(filename,".cseg.gt.png");
-                strcpy(current,filename);
-                read_line_segmentation(cseg,stdio(filename,"r"));
+                if(!bookstore->getLine(cseg,pageno,lineno,cseg_variant)) {
+                    debugf("info","%04d %04d: no such cseg\n",pageno,lineno);
+                    continue;
+                }
+                make_line_segmentation_black(cseg);
+                CHECK(cseg.length()>100);
                 image.makelike(cseg);
                 for(int i=0;i<image.length1d();i++)
                     image.at1d(i) = 255*!cseg.at1d(i);
-
 
                 // read the ground truth segmentation
 
                 nustring nutranscript;
                 {
-                    strcpy(filename,base);
-                    if(retrain)
-                        strcat(filename,".txt");
-                    else
-                        strcat(filename,".gt.txt");
-                    // FIXME this doesn't work with Unicode characters
+                    bookstore->getLine(nutranscript,pageno,lineno,text_variant);
+                    // FIXME this is an awful hack and won't work with unicode
                     char transcript[10000];
-                    stdio line(filename,"r");
-                    CHECK_ARG(fgets(transcript,sizeof(transcript),line)>0);
-                    line.close();
+                    for(int i=0;i<nutranscript.length();i++)
+                        transcript[i] = nutranscript[i].ord();
+                    transcript[nutranscript.length()] = 0;
                     chomp(transcript);
                     if(old_csegs) remove_spaces(transcript);
                     nutranscript = transcript;
-                    if(nutranscript.length()!=max(cseg))
+                    if(nutranscript.length()!=max(cseg)) {
+                        debugf("debug","transcript = '%s'\n",transcript);
                         throwf("transcript doesn't agree with cseg (transcript %d, cseg %d)",
                             nutranscript.length(),max(cseg));
+                    }
                 }
 
                 // for retraining, read the cost file
 
                 if(retrain) {
-                    strcpy(filename,base);
-                    strcat(filename,".costs");
                     costs.resize(10000) = 1e38;
-                    stdio stream(filename,"r");
+                    stdio stream(bookstore->path(pageno,lineno,"","costs"),"r");
                     int index;
                     float cost;
                     while(fscanf(stream,"%d %g\n",&index,&cost)==2) {
@@ -1115,7 +602,7 @@ namespace ocropus {
 
                 {
                     char *transcript = nutranscript.mallocUtf8Encode();
-                    debugf("transcript","%s (%d) [%2d,%2d] %s\n",filename,total_chars,
+                    debugf("transcript","%04d %04d (%d) [%2d,%2d] %s\n",pageno,lineno,total_chars,
                            nutranscript.length(),max(cseg),transcript);
                     free(transcript);
                 }
@@ -1139,7 +626,7 @@ namespace ocropus {
                     fprintf(stderr,"ERROR: (no details)\n");
                 }
             } catch(const char *msg) {
-                printf("%s: %s FIXME\n",filename,msg);
+                printf("%04d %04d: %s FIXME\n",pageno,lineno,msg);
             }
             if(total_chars>=ntrain) break;
         }
@@ -1161,28 +648,6 @@ namespace ocropus {
             // linerec.save(stream);
             return 0;
         } else throw "oops";
-    }
-
-    int main_buildhtml(int argc,char **argv) {
-        if(argc!=2) throw "usage: ... dir";
-        iucstring pattern;
-        sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]",argv[1]);
-        Glob pages(pattern);
-        FILE *output = stdout;
-        hocr_dump_preamble(output);
-        fprintf(output, "<html>\n");
-        hocr_dump_head(output);
-        fprintf(output, "<body>\n");
-        for(int i = 0; i < pages.length(); i++) {
-            hocr_dump_page(output, pages(i));
-        }
-        fprintf(output, "</body>\n");
-        fprintf(output, "</html>\n");
-        return 0;
-    }
-
-    int main_cleanhtml(int argc,char **argv) {
-        throw Unimplemented();
     }
 
     int main_bookstore(int argc,char **argv) {
@@ -1254,6 +719,19 @@ namespace ocropus {
 #endif
         exit(1);
     }
+
+    extern int main_buildhtml(int argc,char **argv);
+    extern int main_cleanhtml(int argc,char **argv);
+    extern int main_evaluate(int argc,char **argv);
+    extern int main_evalconf(int argc,char **argv);
+    extern int main_findconf(int argc,char **argv);
+    extern int main_evalfiles(int argc,char **argv);
+    extern int main_components(int argc,char **argv);
+    extern int main_cinfo(int argc,char **argv);
+    extern int main_params(int argc,char **argv);
+    extern int main_align(int argc,char **argv);
+    extern int main_fsts2text(int argc,char **argv);
+    extern int main_fsts2bestpaths(int argc,char **argv);
 
     int main_ocropus(int argc,char **argv) {
         try {
