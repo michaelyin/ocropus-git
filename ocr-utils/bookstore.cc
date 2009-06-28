@@ -8,6 +8,15 @@ using namespace iulib;
 using namespace ocropus;
 
 namespace {
+    void nustring_convert(iucstring &output,nustring &str) {
+        output.clear();
+        output.append(str);
+    }
+
+    void nustring_convert(nustring &output,iucstring &str) {
+        output.clear();
+        str.toNustring(output);
+    }
 }
 
 namespace ocropus {
@@ -92,11 +101,16 @@ namespace ocropus {
         }
 
         bool getPage(bytearray &image,int page,const char *variant=0) {
-            try {
-                read_image_gray(image,path(page,-1,variant,"png").c_str());
-            } catch(...) { // FIXME do better checking here
-                return false;
-            }
+            iucstring s = path(page,-1,variant,"png");
+            if(!file_exists(s)) return false;
+            read_image_gray(image,s);
+            return true;
+        }
+
+        bool getPage(intarray &image,int page,const char *variant=0) {
+            iucstring s = path(page,-1,variant,"png");
+            if(!file_exists(s)) return false;
+            read_image_packed(image,s);
             return true;
         }
 
@@ -109,11 +123,16 @@ namespace ocropus {
         }
 
         bool getLine(bytearray &image,int page,int line,const char *variant=0) {
-            try {
-                read_image_gray(image,path(page,line,variant,"png").c_str());
-            } catch(...) { // FIXME do better checking here
-                return false;
-            }
+            iucstring s = path(page,line,variant,"png");
+            if(!file_exists(s)) return false;
+            read_image_gray(image,s);
+            return true;
+        }
+
+        bool getLine(intarray &image,int page,int line,const char *variant=0) {
+            iucstring s = path(page,line,variant,"png");
+            if(!file_exists(s)) return false;
+            read_image_packed(image,s);
             return true;
         }
 
@@ -129,14 +148,24 @@ namespace ocropus {
             write_image_gray(stream,image,"png");
         }
 
-        bool getLine(iucstring &s,int page,int line,const char *variant=0) {
+        void putLine(intarray &image,int page,int line,const char *variant=0) {
+            maybeMakeDirectory(page);
+            stdio stream(open("w",page,line,variant,"png"));
+            write_image_packed(stream,image,"png");
+        }
+
+        bool getLine(nustring &str,int page,int line,const char *variant=0) {
+            iucstring s;
             stdio stream(open("r",page,line,variant,"txt"),true);
             if(!stream) return false;
             fread(s,stream);
+            nustring_convert(str,s);
             return true;
         }
 
-        void putLine(iucstring &s,int page,int line,const char *variant=0) {
+        void putLine(nustring &str,int page,int line,const char *variant=0) {
+            iucstring s;
+            nustring_convert(s,str);
             maybeMakeDirectory(page);
             stdio stream(open("w",page,line,variant,"txt"));
             fwrite(s,stream);

@@ -1,0 +1,6 @@
+cuts lines or words from an jsotr data set 
+then recognizes, alignes and trains these lines or words 
+
+usage:
+    train-<lines|words>.sh <jstor-data-dir> <model-for-alignment> <output-dir-for-images> <new-model>
+
