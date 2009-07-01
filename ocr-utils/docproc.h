@@ -48,24 +48,35 @@ namespace ocropus {
 
     int average_on_border(bytearray &a);
 
-    inline bool background_seems_black(bytearray &a) {
-        return average_on_border(a) <= (min(a) + max(a) / 2);
-    }
-
-    inline bool background_seems_white(bytearray &a) {
-        return average_on_border(a) >= (min(a) + max(a) / 2);
-    }
-
     void optional_check_background_is_darker(bytearray &a);
 
     void optional_check_background_is_lighter(bytearray &a);
 
+    // These are not reliable, so don't use them.  They will eventually
+    // disappear.  Use the optional_check_... functions above for sanity
+    // checks.
+
+    inline bool background_seems_black(bytearray &a) DEPRECATED;
+    inline bool background_seems_black(bytearray &a) {
+        return average_on_border(a) <= (min(a) + max(a) / 2);
+    }
+
+    inline bool background_seems_white(bytearray &a) DEPRECATED;
+    inline bool background_seems_white(bytearray &a) {
+        return average_on_border(a) >= (min(a) + max(a) / 2);
+    }
+
+    // These are not reliable, so don't use them.  They will eventually
+    // disappear.
+
+    inline void make_background_white(bytearray &a) DEPRECATED;
     inline void make_background_white(bytearray &a) {
-        if(!background_seems_white(a))
+        if(average_on_border(a) >= (min(a) + max(a) / 2))
             invert(a);
     }
+    inline void make_background_black(bytearray &a) DEPRECATED;
     inline void make_background_black(bytearray &a) {
-        if(!background_seems_black(a))
+        if(average_on_border(a) <= (min(a) + max(a) / 2))
             invert(a);
     }
 

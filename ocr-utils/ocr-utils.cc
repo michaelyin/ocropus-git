@@ -30,7 +30,7 @@ using namespace iulib;
 using namespace colib;
 
 namespace ocropus {
-    param_bool bgcheck("bgcheck", true, "abort on detecting an inverted image");
+    param_bool bgcheck("bgcheck", false, "abort on detecting an inverted image");
 
     void invert(bytearray &a) {
         int n = a.length1d();
@@ -666,12 +666,15 @@ namespace ocropus {
 
     void optional_check_background_is_darker(colib::bytearray &a) {
         if(bgcheck) {
-            CHECK_CONDITION(background_seems_black(a));
+            CHECK_CONDITION2(average_on_border(a) <= (min(a) + max(a) / 2),
+                             "some image failed an internal sanity check; disable this check with bgcheck=0");
+
         }
     }
     void optional_check_background_is_lighter(colib::bytearray &a) {
         if(bgcheck) {
-            CHECK_CONDITION(background_seems_white(a));
+            CHECK_CONDITION2(average_on_border(a) >= (min(a) + max(a) / 2),
+                             "some image failed an internal sanity check; disable this check with bgcheck=0");
         }
     }
 
