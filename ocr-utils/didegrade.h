@@ -38,5 +38,7 @@ namespace ocropus {
                  double sensitivity_sigma = .04,
                  double threshold_mean = .4,
                  double threshold_sigma = .04);
+
+    ICleanupGray *make_Degradation();
 };
 #endif

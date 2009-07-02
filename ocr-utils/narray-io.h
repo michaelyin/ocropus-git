@@ -226,9 +226,9 @@ namespace ocropus {
     inline void bin_append(colib::bytearray &a, const char *path) {
         bin_append(path, a);
     }
-
-    void bin_write_nustring(FILE *f, colib::nustring &a);
-    void bin_read_nustring(FILE *f, colib::nustring &a);
+// -- not used and deprecated -
+//    void bin_write_nustring(FILE *f, colib::nustring &a);
+//    void bin_read_nustring(FILE *f, colib::nustring &a);
 
     /// Read a line from the file, allocating memory with malloc().
     char *read_line_malloc(FILE *f);

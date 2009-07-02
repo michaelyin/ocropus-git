@@ -163,22 +163,22 @@ namespace ocropus {
         write_raw(a, f);
     }
 
-
-    void bin_write_nustring(FILE *f, nustring &a) {
-        intarray dims;
-        get_dims(dims, a);
-        bin_write_1d(f, dims);
-        for(int i = 0; i < a.length1d(); i++)
-            write_int32(a.at1d(i).ord(), f);
-    }
-
-    void bin_read_nustring(FILE *f, nustring &a) {
-        intarray dims;
-        bin_read_1d(f, dims);
-        set_dims(a, dims);
-        for(int i = 0; i < a.length1d(); i++)
-            a.at1d(i) = nuchar(read_int32(f));
-    }
+// -- not used and deprecated -
+//    void bin_write_nustring(FILE *f, nustring &a) {
+//        intarray dims;
+//        get_dims(dims, a);
+//        bin_write_1d(f, dims);
+//        for(int i = 0; i < a.length1d(); i++)
+//            write_int32(a.at1d(i).ord(), f);
+//    }
+//
+//    void bin_read_nustring(FILE *f, nustring &a) {
+//        intarray dims;
+//        bin_read_1d(f, dims);
+//        set_dims(a, dims);
+//        for(int i = 0; i < a.length1d(); i++)
+//            a.at1d(i) = nuchar(read_int32(f));
+//    }
 
     void write_utf8(FILE *f, nustring &a) {
         char *p = a.newUtf8Encode();
