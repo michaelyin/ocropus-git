@@ -154,6 +154,13 @@ namespace ocropus {
             write_image_packed(stream,image,"png");
         }
 
+        bool getLine(ustrg &str,int page,int line,const char *variant=0) {
+            stdio stream(open("r",page,line,variant,"txt"),true);
+            if(!stream) return false;
+            freadUTF8(str,stream);
+            return true;
+        }
+
         bool getLine(nustring &str,int page,int line,const char *variant=0) {
             iucstring s;
             stdio stream(open("r",page,line,variant,"txt"),true);
@@ -161,6 +168,12 @@ namespace ocropus {
             fread(s,stream);
             nustring_convert(str,s);
             return true;
+        }
+
+        void putLine(ustrg &str,int page,int line,const char *variant=0) {
+            maybeMakeDirectory(page);
+            stdio stream(open("w",page,line,variant,"txt"));
+            fwriteUTF8(str,stream);
         }
 
         void putLine(nustring &str,int page,int line,const char *variant=0) {

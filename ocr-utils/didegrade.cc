@@ -1,24 +1,24 @@
 // Copyright 2007 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
-// 
+//
 // You may not use this file except under the terms of the accompanying license.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License"); you
 // may not use this file except in compliance with the License. You may
 // obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
-// Project: 
+//
+// Project:
 // File: didegrade.cc
-// Purpose: 
+// Purpose:
 // Responsible: mezhirov
-// Reviewer: 
-// Primary Repository: 
+// Reviewer:
+// Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
 
@@ -31,7 +31,7 @@ using namespace iulib;
 using namespace ocropus;
 
 namespace {
-    Logger logger("degrade");    
+    Logger logger("degrade");
 
     double rand_uniform() {
         return double(rand())/double(RAND_MAX);
@@ -41,7 +41,7 @@ namespace {
     // generate a number approx N(mean,sigma) using the Box-Muller Transform
     float rand_gauss(float mean, float sigma) {
         float r,phi;
-        if(sigma == 0) 
+        if(sigma == 0)
             return 0;
         do {
             r = rand_uniform();
@@ -56,7 +56,7 @@ namespace {
         for(int i = 0; i < result.length1d(); i++)
             result.at1d(i) = alpha * (2 * rand_uniform() - 1);
         gauss2d(result, sigma, sigma);
-    }    
+    }
 
     void elastic_transform(floatarray &out, floatarray &in,
                            float alpha = 6, float sigma = 4) {
@@ -82,7 +82,7 @@ namespace {
                 float in_01 = in(x0,y1);
                 float in_10 = in(x1,y0);
                 float in_11 = in(x1,y1);
-                out(x,y)=co_00*in_00 + co_01*in_01 + co_10*in_10 + co_11*in_11; 
+                out(x,y)=co_00*in_00 + co_01*in_01 + co_10*in_10 + co_11*in_11;
             }
         }
         if(logger.enabled) {
@@ -97,7 +97,7 @@ namespace {
         int x1,x2,y1,y2;
         float co_11,co_22,co_12,co_21;
         float val_11,val_22,val_12,val_21;
-        
+
         makelike(out, in);
         fill(out, 255);
 
@@ -118,16 +118,16 @@ namespace {
                 co_21 = (1-delta_x)*delta_y;
                 co_22 = delta_x*delta_y;
 
-                val_11 = in(x1,y1); 
+                val_11 = in(x1,y1);
                 val_12 = in(x1,y2);
                 val_21 = in(x2,y1);
                 val_22 = in(x2,y2);
 
-                out(i,j)=co_11*val_11 + co_21*val_21 + co_12*val_12 + co_22*val_22;     
+                out(i,j)=co_11*val_11 + co_21*val_21 + co_12*val_12 + co_22*val_22;
             }
         }
     }
-    
+
     void adjust_sensitivity(floatarray &a, double mean, double sigma) {
         for(int i = 0; i < a.length1d(); i++)
             a.at1d(i) -= 255 * rand_gauss(mean,sigma);
@@ -163,4 +163,27 @@ namespace ocropus {
         copy(image, a);
     }
 
+    struct Degradation : ICleanupGray {
+        Degradation() {
+             pdef("jitter_mean", 0.2, "jitter mean");
+             pdef("jitter_sigma", 0.1, "jitter sigma");
+             pdef("sensitivity_mean", 0.125, "sensitivity mean");
+             pdef("sensitivity_sigma", 0.4, "sensitivity sigma");
+             pdef("threshold_mean", 0.4, "threshold mean");
+             pdef("threshold_sigma", 0.04, "threshold sigma");
+         }
+         const char *name() {
+             return "degradation";
+         }
+         void cleanup(bytearray& dstImg, bytearray& srcImg) {
+             dstImg.copy(srcImg);
+             degrade(dstImg,
+                     pgetf("jitter_mean"), pgetf("jitter_sigma"),
+                     pgetf("sensitivity_mean"), pgetf("sensitivity_sigma"),
+                     pgetf("threshold_mean"), pgetf("threshold_sigma"));
+         }
+     };
+     ICleanupGray *make_Degradation() {
+         return new Degradation();
+     }
 }
