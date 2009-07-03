@@ -1,0 +1,14 @@
+renders a text file into a book structure and trains a model on it
+
+usage:
+       train.sh <text-file> [output-directory] [book-name]
+
+if the output directory is not specified, the current working directory will be used
+if the bookname is not specified, the name of the text file will be used
+
+by explicitly using the command line tool ocrogenft more options like dpi,
+font type oder the numnber of lines per page are adjustable
+afterwards "ocropus trainseg" can be used to train a model on it
+
+for a simple example, just run glass.sh without any arguments
+
