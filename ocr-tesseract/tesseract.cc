@@ -126,8 +126,8 @@ namespace {
     void fill_lattice(IGenericFst &lattice, nustring &text) {
         floatarray costs;
         intarray ids;
-        makelike(costs, text);
-        makelike(ids, text);
+        costs.resize(text.length());
+        ids.resize(text.length());
         for(int i = 0; i < text.length(); i++) {
             costs[i] = 1;
             ids[i] = i + 1;
@@ -728,9 +728,9 @@ static struct sigaction SIGSEGV_old;
 
         tess->tesseract_recognize_blockwise_and_split_to_lines(text, bboxes, costs, gray, pageseg);
         for(int zone = 0; zone < text.length(); zone++) {
-            char *s = text[zone].newUtf8Encode();
-            printf("[zone %d] %s\n", zone + 1, s);
-            delete[] s;
+            utf8strg utf8;
+            text[zone].utf8EncodeTerm(utf8);
+            printf("[zone %d] %s", zone + 1, utf8.c_str());
         }
     }
 

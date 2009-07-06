@@ -410,9 +410,9 @@ namespace glinerec {
         }
 
         void addTrainingLine(intarray &cseg,bytearray &image,nustring &tr) {
-            if(image.dim(1)>pgetf("maxheight")) 
+            if(image.dim(1)>pgetf("maxheight"))
                 throwf("input line too high (%d x %d)",image.dim(0),image.dim(1));
-            if(image.dim(1)*1.0/image.dim(0)>pgetf("maxaspect")) 
+            if(image.dim(1)*1.0/image.dim(0)>pgetf("maxaspect"))
                 throwf("input line has bad aspect ratio (%d x %d)",image.dim(0),image.dim(1));
             bool use_reject = pgetf("use_reject");
             dsection("training");
@@ -420,7 +420,7 @@ namespace glinerec {
             current_recognizer_ = this;
 
             // check and set the transcript
-            transcript.copy(tr);
+            transcript = tr;
             setLine(image);
             for(int i=0;i<transcript.length();i++)
                 CHECK_ARG(transcript(i).ord()>=32);
@@ -453,9 +453,9 @@ namespace glinerec {
                 int c = reject_class;
                 if(match>=0) {
                     if(match>=transcript.length()) {
-                        iucstring s;
-                        s.append(transcript);
-                        debugf("info","mismatch between transcript and cseg: \"%s\"\n",s.c_str());
+                        utf8strg utf8Transcript;
+                        transcript.utf8EncodeTerm(utf8Transcript);
+                        debugf("info","mismatch between transcript and cseg: \"%s\"\n",utf8Transcript.c_str());
                         continue;
                     } else {
                         c = transcript[match].ord();
@@ -528,9 +528,9 @@ namespace glinerec {
         }
 
         void recognizeLine(intarray &segmentation_,IGenericFst &result,bytearray &image_) {
-            if(image_.dim(1)>pgetf("maxheight")) 
+            if(image_.dim(1)>pgetf("maxheight"))
                 throwf("input line too high (%d x %d)",image_.dim(0),image_.dim(1));
-            if(image_.dim(1)*1.0/image_.dim(0)>pgetf("maxaspect")) 
+            if(image_.dim(1)*1.0/image_.dim(0)>pgetf("maxaspect"))
                 throwf("input line has bad aspect ratio (%d x %d)",image_.dim(0),image_.dim(1));
             bool use_reject = pgetf("use_reject");
             bytearray image;

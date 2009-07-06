@@ -304,17 +304,17 @@ namespace ocropus {
     }
     void Logger::operator()(const char *message, nustring &val) {
         if(!enabled) return;
-        char *buf = val.newUtf8Encode();
+        utf8strg utf8;
+        val.utf8EncodeTerm(utf8);
         putIndent();
-        fprintf(get_log()->file, "%s: nustring(\"%s\")<BR>\n", message, buf);
+        fprintf(get_log()->file, "%s: nustring(\"%s\")<BR>\n", message, utf8.c_str());
         fflush(get_log()->file);
-        delete[] buf;
     }
     void Logger::html(nustring &val) {
-        char *buf = val.newUtf8Encode();
-        fprintf(get_log()->file, "%s", buf);
+        utf8strg utf8;
+        val.utf8EncodeTerm(utf8);
+        fprintf(get_log()->file, "%s", utf8.c_str());
         fflush(get_log()->file);
-        delete[] buf;
     }
     void Logger::operator()(const char *description, rectangle &val) {
         if(!enabled) return;
@@ -328,11 +328,11 @@ namespace ocropus {
         if(!enabled) return;
         nustring s;
         val.bestpath(s);
-        char *buf = s.newUtf8Encode();
+        utf8strg utf8;
+        s.utf8EncodeTerm(utf8);
         putIndent();
-        fprintf(get_log()->file, "%s: ICharLattice(bestpath: \"%s\")<BR>\n", message, buf);
+        fprintf(get_log()->file, "%s: ICharLattice(bestpath: \"%s\")<BR>\n", message, utf8.c_str());
         fflush(get_log()->file);
-        delete[] buf;
     }
 
     void Logger::operator()(const char *description, void *ptr) {

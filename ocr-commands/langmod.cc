@@ -94,7 +94,7 @@ namespace ocropus {
     // Read a line and make an FST out of it.
     void read_transcript(IGenericFst &fst, const char *path) {
         nustring gt;
-        read_utf8_line(gt, stdio(path, "r"));
+        fgetsUTF8(gt, stdio(path, "r"));
         fst_line(fst, gt);
     }
 
@@ -189,9 +189,9 @@ namespace ocropus {
                 double cost = sum(costs);
                 remove_epsilons(str, out);
                 if(cost < 1e10) {
-                    iucstring output;
-                    nustring_convert(output,str);
-                    debugf("transcript","%s\t%s\n",files(index), output.c_str());
+                    utf8strg utf8Output;
+                    str.utf8EncodeTerm(utf8Output);
+                    debugf("transcript","%s\t%s\n",files(index), utf8Output.c_str());
                     iucstring base;
                     base = files(index);
                     base.erase(base.length()-4);
@@ -203,7 +203,7 @@ namespace ocropus {
                         if(abort_on_error) abort();
                     }
                     base += ".txt";
-                    fprintf(stdio(base,"w"),"%s\n",output.c_str());
+                    fprintf(stdio(base,"w"),"%s\n",utf8Output.c_str());
                 } else {
                     debugf("info","%s\t%f\n",files(index), cost);
                 }
@@ -229,12 +229,13 @@ namespace ocropus {
             nustring str;
             try {
                 fst->bestpath(str);
-                iucstring output = str;
-                debugf("transcript","%s\t%s\n",files(index),output.c_str());
+                utf8strg utf8Output;
+                str.utf8EncodeTerm(utf8Output);
+                debugf("transcript","%s\t%s\n",files(index),utf8Output.c_str());
                 iucstring base = files(index);
                 base.erase(base.length()-4);
                 base += ".txt";
-                fprintf(stdio(base,"w"),"%s",output.c_str());
+                fprintf(stdio(base,"w"),"%s",utf8Output.c_str());
             } catch(const char *error) {
                 fprintf(stderr,"ERROR in bestpath: %s\n",error);
                 if(abort_on_error) abort();

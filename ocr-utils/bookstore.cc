@@ -7,18 +7,6 @@ using namespace colib;
 using namespace iulib;
 using namespace ocropus;
 
-namespace {
-    void nustring_convert(iucstring &output,nustring &str) {
-        output.clear();
-        output.append(str);
-    }
-
-    void nustring_convert(nustring &output,iucstring &str) {
-        output.clear();
-        str.toNustring(output);
-    }
-}
-
 namespace ocropus {
     struct OldBookStore : IBookStore {
         // FIXME make this OMP safe: allow parallel accesses etc.
@@ -154,34 +142,21 @@ namespace ocropus {
             write_image_packed(stream,image,"png");
         }
 
-        bool getLine(ustrg &str,int page,int line,const char *variant=0) {
-            stdio stream(open("r",page,line,variant,"txt"),true);
-            if(!stream) return false;
-            freadUTF8(str,stream);
-            return true;
-        }
-
         bool getLine(nustring &str,int page,int line,const char *variant=0) {
-            iucstring s;
             stdio stream(open("r",page,line,variant,"txt"),true);
             if(!stream) return false;
-            fread(s,stream);
-            nustring_convert(str,s);
+            utf8strg utf8;
+            utf8.fread(stream);
+            str.utf8Decode(utf8);
             return true;
-        }
-
-        void putLine(ustrg &str,int page,int line,const char *variant=0) {
-            maybeMakeDirectory(page);
-            stdio stream(open("w",page,line,variant,"txt"));
-            fwriteUTF8(str,stream);
         }
 
         void putLine(nustring &str,int page,int line,const char *variant=0) {
-            iucstring s;
-            nustring_convert(s,str);
+            utf8strg utf8;
+            str.utf8Encode(utf8);
             maybeMakeDirectory(page);
             stdio stream(open("w",page,line,variant,"txt"));
-            fwrite(s,stream);
+            utf8.fwrite(stream);
         }
 
         int numberOfPages() {

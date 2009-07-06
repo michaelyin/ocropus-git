@@ -12,14 +12,12 @@ namespace ocropus {
         virtual bool getPage(intarray &image,int page,const char *variant=0) = 0;
         virtual bool getLine(bytearray &image,int page,int line,const char *variant=0) = 0;
         virtual bool getLine(intarray &s,int page,int line,const char *variant=0) = 0;
-        virtual bool getLine(ustrg &s,int page,int line,const char *variant=0) = 0;
         virtual bool getLine(nustring &s,int page,int line,const char *variant=0) = 0;
 
         virtual void putPage(bytearray &image,int page,const char *variant=0) = 0;
         virtual void putPage(intarray &image,int page,const char *variant=0) = 0;
         virtual void putLine(bytearray &image,int page,int line,const char *variant=0) = 0;
         virtual void putLine(intarray &image,int page,int line,const char *variant=0) = 0;
-        virtual void putLine(ustrg &s,int page,int line,const char *variant=0) = 0;
         virtual void putLine(nustring &s,int page,int line,const char *variant=0) = 0;
 
         virtual iucstring path(int page,int line=-1,const char *variant=0,const char *extension=0) = 0;

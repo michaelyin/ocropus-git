@@ -116,11 +116,11 @@ namespace ocropus {
         }
         /// Set the text of the given line
         void setText(colib::nustring &s, int index) {
-            colib::copy(line_texts[index], s);
+            line_texts[index].assign(s);
         }
         /// Get the text of the given line
         void text(colib::nustring &s, int index) {
-            colib::copy(s, line_texts[index]);
+            s.assign(line_texts[index]);
         }
         /// Set the cost array of the given line
         void setCosts(colib::floatarray &c, int index) {
