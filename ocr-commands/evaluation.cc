@@ -69,9 +69,8 @@ namespace ocropus {
 
             cleanup_for_eval(truth);
             cleanup_for_eval(predicted);
-            nustring ntruth,npredicted;
-            truth.toNustring(ntruth);
-            predicted.toNustring(npredicted);
+            nustring ntruth = truth;
+            nustring npredicted = predicted;
             float dist = edit_distance(ntruth,npredicted);
 
             total += dist;
@@ -123,9 +122,8 @@ namespace ocropus {
 
             cleanup_for_eval(truth);
             cleanup_for_eval(predicted);
-            nustring ntruth,npredicted;
-            truth.toNustring(ntruth);
-            predicted.toNustring(npredicted);
+            nustring ntruth = truth;
+            nustring npredicted = predicted;
             float dist = edit_distance(confusion,ntruth,npredicted,1,1,1);
 
             total += dist;
@@ -207,9 +205,8 @@ namespace ocropus {
 
             cleanup_for_eval(truth);
             cleanup_for_eval(predicted);
-            nustring ntruth,npredicted;
-            truth.toNustring(ntruth);
-            predicted.toNustring(npredicted);
+            nustring ntruth = truth;
+            nustring npredicted = predicted;
             confusion = 0;
             edit_distance(confusion,ntruth,npredicted,1,1,1);
             if(confusion(from,to)>0) {
@@ -227,9 +224,8 @@ namespace ocropus {
 
         cleanup_for_eval(truth);
         cleanup_for_eval(predicted);
-        nustring ntruth,npredicted;
-        truth.toNustring(ntruth);
-        predicted.toNustring(npredicted);
+        nustring ntruth = truth;
+        nustring npredicted = predicted;
 
         float dist = edit_distance(ntruth,npredicted);
         printf("dist %g tchars %d pchars %d\n",

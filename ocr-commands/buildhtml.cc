@@ -64,8 +64,8 @@ namespace ocropus {
         }
         fprintf(output, ">\n");
         nustring s;
-        read_utf8_line(s, stdio(path, "r"));
-        write_utf8(output, s);
+        fgetsUTF8(s, stdio(path, "r"));
+        fwriteUTF8(s, output);
         fprintf(output, "</span>");
     }
 

@@ -90,6 +90,24 @@ namespace ocropus {
         s = result;
     }
 
+    void cleanup_for_eval(nustring &s) {
+        bool space = strflag(eval_flags,"space");
+        bool scase = strflag(eval_flags,"case");
+        bool nonanum = strflag(eval_flags,"nonanum");
+        bool nonalpha = strflag(eval_flags,"nonalpha");
+        nustring result;
+        for(int i=0;i<s.length();i++) {
+            int c = s[i].ord();
+            if(space && c==' ') continue;
+            if(nonanum && !isalnum(c)) continue;
+            if(nonalpha && !isalpha(c)) continue;
+            if(c<32||c>127) continue;
+            if(scase && isupper(c)) c = tolower(c);
+            result.push_back(nuchar(c));
+        }
+        s = result;
+    }
+
     // these are used for the single page recognizer
     param_int beam_width("beam_width", 100, "number of nodes in a beam generation");
 
@@ -100,16 +118,6 @@ namespace ocropus {
             if(*p=='/') break;
             if(*p=='.') *p = 0;
         }
-    }
-
-    void nustring_convert(iucstring &output,nustring &str) {
-        output.clear();
-        output.append(str);
-    }
-
-    void nustring_convert(nustring &output,iucstring &str) {
-        output.clear();
-        str.toNustring(output);
     }
 
     void linerec_load(autodel<IRecognizeLine> &linerec,const char *cmodel) {
@@ -242,14 +250,14 @@ namespace ocropus {
                         }
                     }
 
-                    nustring str;
-                    iucstring predicted;
+                    nustring predicted;
                     try {
-                        result->bestpath(str);
-                        nustring_convert(predicted,str);
-                        debugf("transcript","%04d %04d\t%s\n",page,line,predicted.c_str());
+                        result->bestpath(predicted);
+                        utf8strg utf8Predicted;
+                        predicted.utf8EncodeTerm(utf8Predicted);
+                        debugf("transcript","%04d %04d\t%s\n",page,line,utf8Predicted.c_str());
 #pragma omp critical
-                        if(save_fsts) bookstore->putLine(str,page,line);
+                        if(save_fsts) bookstore->putLine(predicted,page,line);
                     } catch(const char *error) {
                         debugf("info","ERROR in bestpath: %s\n",error);
                         if(abort_on_error) abort();
@@ -260,19 +268,14 @@ namespace ocropus {
                         continue;
                     }
 
-                    nustring nutruth;
+                    nustring truth;
 #pragma omp critical
-                    if(bookstore->getLine(nutruth,page,line,"gt")) try {
+                    if(bookstore->getLine(truth,page,line,"gt")) try {
                         // FIXME not unicode clean
-                        iucstring truth;
-                        nustring_convert(truth,nutruth);
                         cleanup_for_eval(truth);
                         cleanup_for_eval(predicted);
                         debugf("truth","%04d %04d\t%s\n",page,line,truth.c_str());
-                        nustring ntruth,npredicted;
-                        nustring_convert(ntruth,truth);
-                        nustring_convert(npredicted,predicted);
-                        float dist = edit_distance(ntruth,npredicted);
+                        float dist = edit_distance(truth,predicted);
 #pragma omp atomic
                         eval_total += dist;
 #pragma omp atomic
@@ -426,9 +429,9 @@ namespace ocropus {
                             double cost = beam_search(str,*result,*langmod,beam_width);
                             if(cost>1e10) throw "beam search failed";
                         }
-                        iucstring output;
-                        nustring_convert(output,str);
-                        printf("%s\n",output.c_str());
+                        utf8strg utf8Output;
+                        str.utf8EncodeTerm(utf8Output);
+                        printf("%s\n",utf8Output.c_str());
                     } catch(const char *error) {
                         fprintf(stderr,"[%s]\n",error);
                     }
@@ -477,14 +480,12 @@ namespace ocropus {
                     printf(" %d",str(i).ord());
                 printf("\n");
             }
-            narray<char> s;
-            str.utf8Encode(s);
-            s.push(0);
-            printf("%s\t%s\n",argv[i],&s[0]);
-
+            utf8strg utf8;
+            str.utf8EncodeTerm(utf8);
+            printf("%s\t%s\n", argv[i], utf8.c_str());
             // log the string to the output file
             char buffer[10000];
-            sprintf(buffer,"<font style='color: green; font-size: 36pt;'>%s</font>\n",&s[0]);
+            sprintf(buffer,"<font style='color: green; font-size: 36pt;'>%s</font>\n",utf8.c_str());
             //logger.log("result",&s[0]);
             logger.html(buffer);
         }
@@ -555,7 +556,7 @@ namespace ocropus {
                     transcript[nutranscript.length()] = 0;
                     chomp(transcript);
                     if(old_csegs) remove_spaces(transcript);
-                    nutranscript = transcript;
+                    nutranscript.assign(transcript);
                     if(nutranscript.length()!=max(cseg)) {
                         debugf("debug","transcript = '%s'\n",transcript);
                         throwf("transcript doesn't agree with cseg (transcript %d, cseg %d)",
@@ -601,10 +602,10 @@ namespace ocropus {
                 // let the user know about progress
 
                 {
-                    char *transcript = nutranscript.mallocUtf8Encode();
+                    utf8strg utf8Transcript;
+                    nutranscript.utf8EncodeTerm(utf8Transcript);
                     debugf("transcript","%04d %04d (%d) [%2d,%2d] %s\n",pageno,lineno,total_chars,
-                           nutranscript.length(),max(cseg),transcript);
-                    free(transcript);
+                           nutranscript.length(),max(cseg),utf8Transcript.c_str());
                 }
                 if(total_chars>=next) {
                     debugf("info","loaded %d chars, %s total\n",

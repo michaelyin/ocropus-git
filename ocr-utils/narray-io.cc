@@ -179,78 +179,78 @@ namespace ocropus {
 //        for(int i = 0; i < a.length1d(); i++)
 //            a.at1d(i) = nuchar(read_int32(f));
 //    }
-
-    void write_utf8(FILE *f, nustring &a) {
-        char *p = a.newUtf8Encode();
-        fprintf(f, "%s\n", p);
-        delete[] p;
-    }
-
-    // adapted from old code, might be too pointer-happy, but should work
-    char *read_line_malloc(FILE *f) {
-        CHECK_ARG(f);
-
-        unsigned line_size = 2; // should also work if it's 2 (for valgrind)
-        char *line = (char *) malloc(line_size);
-        char *end = line + line_size - 1; // last char in the buffer
-        char *start = line; // where to put coming bytes
-
-        while(1) {
-            *end = 'X'; // to know if we've reached the end of the buffer
-
-            char *p = fgets(start, end - start + 1, f);
-
-            if(!p) { // EOF
-                if (start == line)
-                    return NULL; // we haven't read anything at all
-                else
-                    return line; // we've read something before, so return it
-            }
-
-            if (*end)
-                return line; // the buffer was enough (our 'X' is untouched)
-
-            if (end[-1] == '\n' || end[-1] == '\r')
-                return line; // the buffer is full, the line had just fit
-
-            // Bytes are still coming, we need to call fgets() again.
-            int new_offset = line_size - 1; // point to the last '\0'
-            // (we store offsets rather than pointers
-            //  since the line is about to move)
-
-            // grab more memory
-            line_size <<= 1;
-            line = (char *) realloc(line, line_size);
-            start = line + new_offset;
-            end = line + line_size - 1;
-        } // while(1)
-    }
-
-    static void chomp_last_char_if_newline(char *str, int &len) {
-        if(!len) return;
-        if(str[len - 1] == '\r' || str[len - 1] == '\n') {
-            len--;
-            str[len] = '\0';
-        }
-    }
-
-    bool read_utf8_line(nustring &a, FILE *f) {
-        char *line = read_line_malloc(f);
-        if(!line)
-            return false;
-        int n = strlen(line);
-        chomp_last_char_if_newline(line, n);
-        chomp_last_char_if_newline(line, n); // for fans of \r\n
-        a.utf8Decode(line, n);
-        free(line);
-        return true;
-    }
-
-    /// This function name is deprecated because it suggests reading of the
-    /// whole file.
-    bool read_utf8(nustring &a, FILE *f) {
-        return read_utf8_line(a, f);
-    }
+//
+//    void write_utf8(FILE *f, nustring &a) {
+//        char *p = a.newUtf8Encode();
+//        fprintf(f, "%s\n", p);
+//        delete[] p;
+//    }
+//
+//    // adapted from old code, might be too pointer-happy, but should work
+//    char *read_line_malloc(FILE *f) {
+//        CHECK_ARG(f);
+//
+//        unsigned line_size = 2; // should also work if it's 2 (for valgrind)
+//        char *line = (char *) malloc(line_size);
+//        char *end = line + line_size - 1; // last char in the buffer
+//        char *start = line; // where to put coming bytes
+//
+//        while(1) {
+//            *end = 'X'; // to know if we've reached the end of the buffer
+//
+//            char *p = fgets(start, end - start + 1, f);
+//
+//            if(!p) { // EOF
+//                if (start == line)
+//                    return NULL; // we haven't read anything at all
+//                else
+//                    return line; // we've read something before, so return it
+//            }
+//
+//            if (*end)
+//                return line; // the buffer was enough (our 'X' is untouched)
+//
+//            if (end[-1] == '\n' || end[-1] == '\r')
+//                return line; // the buffer is full, the line had just fit
+//
+//            // Bytes are still coming, we need to call fgets() again.
+//            int new_offset = line_size - 1; // point to the last '\0'
+//            // (we store offsets rather than pointers
+//            //  since the line is about to move)
+//
+//            // grab more memory
+//            line_size <<= 1;
+//            line = (char *) realloc(line, line_size);
+//            start = line + new_offset;
+//            end = line + line_size - 1;
+//        } // while(1)
+//    }
+//
+//    static void chomp_last_char_if_newline(char *str, int &len) {
+//        if(!len) return;
+//        if(str[len - 1] == '\r' || str[len - 1] == '\n') {
+//            len--;
+//            str[len] = '\0';
+//        }
+//    }
+//
+//    bool read_utf8_line(nustring &a, FILE *f) {
+//        char *line = read_line_malloc(f);
+//        if(!line)
+//            return false;
+//        int n = strlen(line);
+//        chomp_last_char_if_newline(line, n);
+//        chomp_last_char_if_newline(line, n); // for fans of \r\n
+//        a.utf8Decode(line, n);
+//        free(line);
+//        return true;
+//    }
+//
+//    /// This function name is deprecated because it suggests reading of the
+//    /// whole file.
+//    bool read_utf8(nustring &a, FILE *f) {
+//        return read_utf8_line(a, f);
+//    }
 
     void read_checkpoint(FILE *f, const char *checkpoint) {
         int c;
