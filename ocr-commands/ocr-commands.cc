@@ -209,6 +209,7 @@ namespace ocropus {
                             continue;
                         }
                     }
+                    const char *line_path = (const char *)bookstore->path(page,line);
                     bytearray image;
                     // FIXME output binary versions, intermediate results for debugging
 #pragma omp critical
@@ -224,14 +225,14 @@ namespace ocropus {
                             linerec->recognizeLine(*result,image);
                         }
                     } catch(BadTextLine &error) {
-                        fprintf(stderr,"ERROR: %s (bad text line)\n",(const char *)bookstore->path(page,line));
+                        fprintf(stderr,"skipping line: %s (bad text line)\n",line_path);
                         continue;
                     } catch(const char *error) {
-                        fprintf(stderr,"ERROR in recognizeLine: %s\n",error);
+                        fprintf(stderr,"skipping line: %s (%s)\n",line_path,error);
                         if(abort_on_error) abort();
                         continue;
                     } catch(...) {
-                        fprintf(stderr,"ERROR in recognizeLine\n");
+                        fprintf(stderr,"skipping line: %s (unknown exception)\n",line_path);
                         if(abort_on_error) abort();
                         continue;
                     }
