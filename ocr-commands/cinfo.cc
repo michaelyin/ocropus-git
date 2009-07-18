@@ -83,10 +83,9 @@ namespace ocropus {
                 if(desc.length()>60) desc = desc.substr(0,60);
                 printf("%-32s %-32s\n    %s\n",names[i],p->name(),desc.c_str());
             } catch(const char *err) {
-                printf("** ERROR ** %-32s\n",names[i]);
-                printf("** ERROR **     %s\n",err);
-            } catch(...) {
-                printf("** ERROR ** %-32s\n    %s\n",names[i]);
+                printf("FAILED to instantiate %-32s (%s)\n",names[i],err);
+            } catch(const char *err) {
+                printf("FAILED to instantiate %s\n",names[i],err);
             }
         }
         return 0;
