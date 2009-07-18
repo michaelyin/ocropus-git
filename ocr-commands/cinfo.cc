@@ -74,13 +74,20 @@ namespace ocropus {
         narray<const char *> names;
         list_components(names);
         for(int i=0;i<names.length();i++) {
-            autodel<IComponent> p;
-            p = component_construct(names[i]);
-            iucstring desc(p->description());
-            int where = desc.find("\n");
-            if(where!=desc.npos) desc = desc.substr(0,where);
-            if(desc.length()>60) desc = desc.substr(0,60);
-            printf("%-32s %-32s\n    %s\n",names[i],p->name(),desc.c_str());
+            try {
+                autodel<IComponent> p;
+                p = component_construct(names[i]);
+                iucstring desc(p->description());
+                int where = desc.find("\n");
+                if(where!=desc.npos) desc = desc.substr(0,where);
+                if(desc.length()>60) desc = desc.substr(0,60);
+                printf("%-32s %-32s\n    %s\n",names[i],p->name(),desc.c_str());
+            } catch(const char *err) {
+                printf("** ERROR ** %-32s\n",names[i]);
+                printf("** ERROR **     %s\n",err);
+            } catch(...) {
+                printf("** ERROR ** %-32s\n    %s\n",names[i]);
+            }
         }
         return 0;
     }
