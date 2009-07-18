@@ -209,7 +209,9 @@ namespace ocropus {
                             continue;
                         }
                     }
-                    const char *line_path = (const char *)bookstore->path(page,line);
+                    iucstring line_path_ = bookstore->path(page,line);
+                    const char *line_path = (const char *)line_path_;
+                    debugf("linepath","%s\n",line_path);
                     bytearray image;
                     // FIXME output binary versions, intermediate results for debugging
 #pragma omp critical
