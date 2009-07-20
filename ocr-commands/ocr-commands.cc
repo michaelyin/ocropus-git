@@ -37,6 +37,12 @@
 #include "bookstore.h"
 #include "linesegs.h"
 
+#define DLOPEN
+
+#ifdef DLOPEN
+#include <dlfcn.h>
+#endif
+
 namespace glinerec {
     IRecognizeLine *make_Linerec();
     const char *command = "???";
@@ -63,6 +69,9 @@ namespace ocropus {
     param_string cbookstore("bookstore","OldBookStore","storage abstraction for book");
     param_string cbinarizer("binarizer","","binarization component to use");
     param_string csegmenter("psegmenter","SegmentPageByRAST","segmenter to use at the page level");
+#ifdef DLOPEN
+    param_string extension("extension",0,"preload extensions");
+#endif
 
 #define DEFAULT_DATA_DIR "/usr/local/share/ocropus/models/"
 
@@ -134,6 +143,19 @@ namespace ocropus {
                 throwf("%s: failed to load character model",(const char*)cmodel);
             }
         }
+    }
+
+    int main_threshold(int argc,char **argv) {
+        CHECK(argc==3);
+        param_string name("binarizer","BinarizeBySauvola","binarization method");
+        autodel<IBinarize> binarizer;
+        make_component(binarizer,name);
+        debugf("info","using %s\n",binarizer->name());
+        bytearray image;
+        read_image_gray(image,argv[1]);
+        bytearray bin;
+        binarizer->binarize(bin,image);
+        write_image_gray(argv[2],bin);
     }
 
     int main_book2pages(int argc,char **argv) {
@@ -738,6 +760,21 @@ namespace ocropus {
     extern int main_fsts2bestpaths(int argc,char **argv);
 
     int main_ocropus(int argc,char **argv) {
+#ifdef DLOPEN
+        if(extension) {
+            void *handle = dlopen(extension,RTLD_LAZY);
+            if(!handle) {
+                fprintf(stderr,"%s: cannot load\n",dlerror());
+                exit(1);
+            }
+            void (*init)() = (void(*)())dlsym(handle,"ocropus_init_dl");
+            if(dlerror()!=NULL) {
+                fprintf(stderr,"%s: cannot init library\n",dlerror());
+                exit(1);
+            }
+            init();
+        }
+#endif
         try {
             command = argv[0];
             init_ocropus_components();
@@ -745,6 +782,7 @@ namespace ocropus {
             init_glfmaps();
             init_linerec();
             if(argc<2) usage(argv[0]);
+            if(!strcmp(argv[1],"threshold")) return main_threshold(argc-1,argv+1);
             if(!strcmp(argv[1],"book2pages")) return main_book2pages(argc-1,argv+1);
             if(!strcmp(argv[1],"buildhtml")) return main_buildhtml(argc-1,argv+1);
             if(!strcmp(argv[1],"cinfo")) return main_cinfo(argc-1,argv+1);

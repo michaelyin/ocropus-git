@@ -1,0 +1,13 @@
+Here is a simple extension of ocropus.  It's built either as a static executable with the
+new component linked in, or as a shared library that can be linked dynamically into OCRopus.
+
+You can invoke it like this:
+
+    binarizer=MyThresholder ocrothresh threshold test.jpg out.png
+
+For dynamic loading, you can use the actual ocropus command (this requires a recent version):
+
+    extension=./ocrothresh.so binarizer=MyThresholder ocropus threshold test.jpg out.png
+
+Dynamic loading will be enhanced so that OCRopus can load multiple dynamic extensions
+in the future.
