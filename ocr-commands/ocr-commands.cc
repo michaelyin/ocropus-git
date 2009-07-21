@@ -66,7 +66,7 @@ namespace ocropus {
     param_float maxheight("max_line_height",300,"maximum line height");
     param_float maxaspect("max_line_aspect",0.5,"maximum line aspect ratio");
 
-    param_string cbookstore("bookstore","BookStore","storage abstraction for book");
+    param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
     param_string cbinarizer("binarizer","","binarization component to use");
     param_string csegmenter("psegmenter","SegmentPageByRAST","segmenter to use at the page level");
 #ifdef DLOPEN
@@ -360,7 +360,10 @@ namespace ocropus {
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(outdir);
         int npages = bookstore->numberOfPages();
-
+        int nfiles = 0;
+        for(int page=0;page<bookstore->numberOfPages();page++)
+            nfiles += bookstore->linesOnPage(page);
+        CHECK(nfiles>0);
         debugf("info","found %d pages\n",npages);
         if(npages<1) throw "no pages found";
 #pragma omp parallel for private(segmenter)
@@ -548,6 +551,11 @@ namespace ocropus {
         autodel<IBookStore> bookstore;
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(argv[2]);
+        CHECK(bookstore->numberOfPages()>0);
+        int nfiles = 0;
+        for(int page=0;page<bookstore->numberOfPages();page++)
+            nfiles += bookstore->linesOnPage(page);
+        CHECK(nfiles>0);
         intarray cseg;
         bytearray image;
         int total_chars = 0;

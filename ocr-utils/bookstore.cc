@@ -210,6 +210,44 @@ namespace ocropus {
 
     };
 
+    struct SmartBookStore : IBookStore {
+        autodel<IBookStore> p;
+
+        virtual void setPrefix(const char *prefix) {
+            iucstring pattern;
+            sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].png",(const char *)prefix);
+            debugf("debug","checking %s\n",pattern.c_str());
+            Glob glob(pattern);
+            if(glob.length()>0) {
+                debugf("info","selecting OldBookStore\n");
+                p = new OldBookStore();
+            } else {
+                debugf("info","selecting (new) BookStore\n");
+                p = new BookStore();
+            }
+            p->setPrefix(prefix);
+        }
+
+        virtual bool getPage(bytearray &image,int page,const char *variant=0) { return p->getPage(image,page,variant); }
+        virtual bool getPage(intarray &image,int page,const char *variant=0) { return p->getPage(image,page,variant); }
+        virtual bool getLine(bytearray &image,int page,int line,const char *variant=0) { return p->getLine(image,page,line,variant); }
+        virtual bool getLine(intarray &s,int page,int line,const char *variant=0) { return p->getLine(s,page,line,variant); }
+        virtual bool getLine(nustring &s,int page,int line,const char *variant=0) { return p->getLine(s,page,line,variant); }
+
+        virtual void putPage(bytearray &image,int page,const char *variant=0) { p->putPage(image,page,variant); }
+        virtual void putPage(intarray &image,int page,const char *variant=0) { p->putPage(image,page,variant); }
+        virtual void putLine(bytearray &image,int page,int line,const char *variant=0) { p->putLine(image,page,line,variant); }
+        virtual void putLine(intarray &image,int page,int line,const char *variant=0) { p->putLine(image,page,line,variant); }
+        virtual void putLine(nustring &s,int page,int line,const char *variant=0) { p->putLine(s,page,line,variant); }
+
+        virtual iucstring path(int page,int line=-1,const char *variant=0,const char *extension=0) { return p->path(page,line,variant,extension); }
+        virtual FILE *open(const char *mode,int page,int line=-1,const char *variant=0,const char *extension=0) { return p->open(mode,page,line,variant,extension); }
+
+        virtual int numberOfPages() { return p->numberOfPages(); }
+        virtual int linesOnPage(int i) { return p->linesOnPage(i); }
+        virtual int getLineId(int i,int j) { return p->getLineId(i,j); }
+    };
+
     IBookStore *make_OldBookStore() {
         return new OldBookStore();
     }
@@ -217,4 +255,9 @@ namespace ocropus {
     IBookStore *make_BookStore() {
         return new BookStore();
     }
+
+    IBookStore *make_SmartBookStore() {
+        return new SmartBookStore();
+    }
 }
+
