@@ -67,6 +67,7 @@ namespace ocropus {
         component_register("CurvedCutWithCcSegmenter",make_CurvedCutWithCcSegmenter);
         component_register("SkelSegmenter",make_SkelSegmenter);
         component_register("OldBookStore",make_OldBookStore);
+        component_register("BookStore",make_BookStore);
         component_register("Degradation",make_Degradation);
         component_register<Pages>("Pages");
 

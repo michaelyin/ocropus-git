@@ -90,8 +90,8 @@ env.Append(CXXFLAGS=["-DDATADIR='\""+datadir+"\"'"])
 env.Append(CXXFLAGS=["-g","-fPIC"])
 env.Append(CXXFLAGS=env["opt"])
 env.Append(CXXFLAGS=env["warn"])
-Help(opts.GenerateHelpText(env))
 conf = Configure(env)
+Help(opts.GenerateHelpText(env))
 
 if "-DUNSAFE" in env["opt"]:
     print "WARNING: do not compile with -DUNSAFE except for benchmarking or profiling"
@@ -108,9 +108,10 @@ else:
 
 env.Append(LIBPATH=["${iulib}/lib"])
 env.Append(CPPPATH=["${iulib}/include"])
+env.Append(CPPPATH=["/tmp/o/include"])
 env.Append(LIBS=["iulib"])
-assert conf.CheckHeader("colib/colib.h",language="C++")
 assert conf.CheckLibWithHeader("iulib","iulib/iulib.h","C++");
+assert conf.CheckHeader("colib/colib.h",language="C++")
 
 ### OpenFST
 

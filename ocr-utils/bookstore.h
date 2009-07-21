@@ -29,6 +29,7 @@ namespace ocropus {
     };
 
     IBookStore *make_OldBookStore();
+    IBookStore *make_BookStore();
 }
 
 #endif
