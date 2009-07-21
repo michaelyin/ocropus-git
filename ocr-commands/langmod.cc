@@ -93,54 +93,55 @@ namespace ocropus {
     }
 
     int main_align(int argc,char **argv) {
-        throw "FIXME: main_align TEMPORARILY DISABLED";
-#if 0
-        if(argc!=2) throw "usage: ... dir";
-        iucstring s;
-        s = argv[1];
-        s += "/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst";
-        Glob files(s);
-        for(int index=0;index<files.length();index++) {
-            if(index%1000==0)
-                debugf("info","%s (%d/%d)\n",files(index),index,files.length());
-
-            iucstring base;
-            base = files(index);
-            base.erase(base.length()-4);
-
-            autodel<OcroFST> gt_fst(make_OcroFST());
-            read_gt(*gt_fst, base);
-
-            autodel<OcroFST> fst(make_OcroFST());
-            fst->load(files(index));
-            nustring str;
-            intarray v1;
-            intarray v2;
-            intarray in;
-            intarray out;
-            floatarray costs;
-            try {
-                beam_search(v1, v2, in, out, costs,
-                            *fst, *gt_fst, beam_width);
-                // recolor rseg to cseg
-            } catch(const char *error) {
-                fprintf(stderr,"ERROR in bestpath: %s\n",error);
-                if(abort_on_error) abort();
-            }
-            try {
-                rseg_to_cseg(base, in);
-                store_costs(base, costs);
-                debugf("dcost","--------------------------------\n");
-                for(int i=0;i<out.length();i++) {
-                    debugf("dcost","%3d %10g %c\n",i,costs(i),out(i));
+        autodel<IBookStore> bookstore;
+        extern param_string cbookstore;
+        make_component(bookstore,cbookstore);
+        bookstore->setPrefix(argv[1]);
+//#pragma omp parallel for schedule(dynamic,20)
+        for(int page=0;page<bookstore->numberOfPages();page++) {
+            int nlines = bookstore->linesOnPage(page);
+//#pragma omp parallel for private(linerec) shared(finished) schedule(dynamic,4)
+            for(int j=0;j<nlines;j++) {
+                int line = bookstore->getLineId(page,j);
+                debugf("progress","page %04d %06x\n",page,line);
+                autodel<OcroFST> gt_fst(make_OcroFST());
+                read_gt(*gt_fst, bookstore->path(page,line,0,""));
+                autodel<OcroFST> fst(make_OcroFST());
+                fst->load(bookstore->path(page,line,0,"fst"));
+                nustring str;
+                intarray v1;
+                intarray v2;
+                intarray in;
+                intarray out;
+                floatarray costs;
+                try {
+                    beam_search(v1, v2, in, out, costs,
+                                *fst, *gt_fst, beam_width);
+                    // recolor rseg to cseg
+                } catch(const char *error) {
+                    fprintf(stderr,"ERROR in bestpath: %s\n",error);
+                    if(abort_on_error) abort();
                 }
-            } catch(const char *err) {
-                fprintf(stderr,"ERROR in cseg reconstruction: %s\n",err);
-                if(abort_on_error) abort();
+                try {
+                    intarray rseg;
+                    read_image_packed(rseg, bookstore->path(page,line,"rseg","png"));
+                    make_line_segmentation_black(rseg);
+                    intarray cseg;
+                    rseg_to_cseg(cseg, rseg, in);
+                    ::make_line_segmentation_white(cseg);
+                    write_image_packed(bookstore->path(page,line,"cseg","png"),cseg);
+                    store_costs(bookstore->path(page,line,0,""), costs);
+                    debugf("dcost","--------------------------------\n");
+                    for(int i=0;i<out.length();i++) {
+                        debugf("dcost","%3d %10g %c\n",i,costs(i),out(i));
+                    }
+                } catch(const char *err) {
+                    fprintf(stderr,"ERROR in cseg reconstruction: %s\n",err);
+                    if(abort_on_error) abort();
+                }
             }
         }
         return 0;
-#endif
     }
 
 
