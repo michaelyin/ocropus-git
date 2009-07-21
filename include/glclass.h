@@ -249,6 +249,8 @@ namespace glinerec {
         };
 
         void train(IDataset &ds) {
+            CHECK(ds.nsamples()>0);
+            CHECK(ds.nfeatures()>0);
             if(c2i.length()<1) {
                 intarray raw_classes;
                 for(int i=0;i<ds.nsamples();i++)

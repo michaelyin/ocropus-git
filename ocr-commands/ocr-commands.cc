@@ -557,104 +557,107 @@ namespace ocropus {
         }
         int next = 1000;
         floatarray costs;
-        for(int pageno=0;pageno<bookstore->numberOfPages();pageno++) for(int lineno=0;lineno<bookstore->linesOnPage(pageno);lineno++) {
-            try {
-                if(!bookstore->getLine(cseg,pageno,lineno,cseg_variant)) {
-                    debugf("info","%04d %04d: no such cseg\n",pageno,lineno);
-                    continue;
-                }
-                make_line_segmentation_black(cseg);
-                CHECK(cseg.length()>100);
-                image.makelike(cseg);
-                for(int i=0;i<image.length1d();i++)
-                    image.at1d(i) = 255*!cseg.at1d(i);
-
-                // read the ground truth segmentation
-
-                nustring nutranscript;
-                {
-                    bookstore->getLine(nutranscript,pageno,lineno,text_variant);
-                    // FIXME this is an awful hack and won't work with unicode
-                    char transcript[10000];
-                    for(int i=0;i<nutranscript.length();i++)
-                        transcript[i] = nutranscript[i].ord();
-                    transcript[nutranscript.length()] = 0;
-                    chomp(transcript);
-                    if(old_csegs) remove_spaces(transcript);
-                    nutranscript.assign(transcript);
-                    if(nutranscript.length()!=max(cseg)) {
-                        debugf("debug","transcript = '%s'\n",transcript);
-                        throwf("transcript doesn't agree with cseg (transcript %d, cseg %d)",
-                            nutranscript.length(),max(cseg));
-                    }
-                }
-
-                // for retraining, read the cost file
-
-                if(retrain) {
-                    costs.resize(10000) = 1e38;
-                    stdio stream(bookstore->path(pageno,lineno,"","costs"),"r");
-                    int index;
-                    float cost;
-                    while(fscanf(stream,"%d %g\n",&index,&cost)==2) {
-                        costs(index) = cost;
-                    }
-                    // remove all segments whose costs are too high
-                    int old_length = nutranscript.length();
-                    for(int i=0;i<nutranscript.length();i++) {
-                        if(costs[i]>retrain_threshold)
-                            nutranscript[i] = nuchar(' ');
-                    }
-                    for(int i=0;i<cseg.length();i++) {
-                        if(costs(cseg[i])>retrain_threshold)
-                            cseg[i] = 0;
-                    }
-                    int delta = old_length - nutranscript.length();
-                    if(delta>0) {
-                        debugf("info","removed %d exceeding cost\n",delta);
-                    }
-                    debugf("dcost","--------------------------------\n");
-                    for(int i=0;i<nutranscript.length();i++) {
-                        debugf("dcost","%3d %10g %c\n",i,costs(i),nutranscript(i).ord());
-                    }
-                    {
-                        dsection("dcost");
-                        dshowr(cseg);
-                        dwait();
-                    }
-                }
-
-                // let the user know about progress
-
-                {
-                    utf8strg utf8Transcript;
-                    nutranscript.utf8EncodeTerm(utf8Transcript);
-                    debugf("transcript","%04d %04d (%d) [%2d,%2d] %s\n",pageno,lineno,total_chars,
-                           nutranscript.length(),max(cseg),utf8Transcript.c_str());
-                }
-                if(total_chars>=next) {
-                    debugf("info","loaded %d chars, %s total\n",
-                            total_chars,linerec.command("total"));
-                    next += 1000;
-                }
-
-                // now, actually add the segmented characters to the line recognizer
-
+        for(int pageno=0;pageno<bookstore->numberOfPages();pageno++) {
+            for(int lineno=0;lineno<bookstore->linesOnPage(pageno);lineno++) {
+                int line = bookstore->getLineId(pageno,lineno);
                 try {
-                    linerec.addTrainingLine(cseg,image,nutranscript);
-                    total_chars += max(cseg);
-                    total_lines++;
-                } catch(const char *s) {
-                    fprintf(stderr,"ERROR: %s\n",s);
-                } catch(BadTextLine &err) {
-                    fprintf(stderr,"ERROR: BadTextLine\n");
-                } catch(...) {
-                    fprintf(stderr,"ERROR: (no details)\n");
+                    if(!bookstore->getLine(cseg,pageno,line,cseg_variant)) {
+                        debugf("info","%04d %06x: no such cseg\n",pageno,line);
+                        continue;
+                    }
+                    make_line_segmentation_black(cseg);
+                    CHECK(cseg.length()>100);
+                    image.makelike(cseg);
+                    for(int i=0;i<image.length1d();i++)
+                        image.at1d(i) = 255*!cseg.at1d(i);
+
+                    // read the ground truth segmentation
+
+                    nustring nutranscript;
+                    {
+                        bookstore->getLine(nutranscript,pageno,line,text_variant);
+                        // FIXME this is an awful hack and won't work with unicode
+                        char transcript[10000];
+                        for(int i=0;i<nutranscript.length();i++)
+                            transcript[i] = nutranscript[i].ord();
+                        transcript[nutranscript.length()] = 0;
+                        chomp(transcript);
+                        if(old_csegs) remove_spaces(transcript);
+                        nutranscript.assign(transcript);
+                        if(nutranscript.length()!=max(cseg)) {
+                            debugf("debug","transcript = '%s'\n",transcript);
+                            throwf("transcript doesn't agree with cseg (transcript %d, cseg %d)",
+                                   nutranscript.length(),max(cseg));
+                        }
+                    }
+
+                    // for retraining, read the cost file
+
+                    if(retrain) {
+                        costs.resize(10000) = 1e38;
+                        stdio stream(bookstore->path(pageno,line,"","costs"),"r");
+                        int index;
+                        float cost;
+                        while(fscanf(stream,"%d %g\n",&index,&cost)==2) {
+                            costs(index) = cost;
+                        }
+                        // remove all segments whose costs are too high
+                        int old_length = nutranscript.length();
+                        for(int i=0;i<nutranscript.length();i++) {
+                            if(costs[i]>retrain_threshold)
+                                nutranscript[i] = nuchar(' ');
+                        }
+                        for(int i=0;i<cseg.length();i++) {
+                            if(costs(cseg[i])>retrain_threshold)
+                                cseg[i] = 0;
+                        }
+                        int delta = old_length - nutranscript.length();
+                        if(delta>0) {
+                            debugf("info","removed %d exceeding cost\n",delta);
+                        }
+                        debugf("dcost","--------------------------------\n");
+                        for(int i=0;i<nutranscript.length();i++) {
+                            debugf("dcost","%3d %10g %c\n",i,costs(i),nutranscript(i).ord());
+                        }
+                        {
+                            dsection("dcost");
+                            dshowr(cseg);
+                            dwait();
+                        }
+                    }
+
+                    // let the user know about progress
+
+                    {
+                        utf8strg utf8Transcript;
+                        nutranscript.utf8EncodeTerm(utf8Transcript);
+                        debugf("transcript","%04d %06x (%d) [%2d,%2d] %s\n",pageno,line,total_chars,
+                               nutranscript.length(),max(cseg),utf8Transcript.c_str());
+                    }
+                    if(total_chars>=next) {
+                        debugf("info","loaded %d chars, %s total\n",
+                               total_chars,linerec.command("total"));
+                        next += 1000;
+                    }
+
+                    // now, actually add the segmented characters to the line recognizer
+
+                    try {
+                        linerec.addTrainingLine(cseg,image,nutranscript);
+                        total_chars += max(cseg);
+                        total_lines++;
+                    } catch(const char *s) {
+                        fprintf(stderr,"ERROR: %s\n",s);
+                    } catch(BadTextLine &err) {
+                        fprintf(stderr,"ERROR: BadTextLine\n");
+                    } catch(...) {
+                        fprintf(stderr,"ERROR: (no details)\n");
+                    }
+                } catch(const char *msg) {
+                    printf("%04d %06x: %s FIXME\n",pageno,line,msg);
                 }
-            } catch(const char *msg) {
-                printf("%04d %04d: %s FIXME\n",pageno,lineno,msg);
+                if(total_chars>=ntrain) break;
             }
-            if(total_chars>=ntrain) break;
         }
         if(!strcmp(argv[0],"trainseg")) {
             linerec.finishTraining();
