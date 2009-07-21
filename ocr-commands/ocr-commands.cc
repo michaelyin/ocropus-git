@@ -66,7 +66,7 @@ namespace ocropus {
     param_float maxheight("max_line_height",300,"maximum line height");
     param_float maxaspect("max_line_aspect",0.5,"maximum line aspect ratio");
 
-    param_string cbookstore("bookstore","OldBookStore","storage abstraction for book");
+    param_string cbookstore("bookstore","BookStore","storage abstraction for book");
     param_string cbinarizer("binarizer","","binarization component to use");
     param_string csegmenter("psegmenter","SegmentPageByRAST","segmenter to use at the page level");
 #ifdef DLOPEN
@@ -156,6 +156,7 @@ namespace ocropus {
         bytearray bin;
         binarizer->binarize(bin,image);
         write_image_gray(argv[2],bin);
+        return 0;
     }
 
     int main_book2pages(int argc,char **argv) {
@@ -217,7 +218,7 @@ namespace ocropus {
                         debugf("info","loading %s failed\n",(const char *)cmodel);
                         abort(); // can't do much else in OpenMP
                     }
-                    debugf("progress","page %d line %d\n",page,line);
+                    debugf("progress","page %04d line %06x\n",page,line);
                     if(continue_partial) {
                         iucstring s;
                         stdio stream;
@@ -280,7 +281,7 @@ namespace ocropus {
                         result->bestpath(predicted);
                         utf8strg utf8Predicted;
                         predicted.utf8EncodeTerm(utf8Predicted);
-                        debugf("transcript","%04d %04d\t%s\n",page,line,utf8Predicted.c_str());
+                        debugf("transcript","%04d %06x\t%s\n",page,line,utf8Predicted.c_str());
 #pragma omp critical
                         if(save_fsts) bookstore->putLine(predicted,page,line);
                     } catch(const char *error) {
@@ -392,8 +393,11 @@ namespace ocropus {
                         regions.extract(line_image,page_gray,lineno,1);
                         CHECK_ARG(line_image.dim(1)<maxheight);
                         CHECK_ARG(line_image.dim(1)*1.0/line_image.dim(0)<maxaspect);
-                        // TODO/mezhirov output log of coordinates here
-                        bookstore->putLine(line_image,pageno,lineno);
+                        // TODO/mezhirov output log of coordinates
+                        // here
+                        int id = regions.id(lineno);
+                        if(!strcmp(cbookstore,"OldBookStore")) id = lineno;
+                        bookstore->putLine(line_image,pageno,id);
                     } catch(const char *s) {
                         fprintf(stderr,"ERROR: %s\n",s);
                         if(abort_on_error) abort();

@@ -74,23 +74,6 @@ namespace ocropus {
             cseg.at1d(i) = map[rseg.at1d(i)];
     }
 
-    static void rseg_to_cseg(const char *base, intarray &ids) {
-        iucstring s;
-        s = base;
-        s += ".rseg.png";
-        intarray rseg;
-        read_image_packed(rseg, s.c_str());
-        make_line_segmentation_black(rseg);
-        intarray cseg;
-
-        rseg_to_cseg(cseg, rseg, ids);
-
-        ::make_line_segmentation_white(cseg);
-        s = base;
-        s += ".cseg.png";
-        write_image_packed(s, cseg);
-    }
-
     // Read a line and make an FST out of it.
     void read_transcript(IGenericFst &fst, const char *path) {
         nustring gt;
@@ -110,6 +93,8 @@ namespace ocropus {
     }
 
     int main_align(int argc,char **argv) {
+        throw "FIXME: main_align TEMPORARILY DISABLED";
+#if 0
         if(argc!=2) throw "usage: ... dir";
         iucstring s;
         s = argv[1];
@@ -155,6 +140,7 @@ namespace ocropus {
             }
         }
         return 0;
+#endif
     }
 
 
@@ -168,49 +154,57 @@ namespace ocropus {
         } catch(...) {
             throwf("%s: failed to load language model",(const char*)lmodel);
         }
-        iucstring s;
-        sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst",argv[1]);
-        Glob files(s);
-#pragma omp parallel for schedule(dynamic,20)
-        for(int index=0;index<files.length();index++) {
-            if(index%1000==0)
-                debugf("info","%s (%d/%d)\n",files(index),index,files.length());
-            autodel<OcroFST> fst(make_OcroFST());
-            fst->load(files(index));
-            nustring str;
-            try {
-                intarray v1;
-                intarray v2;
-                intarray in;
-                intarray out;
-                floatarray costs;
-                beam_search(v1, v2, in, out, costs,
-                            *fst, *langmod, beam_width);
-                double cost = sum(costs);
-                remove_epsilons(str, out);
-                if(cost < 1e10) {
-                    utf8strg utf8Output;
-                    str.utf8EncodeTerm(utf8Output);
-                    debugf("transcript","%s\t%s\n",files(index), utf8Output.c_str());
-                    iucstring base;
-                    base = files(index);
-                    base.erase(base.length()-4);
+
+        autodel<IBookStore> bookstore;
+        extern param_string cbookstore;
+        make_component(bookstore,cbookstore);
+        bookstore->setPrefix(argv[1]);
+//#pragma omp parallel for schedule(dynamic,20)
+        for(int page=0;page<bookstore->numberOfPages();page++) {
+            int nlines = bookstore->linesOnPage(page);
+//#pragma omp parallel for private(linerec) shared(finished) schedule(dynamic,4)
+                for(int j=0;j<nlines;j++) {
+                    int line = bookstore->getLineId(page,j);
+                    debugf("progress","page %04d %06x\n",page,line);
+                    autodel<OcroFST> fst(make_OcroFST());
+                    fst->load(bookstore->path(page,line,0,"fst"));
+                    nustring str;
                     try {
-                        rseg_to_cseg(base, in);
-                        store_costs(base, costs);
-                    } catch(const char *err) {
-                        fprintf(stderr,"ERROR in cseg reconstruction: %s\n",err);
+                        intarray v1;
+                        intarray v2;
+                        intarray in;
+                        intarray out;
+                        floatarray costs;
+                        beam_search(v1, v2, in, out, costs,
+                                    *fst, *langmod, beam_width);
+                        double cost = sum(costs);
+                        remove_epsilons(str, out);
+                        if(cost < 1e10) {
+                            utf8strg utf8Output;
+                            str.utf8EncodeTerm(utf8Output);
+                            debugf("transcript","%04d %06x\t%s\n",page,line, utf8Output.c_str());
+                            try {
+                                intarray rseg;
+                                read_image_packed(rseg, bookstore->path(page,line,"rseg","png"));
+                                make_line_segmentation_black(rseg);
+                                intarray cseg;
+                                rseg_to_cseg(cseg, rseg, in);
+                                ::make_line_segmentation_white(cseg);
+                                write_image_packed(bookstore->path(page,line,"cseg","png"),cseg);
+                            } catch(const char *err) {
+                                fprintf(stderr,"ERROR in cseg reconstruction: %s\n",err);
+                                if(abort_on_error) abort();
+                            }
+                            iucstring s(bookstore->path(page,line,0,"txt"));
+                            fprintf(stdio(s,"w"),"%s\n",utf8Output.c_str());
+                        } else {
+                            debugf("info","%04d %06x failed to match language model\n",page,line);
+                        }
+                    } catch(const char *error) {
+                        fprintf(stderr,"ERROR in bestpath: %s\n",error);
                         if(abort_on_error) abort();
                     }
-                    base += ".txt";
-                    fprintf(stdio(base,"w"),"%s\n",utf8Output.c_str());
-                } else {
-                    debugf("info","%s\t%f\n",files(index), cost);
                 }
-            } catch(const char *error) {
-                fprintf(stderr,"ERROR in bestpath: %s\n",error);
-                if(abort_on_error) abort();
-            }
         }
 
         return 0;
@@ -218,27 +212,31 @@ namespace ocropus {
 
     int main_fsts2bestpaths(int argc,char **argv) {
         if(argc!=2) throw "usage: ... dir";
-        iucstring s;
-        sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].fst",argv[1]);
-        Glob files(s);
-        for(int index=0;index<files.length();index++) {
-            if(index%1000==0)
-                debugf("info","%s (%d/%d)\n",files(index),index,files.length());
-            autodel<IGenericFst> fst(make_OcroFST());
-            fst->load(files(index));
-            nustring str;
-            try {
-                fst->bestpath(str);
-                utf8strg utf8Output;
-                str.utf8EncodeTerm(utf8Output);
-                debugf("transcript","%s\t%s\n",files(index),utf8Output.c_str());
-                iucstring base = files(index);
-                base.erase(base.length()-4);
-                base += ".txt";
-                fprintf(stdio(base,"w"),"%s",utf8Output.c_str());
-            } catch(const char *error) {
-                fprintf(stderr,"ERROR in bestpath: %s\n",error);
-                if(abort_on_error) abort();
+        autodel<IBookStore> bookstore;
+        extern param_string cbookstore;
+        make_component(bookstore,cbookstore);
+        bookstore->setPrefix(argv[1]);
+//#pragma omp parallel for schedule(dynamic,20)
+        for(int page=0;page<bookstore->numberOfPages();page++) {
+            int nlines = bookstore->linesOnPage(page);
+//#pragma omp parallel for private(linerec) shared(finished) schedule(dynamic,4)
+            for(int j=0;j<nlines;j++) {
+                int line = bookstore->getLineId(page,j);
+                debugf("progress","page %04d %06x\n",page,line);
+                autodel<OcroFST> fst(make_OcroFST());
+                fst->load(bookstore->path(page,line,0,"fst"));
+                nustring str;
+                try {
+                    fst->bestpath(str);
+                    utf8strg utf8Output;
+                    str.utf8EncodeTerm(utf8Output);
+                    debugf("transcript","%04d %06x\t%s\n",page,line,utf8Output.c_str());
+                    iucstring s(bookstore->path(page,line,0,"txt"));
+                    fprintf(stdio(s,"w"),"%s",utf8Output.c_str());
+                } catch(const char *error) {
+                    fprintf(stderr,"ERROR in bestpath: %s\n",error);
+                    if(abort_on_error) abort();
+                }
             }
         }
         return 0;

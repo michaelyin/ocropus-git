@@ -93,11 +93,22 @@ namespace ocropus {
 
     struct RegionExtractor {
         intarray segmentation;
+        intarray ids;
         narray<rectangle> boxes;
+        void idsAndBoxes() {
+            intarray temp;
+            temp = segmentation;
+            renumber_labels(segmentation,1);
+            int n = max(segmentation)+1;
+            ids.resize(n);
+            ids = -1;
+            for(int i=0;i<temp.length();i++)
+                ids[segmentation[i]] = temp[i];
+            bounding_boxes(boxes,segmentation);
+        }
         void setImage(intarray &image) {
             copy(segmentation,image);
-            renumber_labels(segmentation,1);
-            bounding_boxes(boxes,segmentation);
+            idsAndBoxes();
         }
         void setImageMasked(intarray &image,int mask,int lo,int hi) {
             makelike(segmentation,image);
@@ -107,8 +118,7 @@ namespace ocropus {
                 if(pixel<lo || pixel>hi) continue;
                 segmentation.at1d(i) = (pixel & mask);
             }
-            renumber_labels(segmentation,1);
-            bounding_boxes(boxes,segmentation);
+            idsAndBoxes();
         }
         void setPageColumns(intarray &image) {
             makelike(segmentation,image);
@@ -121,8 +131,7 @@ namespace ocropus {
                 if(par>=64) continue;
                 segmentation.at1d(i) = col;
             }
-            renumber_labels(segmentation,1);
-            bounding_boxes(boxes,segmentation);
+            idsAndBoxes();
         }
         void setPageParagraphs(intarray &image) {
             makelike(segmentation,image);
@@ -135,8 +144,7 @@ namespace ocropus {
                 if(par>=64) continue;
                 segmentation.at1d(i) = (col<<8) | par;
             }
-            renumber_labels(segmentation,1);
-            bounding_boxes(boxes,segmentation);
+            idsAndBoxes();
         }
         void setPageLines(intarray &image) {
             makelike(segmentation,image);
@@ -149,11 +157,13 @@ namespace ocropus {
                 if(par>=64) continue;
                 segmentation.at1d(i) = pixel;
             }
-            renumber_labels(segmentation,1);
-            bounding_boxes(boxes,segmentation);
+            idsAndBoxes();
         }
         int length() {
             return boxes.length();
+        }
+        int id(int i) {
+            return ids[i];
         }
         rectangle bbox(int i) {
             return boxes[i];
