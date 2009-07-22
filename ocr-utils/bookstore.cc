@@ -15,12 +15,11 @@ namespace ocropus {
         narray<intarray> lines;
 
         virtual int get_max_page(const char *fpattern) {
-#pragma omp critical
+            int npages = -1;
             {
                 iucstring pattern;
                 sprintf(pattern,"%s/%s",(const char *)prefix,fpattern);
                 debugf("bookstore","pattern: %s\n",pattern.c_str());
-                int npages = -1;
                 Glob glob(pattern);
                 for(int i=0;i<glob.length();i++) {
                     int p = -1;
@@ -31,15 +30,16 @@ namespace ocropus {
                     debugf("bookstore","%4d %s [%d]\n",i,glob(i),npages);
                 }
                 npages++;
-                return npages;
             }
+            return npages;
         }
 
         virtual void get_lines_of_page(intarray &lines,int i) {
-#pragma omp critical
             {
                 iucstring pattern;
                 sprintf(pattern,"%s/%04d/[0-9][0-9][0-9][0-9].png",(const char *)prefix,i);
+                debugf("bookstore","pattern: %s\n",pattern.c_str());
+
                 lines.clear();
                 Glob glob(pattern);
                 for(int i=0;i<glob.length();i++) {
@@ -49,22 +49,24 @@ namespace ocropus {
                     sscanf(glob(i)+c+1,"%d.png",&k);
                     CHECK_ARG(k>=0 && k<=9999);
                     lines.push(k);
+                    debugf("bookstore","adding: %s\n",glob(i));
                 }
             }
         }
 
         int linesOnPage(int i) {
-#pragma omp critical
-            return lines(i).length();
+            int result;
+            result = lines(i).length();
+            return result;
         }
 
         int getLineId(int i,int j) {
-#pragma omp critical
-            return lines(i)(j);
+            int result;
+            result = lines(i)(j);
+            return result;
         }
 
         void setPrefix(const char *s) {
-#pragma omp critical
             {
                 prefix = s;
                 int ndirs = get_max_page("[0-9][0-9][0-9][0-9]");
@@ -82,16 +84,15 @@ namespace ocropus {
         }
 
         virtual iucstring path(int page,int line=-1,const char *variant=0,const char *extension=0) {
-#pragma omp critical
+            iucstring file;
             {
-                iucstring file;
                 sprintf(file,"%s/%04d",(const char *)prefix,page);
                 if(line>=0) sprintf_append(file,"/%04d",line);
                 if(variant) sprintf_append(file,".%s",variant);
                 if(extension) sprintf_append(file,".%s",extension);
                 debugf("bookstore","(path: %s)\n",file.c_str());
-                return file;
             }
+            return file;
         }
 
         FILE *open(const char *mode,int page,int line,const char *variant=0,const char *extension=0) {
@@ -180,10 +181,10 @@ namespace ocropus {
 
     struct BookStore : OldBookStore {
         virtual void get_lines_of_page(intarray &lines,int i) {
-#pragma omp critical
             {
                 iucstring pattern;
                 sprintf(pattern,"%s/%04d/[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F].png",(const char *)prefix,i);
+                debugf("bookstore","pattern: %s\n",pattern.c_str());
                 lines.clear();
                 Glob glob(pattern);
                 for(int i=0;i<glob.length();i++) {
@@ -196,16 +197,15 @@ namespace ocropus {
             }
         }
         virtual iucstring path(int page,int line=-1,const char *variant=0,const char *extension=0) {
-#pragma omp critical
+            iucstring file;
             {
-                iucstring file;
                 sprintf(file,"%s/%04d",(const char *)prefix,page);
                 if(line>=0) sprintf_append(file,"/%06x",line);
                 if(variant) sprintf_append(file,".%s",variant);
                 if(extension) sprintf_append(file,".%s",extension);
                 debugf("bookstore","(path: %s)\n",file.c_str());
-                return file;
             }
+            return file;
         }
 
     };
@@ -214,18 +214,20 @@ namespace ocropus {
         autodel<IBookStore> p;
 
         virtual void setPrefix(const char *prefix) {
-            iucstring pattern;
-            sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].png",(const char *)prefix);
-            debugf("debug","checking %s\n",pattern.c_str());
-            Glob glob(pattern);
-            if(glob.length()>0) {
-                debugf("info","selecting OldBookStore\n");
-                p = new OldBookStore();
-            } else {
-                debugf("info","selecting (new) BookStore\n");
-                p = new BookStore();
+            {
+                iucstring pattern;
+                sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].png",(const char *)prefix);
+                debugf("debug","checking %s\n",pattern.c_str());
+                Glob glob(pattern);
+                if(glob.length()>0) {
+                    debugf("info","selecting OldBookStore\n");
+                    p = new OldBookStore();
+                } else {
+                    debugf("info","selecting (new) BookStore\n");
+                    p = new BookStore();
+                }
+                p->setPrefix(prefix);
             }
-            p->setPrefix(prefix);
         }
 
         virtual bool getPage(bytearray &image,int page,const char *variant=0) { return p->getPage(image,page,variant); }
