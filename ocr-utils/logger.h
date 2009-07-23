@@ -68,10 +68,10 @@ namespace ocropus {
     /// Note: you can use logger.log() methods along with logger() operators.
     /// (This is the only way under Lua)
     class Logger {
-        colib::iucstring name;
+        colib::strg name;
         colib::stdio logImage(const char *description, int w, int h);
         void html(colib::bytearray &img);
-        void html(colib::nustring &val);
+        void html(colib::ustrg &val);
         colib::stdio logImageHtml();
         colib::stdio logImageHtmlBorder();
         colib::stdio logText(const char *description);
@@ -140,9 +140,9 @@ namespace ocropus {
         void operator()(const char *description, colib::nuchar);
         void log(const char *descr, colib::nuchar c){(*this)(descr, c);}
 
-        /// Log a nustring value, decoding it to UTF-8.
-        void operator()(const char *description, colib::nustring &);
-        void log(const char *descr, colib::nustring &s){(*this)(descr, s);}
+        /// Log a ustrg value, decoding it to UTF-8.
+        void operator()(const char *description, colib::ustrg &);
+        void log(const char *descr, colib::ustrg &s){(*this)(descr, s);}
 
         /// Log a rectangle.
         void operator()(const char *description, colib::rectangle &);

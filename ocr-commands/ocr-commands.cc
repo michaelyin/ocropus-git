@@ -81,12 +81,12 @@ namespace ocropus {
 
     param_string eval_flags("eval_flags","space","which features to ignore during evaluation");
 
-    void cleanup_for_eval(iucstring &s) {
+    void cleanup_for_eval(strg &s) {
         bool space = strflag(eval_flags,"space");
         bool scase = strflag(eval_flags,"case");
         bool nonanum = strflag(eval_flags,"nonanum");
         bool nonalpha = strflag(eval_flags,"nonalpha");
-        iucstring result = "";
+        strg result = "";
         for(int i=0;i<s.length();i++) {
             int c = s[i];
             if(space && c==' ') continue;
@@ -99,12 +99,12 @@ namespace ocropus {
         s = result;
     }
 
-    void cleanup_for_eval(nustring &s) {
+    void cleanup_for_eval(ustrg &s) {
         bool space = strflag(eval_flags,"space");
         bool scase = strflag(eval_flags,"case");
         bool nonanum = strflag(eval_flags,"nonanum");
         bool nonalpha = strflag(eval_flags,"nonalpha");
-        nustring result;
+        ustrg result;
         for(int i=0;i<s.length();i++) {
             int c = s[i].ord();
             if(space && c==' ') continue;
@@ -174,7 +174,7 @@ namespace ocropus {
 
         bookstore->setPrefix(outdir);
 
-        iucstring s;
+        strg s;
         for(int arg=2;arg<argc;arg++) {
             Pages pages;
             pages.parseSpec(argv[arg]);
@@ -220,7 +220,7 @@ namespace ocropus {
                     }
                     debugf("progress","page %04d line %06x\n",page,line);
                     if(continue_partial) {
-                        iucstring s;
+                        strg s;
                         stdio stream;
 #pragma omp critical
                         stream = bookstore->open("r",page,line,0,"fst");
@@ -232,7 +232,7 @@ namespace ocropus {
                             continue;
                         }
                     }
-                    iucstring line_path_ = bookstore->path(page,line);
+                    strg line_path_ = bookstore->path(page,line);
                     const char *line_path = (const char *)line_path_;
                     debugf("linepath","%s\n",line_path);
                     bytearray image;
@@ -263,7 +263,7 @@ namespace ocropus {
                     }
 
                     if(save_fsts) {
-                        iucstring s;
+                        strg s;
                         s = bookstore->path(page,line,0,"fst");
                         result->save(s);
                         if(segmentation.length()>0) {
@@ -276,7 +276,7 @@ namespace ocropus {
                         }
                     }
 
-                    nustring predicted;
+                    ustrg predicted;
                     try {
                         result->bestpath(predicted);
                         utf8strg utf8Predicted;
@@ -294,7 +294,7 @@ namespace ocropus {
                         continue;
                     }
 
-                    nustring truth;
+                    ustrg truth;
 #pragma omp critical
                     if(bookstore->getLine(truth,page,line,"gt")) try {
                         // FIXME not unicode clean
@@ -454,7 +454,7 @@ namespace ocropus {
                         regions.extract(line_image,page_gray,i,1);
                         autodel<OcroFST> result(make_OcroFST());
                         linerec->recognizeLine(*result,line_image);
-                        nustring str;
+                        ustrg str;
                         if(0) {
                             result->bestpath(str);
                         } else {
@@ -502,12 +502,12 @@ namespace ocropus {
             logger.log("fst",fst_image);
 
             // output the result
-            nustring str;
+            ustrg str;
             str.clear();
             result->bestpath(str);
             if(str.length()<1) throw "recognition failed";
             if(debug("detail")) {
-                debugf("detail","nustring result: ");
+                debugf("detail","ustrg result: ");
                 for(int i=0;i<str.length();i++)
                     printf(" %d",str(i).ord());
                 printf("\n");
@@ -561,8 +561,8 @@ namespace ocropus {
         int total_chars = 0;
         int total_lines = 0;
         linerec.startTraining("");
-        iucstring cseg_variant = "cseg.gt";
-        iucstring text_variant = "gt";
+        strg cseg_variant = "cseg.gt";
+        strg text_variant = "gt";
         if(retrain) {
             cseg_variant = "cseg";
             text_variant = "";
@@ -585,7 +585,7 @@ namespace ocropus {
 
                     // read the ground truth segmentation
 
-                    nustring nutranscript;
+                    ustrg nutranscript;
                     {
                         bookstore->getLine(nutranscript,pageno,line,text_variant);
                         // FIXME this is an awful hack and won't work with unicode

@@ -26,11 +26,11 @@
 using namespace colib;
 
 namespace ocropus {
-    iucstring find_file_on_path(const char *path, const char *file) {
-        narray<iucstring> components;
+    strg find_file_on_path(const char *path, const char *file) {
+        narray<strg> components;
         split_string(components, path, ":;");
         for(int i = 0; i < components.length(); i++) {
-            iucstring s(components[i]);
+            strg s(components[i]);
             s.append("/");
             s.append(file);
             FILE *f = fopen(s, "rb");
@@ -39,6 +39,6 @@ namespace ocropus {
                 return s;
             }
         }
-        return iucstring();
+        return strg();
     }
 }

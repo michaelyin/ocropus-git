@@ -554,7 +554,7 @@ namespace ocropus {
     }
 
     /// Analogous to python's split().
-    void split_string(narray<iucstring> &components,
+    void split_string(narray<strg> &components,
                       const char *s,
                       const char *delimiters) {
         components.clear();

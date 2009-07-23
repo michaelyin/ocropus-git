@@ -77,7 +77,7 @@ namespace ocropus {
             try {
                 autodel<IComponent> p;
                 p = component_construct(names[i]);
-                iucstring desc(p->description());
+                strg desc(p->description());
                 int where = desc.find("\n");
                 if(where!=desc.npos) desc = desc.substr(0,where);
                 if(desc.length()>60) desc = desc.substr(0,60);

@@ -36,7 +36,6 @@
 #include "colib/smartptr.h"
 #include "colib/misc.h"
 #include "colib/coords.h"
-#include "colib/nustring.h"
 #include "colib/iustring.h"
 #include "components.h"
 
@@ -141,13 +140,13 @@ namespace ocropus {
 
         /// \brief Compute the best path through the language model.
         /// Useful for simple OCR tasks and for debugging.
-        virtual void bestpath(nustring &result) = 0;
+        virtual void bestpath(ustrg &result) = 0;
 
         /// destroy the language model
         virtual ~IGenericFst() {}
 
         /// simple interface for line recognizers
-        virtual void setString(nustring &text,floatarray &costs,intarray &ids) {
+        virtual void setString(ustrg &text,floatarray &costs,intarray &ids) {
             int n = text.length();
             intarray states;
             states.clear();
@@ -221,7 +220,7 @@ namespace ocropus {
         /// Unicode character or character string.
         //
         /// Note that some classifiers may return multiple characters per class
-        virtual void cls(nustring &result, int i) = 0;
+        virtual void cls(ustrg &result, int i) = 0;
 
         /// cost value for this classification; lower costs = better
         /// should aim to return negative log likelihoods
@@ -236,16 +235,16 @@ namespace ocropus {
         //
         /// (Commonly, this only stores data in the model; training is via an external program).
         /// This may be also train on ligatures (if supported),
-        /// that's why `characters' is a nustring.
-        virtual void addTrainingChar(bytearray &input_image,nustring &characters)
+        /// that's why `characters' is a ustrg.
+        virtual void addTrainingChar(bytearray &input_image,ustrg &characters)
             { throw "unimplemented"; }
 
         /// Train a character.
         virtual void addTrainingChar(bytearray &image,int base_y, int xheight_y, int descender_y,
-                int ascender_y,nustring &characters) { throw "unimplemented"; }
+                int ascender_y,ustrg &characters) { throw "unimplemented"; }
 
         /// Train a character in context (think about this some more).
-        virtual void addTrainingChar(bytearray &image,bytearray &mask,nustring &characters)
+        virtual void addTrainingChar(bytearray &image,bytearray &mask,ustrg &characters)
                 { throw "unimplemented"; }
 
         /// Finish training and switch back to recognition; this method may
@@ -263,7 +262,7 @@ namespace ocropus {
         /// \brief Convenience function for getting the best output
         //
         /// (useful for debugging)
-        virtual void best(nustring &result) {
+        virtual void best(ustrg &result) {
             int mi = -1;
             float mc = 1e30;
             for(int i=0;i<length();i++) {
@@ -306,13 +305,13 @@ namespace ocropus {
         /// NB: you might train on length 1 strings for single character training
         /// and might train on words if line alignment is not working
         /// (well, for some training data)
-        virtual void addTrainingLine(bytearray &image,nustring &transcription) { throw "unimplemented"; }
+        virtual void addTrainingLine(bytearray &image,ustrg &transcription) { throw "unimplemented"; }
 
 
         /// \brief Train on a text line, given a segmentation.
-        /// This is analogous to addTrainingLine(bytearray,nustring) except that
+        /// This is analogous to addTrainingLine(bytearray,ustrg) except that
         /// it takes the "ground truth" line segmentation.
-        virtual void addTrainingLine(intarray &segmentation, bytearray &image_grayscale, nustring &transcription) { throw "unimplemented"; }
+        virtual void addTrainingLine(intarray &segmentation, bytearray &image_grayscale, ustrg &transcription) { throw "unimplemented"; }
 
 
         /// Align a lattice with a transcription.
@@ -326,7 +325,7 @@ namespace ocropus {
         /// \param[out] costs Costs corresponding to chars
         /// \param[in] image Input grayscale image
         /// \param[in] transcription The "ground truth" lattice to align
-        virtual void align(nustring &chars,intarray &seg,floatarray &costs,
+        virtual void align(ustrg &chars,intarray &seg,floatarray &costs,
                            bytearray &image,IGenericFst &transcription) { throw "unimplemented"; }
 
         // eventually?

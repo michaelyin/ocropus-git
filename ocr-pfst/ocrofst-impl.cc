@@ -132,7 +132,7 @@ namespace ocropus {
         virtual int special(const char *s) {
             return 0;
         }
-        virtual void bestpath(colib::nustring &result) {
+        virtual void bestpath(colib::ustrg &result) {
             a_star(result, *this);
         }
         virtual void save(const char *path) {

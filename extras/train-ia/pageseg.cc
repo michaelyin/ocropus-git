@@ -39,7 +39,7 @@ using namespace ocropus;
 typedef struct {
     rectangle bbox;
     rectarray charBBoxes;
-    iuistring trans;
+    ustrg trans;
 } Line;
 
 void renumber(intarray& src) {
@@ -65,12 +65,12 @@ int main(int argc, char* argv[]) {
     // -- determine page number --
     char s1[1024];
     strcpy(s1, argv[2]);
-    iucstring dd = basename(s1);
+    strg dd = basename(s1);
     int pageNo = atoi(dd.erase(4).c_str());
 
     // -- create output directory --
     strcpy(s1, argv[2]);
-    iucstring outDir = dirname(s1);
+    strg outDir = dirname(s1);
     sprintf_append(outDir, "/%04d", pageNo);
     mkdir(outDir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
     }
     linesBBoxes.clear();
 
-    iuistring space;
+    ustrg space;
     space.push_back(' ');
 
     // -- reading characters with bounding boxes from text file --
@@ -112,11 +112,12 @@ int main(int argc, char* argv[]) {
         // -- read one line into variables --
         rectangle box;
         char c[5];
-        iuistring unicode;
+        ustrg unicode;
         if(fscanf(file, "%d,%d,%d,%d,%[^\n]\n", &box.x0, &box.y1, &box.x1, &box.y0, c) == 5) {
             box.y0 = pageBin.dim(1) - box.y0;
             box.y1 = pageBin.dim(1) - box.y1;
-            decodeUTF8(unicode, c, strlen(c));
+            unicode.clear();
+            unicode.utf8Decode(c, strlen(c));
             // -- find according line --
             int line = -1;
             double maxCover = 0.0;
@@ -167,7 +168,7 @@ int main(int argc, char* argv[]) {
         intarray lineSeg;
         ocr_bboxes_to_charseg(lineSeg, line.charBBoxes, lineOverSeg);
 
-        iucstring outFile;
+        strg outFile;
 
         intarray lineSegSave;
         lineSegSave.copy(lineSeg);
@@ -188,10 +189,8 @@ int main(int argc, char* argv[]) {
 
         sprintf(outFile, "%s/%04d.gt.txt", outDir.c_str(), i);
         //char utf8Line[line.trans.length()*4+1];
-        bytearray utf8;
-        encodeUTF8(utf8, line.trans);
         FILE* file = fopen(outFile, "w");
-        fwrite(utf8.data, 1, utf8.length(), file);
+        fputsUTF8(line.trans, file);
         fclose(file);
     }
 

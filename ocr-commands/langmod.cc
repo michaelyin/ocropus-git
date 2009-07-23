@@ -23,11 +23,11 @@ namespace ocropus {
     extern param_int beam_width;
     extern param_int abort_on_error;
     extern param_string lmodel;
-    extern void nustring_convert(iucstring &output,nustring &str);
-    extern void nustring_convert(nustring &output,iucstring &str);
+    extern void ustrg_convert(strg &output,ustrg &str);
+    extern void ustrg_convert(ustrg &output,strg &str);
 
     static void store_costs(const char *base, floatarray &costs) {
-        iucstring s;
+        strg s;
         s = base;
         s.append(".costs");
         stdio stream(s,"w");
@@ -59,7 +59,7 @@ namespace ocropus {
 
     // Read a line and make an FST out of it.
     void read_transcript(IGenericFst &fst, const char *path) {
-        nustring gt;
+        ustrg gt;
         fgetsUTF8(gt, stdio(path, "r"));
         fst_line(fst, gt);
     }
@@ -91,7 +91,7 @@ namespace ocropus {
                 read_gt(*gt_fst, bookstore->path(page,line,0,""));
                 autodel<OcroFST> fst(make_OcroFST());
                 fst->load(bookstore->path(page,line,0,"fst"));
-                nustring str;
+                ustrg str;
                 intarray v1;
                 intarray v2;
                 intarray in;
@@ -158,7 +158,7 @@ namespace ocropus {
                         // if(abort_on_error) abort();
                         continue;
                     }
-                    nustring str;
+                    ustrg str;
                     try {
                         intarray v1;
                         intarray v2;
@@ -185,7 +185,7 @@ namespace ocropus {
                                 fprintf(stderr,"ERROR in cseg reconstruction: %s\n",err);
                                 if(abort_on_error) abort();
                             }
-                            iucstring s(bookstore->path(page,line,0,"txt"));
+                            strg s(bookstore->path(page,line,0,"txt"));
                             fprintf(stdio(s,"w"),"%s\n",utf8Output.c_str());
                         } else {
                             debugf("info","%04d %06x failed to match language model\n",page,line);
@@ -215,13 +215,13 @@ namespace ocropus {
                 debugf("progress","page %04d %06x\n",page,line);
                 autodel<OcroFST> fst(make_OcroFST());
                 fst->load(bookstore->path(page,line,0,"fst"));
-                nustring str;
+                ustrg str;
                 try {
                     fst->bestpath(str);
                     utf8strg utf8Output;
                     str.utf8EncodeTerm(utf8Output);
                     debugf("transcript","%04d %06x\t%s\n",page,line,utf8Output.c_str());
-                    iucstring s(bookstore->path(page,line,0,"txt"));
+                    strg s(bookstore->path(page,line,0,"txt"));
                     fprintf(stdio(s,"w"),"%s",utf8Output.c_str());
                 } catch(const char *error) {
                     fprintf(stderr,"ERROR in bestpath: %s\n",error);

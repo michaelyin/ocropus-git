@@ -86,7 +86,7 @@ namespace ocropus {
         }
 
         /// misc information logged about the history of the component
-        iucstring object_history;
+        strg object_history;
 
         /// print longer info to stdout
         virtual void info(int depth=0,FILE *stream=stdout) {
@@ -104,7 +104,7 @@ namespace ocropus {
 
         /// parameter setting and loading
     private:
-        strhash<iucstring> params;
+        strhash<strg> params;
         strhash<bool> shown;
         bool checked;
     public:
@@ -122,7 +122,7 @@ namespace ocropus {
             if(name[0]=='%') throwf("pdef: %s must not start with %%",name);
             if(params.find(name)) throwf("pdefs: %s: parameter already defined");
             params(name) = value;
-            iucstring key;
+            strg key;
             key = this->name();
             key += "_";
             key += name;
@@ -144,7 +144,7 @@ namespace ocropus {
             }
         }
         void pdef(const char *name,double value,const char *doc) {
-            iucstring svalue;
+            strg svalue;
             sprintf(svalue, "%g",value);
             pdef(name,svalue.c_str(),doc);
         }
@@ -169,7 +169,7 @@ namespace ocropus {
                 fprintf(stderr,"set %s_%s=%s\n",this->name(),name,value);
         }
         virtual void pset(const char *name,double value) {
-            iucstring svalue;
+            strg svalue;
             sprintf(svalue, "%g",value);
             pset(name,svalue.c_str());
         }

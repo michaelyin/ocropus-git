@@ -257,7 +257,7 @@ namespace ocropus {
         return true;
     }
 
-    double a_star(nustring &result, OcroFST &fst) {
+    double a_star(ustrg &result, OcroFST &fst) {
         intarray inputs;
         intarray vertices;
         intarray outputs;
@@ -373,7 +373,7 @@ namespace ocropus {
         return result;
     }
 
-    double a_star(nustring &result, OcroFST &fst1, OcroFST &fst2) {
+    double a_star(ustrg &result, OcroFST &fst1, OcroFST &fst2) {
         intarray inputs;
         intarray v1;
         intarray v2;

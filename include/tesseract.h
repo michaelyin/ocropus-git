@@ -45,7 +45,7 @@ namespace ocropus {
 
     /// \brief Recognize an image with Tesseract, returning detailed results.
     ///
-    /// \param[out] text    An array of nustrings, one per line.
+    /// \param[out] text    An array of ustrgs, one per line.
     /// \param[out] bboxes  Character bounding boxes, an array per line,
     ///                     corresponding to text.
     /// \param[out] costs   Costs (badness rating) for characters.
@@ -53,7 +53,7 @@ namespace ocropus {
     /// \param[in] gray     Grayscale input image.
     /// \param[in] pseg     Page segmentation.
     void tesseract_recognize_blockwise_and_split_to_lines(
-            colib::narray<colib::nustring> &text,
+            colib::narray<colib::ustrg> &text,
             colib::narray<colib::narray<colib::rectangle> > &bboxes,
             colib::narray<colib::floatarray> &costs,
             colib::bytearray &gray,
@@ -69,12 +69,12 @@ namespace ocropus {
 
     class RecognizedPage {
 
-        colib::narray<colib::nustring>   line_texts;
+        colib::narray<colib::ustrg>   line_texts;
         colib::narray<colib::floatarray> line_costs;
         colib::narray<colib::rectarray> line_bboxes;
-        colib::iucstring desc;
+        colib::strg desc;
         int w, h;
-        colib::iucstring time_report;
+        colib::strg time_report;
     public:
         /// Get page width
         int width() {
@@ -119,11 +119,11 @@ namespace ocropus {
             return line_texts.length();
         }
         /// Set the text of the given line
-        void setText(colib::nustring &s, int index) {
+        void setText(colib::ustrg &s, int index) {
             colib::copy(line_texts[index], s);
         }
         /// Get the text of the given line
-        void text(colib::nustring &s, int index) {
+        void text(colib::ustrg &s, int index) {
             colib::copy(s, line_texts[index]);
         }
         /// Set the cost array of the given line

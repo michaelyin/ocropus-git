@@ -213,7 +213,7 @@ namespace glinerec {
             classifier->updateModel();
         }
 
-        nustring transcript;
+        ustrg transcript;
         bytearray line;
         intarray segmentation;
 
@@ -403,13 +403,13 @@ namespace glinerec {
             push_unary(v,aspect,-1,4,csize);
         }
 
-        void addTrainingLine(intarray &cseg,nustring &tr) {
+        void addTrainingLine(intarray &cseg,ustrg &tr) {
             bytearray gimage;
             segmentation_as_bitmap(gimage,cseg);
             addTrainingLine(cseg,gimage,tr);
         }
 
-        void addTrainingLine(intarray &cseg,bytearray &image,nustring &tr) {
+        void addTrainingLine(intarray &cseg,bytearray &image,ustrg &tr) {
             if(image.dim(1)>pgetf("maxheight"))
                 throwf("input line too high (%d x %d)",image.dim(0),image.dim(1));
             if(image.dim(1)*1.0/image.dim(0)>pgetf("maxaspect"))
@@ -602,7 +602,7 @@ namespace glinerec {
             grouper->getLattice(result);
         }
 
-        void align(nustring &chars,intarray &seg,floatarray &costs,
+        void align(ustrg &chars,intarray &seg,floatarray &costs,
                    bytearray &image,IGenericFst &transcription) {
             throw Unimplemented();
 #if 0

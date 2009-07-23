@@ -47,10 +47,10 @@ namespace ocropus {
         // TODO/tmb rewrite this more cleanly in terms of iustring
         if(checked) return;
         checked = true;
-        iucstring prefix = this->name();
+        strg prefix = this->name();
         prefix += "_";
         for(int i=0;environ[i];i++) {
-            iucstring entry = environ[i];
+            strg entry = environ[i];
             if(!entry.compare(0, prefix.length(), prefix)) {
                 int where = entry.find('=');
                 if(where >= 0) {

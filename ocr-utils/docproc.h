@@ -117,7 +117,7 @@ namespace ocropus {
     void remove_marginal_components(narray<T> &bimage,int x0,int y0,int x1,int y1);
 
     /// Split a string into a list using the given array of delimiters.
-    void split_string(narray<iucstring> &components,
+    void split_string(narray<strg> &components,
                       const char *path,
                       const char *delimiters);
     int binarize_simple(bytearray &result, bytearray &image);

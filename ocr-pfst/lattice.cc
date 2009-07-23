@@ -162,7 +162,7 @@ namespace {
             }
         }
 
-        virtual void bestpath(nustring &s) {
+        virtual void bestpath(ustrg &s) {
             throw "NIY";
         }
     };

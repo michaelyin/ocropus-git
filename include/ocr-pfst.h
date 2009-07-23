@@ -89,10 +89,10 @@ namespace ocropus {
     /// \param[in]  fst     The FST.
     /// \param      max     The maximum length of the result.
     /// \returns total cost
-    double fst_sample(nustring &result, IGenericFst &fst, int max=1000);
+    double fst_sample(ustrg &result, IGenericFst &fst, int max=1000);
 
     /// Remove epsilons (zeros) and converts integers to nuchars.
-    void remove_epsilons(nustring &s, intarray &a);
+    void remove_epsilons(ustrg &s, intarray &a);
     
     /// Make an in-place Kleene closure of the FST.
     void fst_star(IGenericFst &fst);
@@ -100,24 +100,24 @@ namespace ocropus {
     /// Make a Kleene closure.
     void fst_star(IGenericFst &result, IGenericFst &fst);
 
-    void fst_line(IGenericFst &fst, nustring &s);
-    void get_alphabet(intarray &alphabet, objlist<nustring> &dict);
+    void fst_line(IGenericFst &fst, ustrg &s);
+    void get_alphabet(intarray &alphabet, objlist<ustrg> &dict);
 
     /// \brief Simplified interface for a_star().
     ///
     /// \param[out] result      FST output with epsilons removed,
-    ///                         converted to a nustring.
+    ///                         converted to a ustrg.
     /// \param[in]  fst         the FST to search
     /// \returns total cost
-    double a_star(nustring &result, OcroFST &fst);
+    double a_star(ustrg &result, OcroFST &fst);
 
     /// \brief Simplified interface for a_star_in_composition().
     ///
     /// \param[out] result      FST output with epsilons removed,
-    ///                         converted to a nustring.
+    ///                         converted to a ustrg.
     /// \param[in]  fst         the FST to search
     /// \returns total cost
-    double a_star(nustring &result, OcroFST &fst1, OcroFST &fst2);
+    double a_star(ustrg &result, OcroFST &fst1, OcroFST &fst2);
 
 
     // TODO/mezhirov document return value
@@ -178,7 +178,7 @@ namespace ocropus {
                      OcroFST &fst2,
                      int beam_width=1000);
 
-    double beam_search(nustring &result, OcroFST &fst1, OcroFST &fst2,
+    double beam_search(ustrg &result, OcroFST &fst1, OcroFST &fst2,
                        int beam_width=1000);
 
 };

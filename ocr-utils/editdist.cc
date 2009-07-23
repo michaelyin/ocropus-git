@@ -38,7 +38,7 @@ namespace {
             array[i] = item;
     }
 
-    void fill_edit_distance_table(floatarray &d, nustring &str1, nustring &str2, float del_cost, float ins_cost, float sub_cost) {
+    void fill_edit_distance_table(floatarray &d, ustrg &str1, ustrg &str2, float del_cost, float ins_cost, float sub_cost) {
         int m = str1.length();
         int n = str2.length();
         floatarray temp_del_ins_sub(3);
@@ -64,15 +64,15 @@ namespace {
 
 namespace ocropus {
 
-    float edit_distance(nustring &str1, nustring &str2, float del_cost, float ins_cost, float sub_cost) {
+    float edit_distance(ustrg &str1, ustrg &str2, float del_cost, float ins_cost, float sub_cost) {
         floatarray d;
         fill_edit_distance_table(d, str1, str2, del_cost, ins_cost, sub_cost);
         return d(str1.length(), str2.length());
     }
 
     float edit_distance(intarray &confusion,
-                        nustring &str1,
-                        nustring &str2,
+                        ustrg &str1,
+                        ustrg &str2,
                         float del_cost,
                         float ins_cost,
                         float sub_cost) {
@@ -111,7 +111,7 @@ namespace ocropus {
         return d(str1.length(), str2.length());
     }
 
-    float block_move_edit_cost(nustring &from, nustring &to, float c) {
+    float block_move_edit_cost(ustrg &from, ustrg &to, float c) {
         floatarray upper, row;
         row.resize(from.length() + 1);
         upper.resize(from.length() + 1);
@@ -148,7 +148,7 @@ namespace ocropus {
 
     /// Same as block_move_edit_cost(), but also records all block movements
     /// (aka cursor jumps) in the form of two integer arrays.
-    float block_move_edit_cost_record_jumps(intarray &jumps_from, intarray &jumps_to, nustring &from, nustring &to, float c) {
+    float block_move_edit_cost_record_jumps(intarray &jumps_from, intarray &jumps_to, ustrg &from, ustrg &to, float c) {
         floatarray upper(from.length() + 1);
         floatarray row(from.length() + 1);
         narray<intarray> jumps(from.length() + 1);
@@ -214,7 +214,7 @@ namespace ocropus {
     }
 
 
-    float edit_cost_for_layout(intarray &jumps_from, intarray &jumps_to, nustring &from, nustring &to, float c) {
+    float edit_cost_for_layout(intarray &jumps_from, intarray &jumps_to, ustrg &from, ustrg &to, float c) {
         floatarray upper(from.length() + 1);
         floatarray row(from.length() + 1);
         narray<intarray> jumps(from.length() + 1);
@@ -298,7 +298,7 @@ namespace ocropus {
     }
 
 
-    float block_move_edit_distance(nustring &a, nustring &b, float c) {
+    float block_move_edit_distance(ustrg &a, ustrg &b, float c) {
         return (block_move_edit_cost(a, b, c)
               + block_move_edit_cost(b, a, c)) / 2;
     }
@@ -322,7 +322,7 @@ namespace ocropus {
         fill_slice(area_covered_by_non_jumps,1, to[njumps-1], source_length);
     }
 
-    void get_text_jumped_over(nustring &result, bytearray &covered, nustring &text) {
+    void get_text_jumped_over(ustrg &result, bytearray &covered, ustrg &text) {
         CHECK_ARG(covered.length() == text.length());
         result.clear();
         for(int i = 0; i < text.length(); i++) {

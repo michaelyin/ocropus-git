@@ -27,13 +27,13 @@
 #define h_editdist_
 
 namespace ocropus {
-    float edit_distance(colib::nustring &str1, colib::nustring &str2, float del_cost=1, float ins_cost=1, float sub_cost=1);
+    float edit_distance(colib::ustrg &str1, colib::ustrg &str2, float del_cost=1, float ins_cost=1, float sub_cost=1);
 
     /// A variant of edit_distance() with a confusion matrix.
     /// The confusion matrix should be pre-initialized.
     float edit_distance(colib::intarray &confusion,
-                        colib::nustring &str1,
-                        colib::nustring &str2,
+                        colib::ustrg &str1,
+                        colib::ustrg &str2,
                         float del_cost=1,
                         float ins_cost=1,
                         float sub_cost=1);
@@ -43,21 +43,21 @@ namespace ocropus {
     /// \param[in] from     The string where editing starts.
     /// \param[in] to       The string where editing finishes.
     /// \param c        Cost of block movement (moving the "cursor" anywhere).
-    float block_move_edit_cost(colib::nustring &from,
-                               colib::nustring &to,
+    float block_move_edit_cost(colib::ustrg &from,
+                               colib::ustrg &to,
                                float c);
     
     /// Symmetrization of block_move_edit_cost().
-    float block_move_edit_distance(colib::nustring &a,
-                                   colib::nustring &b,
+    float block_move_edit_distance(colib::ustrg &a,
+                                   colib::ustrg &b,
                                    float c);
     
     /// Same as block_move_edit_cost(), but also records all block movements
     /// (aka cursor jumps) in the form of two integer arrays.
     float block_move_edit_cost_record_jumps(colib::intarray &jumps_from,
                                             colib::intarray &jumps_to,
-                                            colib::nustring &from,
-                                            colib::nustring &to, float c);
+                                            colib::ustrg &from,
+                                            colib::ustrg &to, float c);
     
     /// See what parts of the text were 
     /// By looking at the jumps recorded by block_move_edit_cost_record_jumps(),
@@ -68,11 +68,11 @@ namespace ocropus {
                        colib::intarray &to,
                        int source_length);
     
-    void get_text_jumped_over(colib::nustring &result, 
+    void get_text_jumped_over(colib::ustrg &result, 
                               colib::bytearray &covered,
-                              colib::nustring &text);
+                              colib::ustrg &text);
 
-    float edit_cost_for_layout(colib::intarray &jumps_from, colib::intarray &jumps_to, colib::nustring &from, colib::nustring &to, float c);
+    float edit_cost_for_layout(colib::intarray &jumps_from, colib::intarray &jumps_to, colib::ustrg &from, colib::ustrg &to, float c);
 
 }
 

@@ -323,7 +323,7 @@ namespace ocropus {
         b.bestpath(vertices1, vertices2, inputs, outputs, costs);
     }
 
-    double beam_search(nustring &result, OcroFST &fst1, OcroFST &fst2,
+    double beam_search(ustrg &result, OcroFST &fst1, OcroFST &fst2,
                        int beam_width) {
         intarray v1;
         intarray v2;

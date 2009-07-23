@@ -32,7 +32,7 @@ namespace ocropus {
 
     struct Pages : IComponent {
         autodel<IBinarize> binarizer;
-        narray<iucstring> files;
+        narray<strg> files;
         intarray numSubpages;    /// number of (sub)pages within each image
         bool want_gray;
         bool want_color;
@@ -116,7 +116,7 @@ namespace ocropus {
         void clear() {
             files.clear();
         }
-        static bool isTiff(iucstring& filename) {
+        static bool isTiff(strg& filename) {
             return re_search(filename, "\\.tif\\(f\\?\\)$") >= 0;
         }
         void addFile(const char *file) {
@@ -188,7 +188,7 @@ namespace ocropus {
             binary.clear();
             gray.clear();
             color.clear();
-            iucstring& current_file = files(current_image);
+            strg& current_file = files(current_image);
             if(current_subpage > 0) {
                 if(!isTiff(current_file)) {
                     throw "subpage requested but not a TIFF image";

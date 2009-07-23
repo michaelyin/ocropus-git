@@ -63,14 +63,14 @@ namespace ocropus {
                         r.x1(index), h - 1 - r.y1(index));
         }
         fprintf(output, ">\n");
-        nustring s;
+        ustrg s;
         fgetsUTF8(s, stdio(path, "r"));
         fwriteUTF8(s, output);
         fprintf(output, "</span>");
     }
 
     void hocr_dump_page(FILE *output, const char *path) {
-        iucstring pattern;
+        strg pattern;
 
         sprintf(pattern,"%s.pseg.png",path);
         if(!file_exists(pattern))
@@ -100,7 +100,7 @@ namespace ocropus {
 
     int main_buildhtml(int argc,char **argv) {
         if(argc!=2) throw "usage: ... dir";
-        iucstring pattern;
+        strg pattern;
         sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]",argv[1]);
         Glob pages(pattern);
         FILE *output = stdout;

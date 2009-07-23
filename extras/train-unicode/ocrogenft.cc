@@ -47,14 +47,14 @@ int cHeight = 0;
 int hDpi = 96;
 int vDpi = 0;
 int nLines = 40;
-narray<iucstring> inputFilenames;
+narray<strg> inputFilenames;
 autodel<ocropus::IBookStore> bookStore;
 
-iucstring outDir = ".";
-iucstring bookName;
+strg outDir = ".";
+strg bookName;
 bool writePages = false;
-iucstring ttfFile = "/usr/share/fonts/truetype/freefont/FreeSans.ttf";
-iucstring logFilename = "log.txt";
+strg ttfFile = "/usr/share/fonts/truetype/freefont/FreeSans.ttf";
+strg logFilename = "log.txt";
 int verbose = 0;
 
 // -- parameters for baird's degradation --
@@ -87,7 +87,7 @@ using namespace iulib;
 int renderText(intarray& seg, bytearray& gray, ustrg& string, int x0, int y0, FT_Face& face) {
     bool onePixel = false;
     for(int i=0; i<string.length(); i++) {
-        int error = FT_Load_Char(face, string[i], FT_LOAD_RENDER);
+        int error = FT_Load_Char(face, string[i].ord(), FT_LOAD_RENDER);
         if(error) {
             fprintf(stderr, "error during loading the glyph\n");
             return error;
@@ -147,7 +147,7 @@ template<class T>
 void removeCntrl(iustrg<T>& s) {
     iustrg<T> s2;
     for(int i=0; i<s.length(); i++) {
-        if(s[i] > 255 || !iscntrl(s[i])) {
+        if(s[i].ord() > 255 || !iscntrl(s[i].ord())) {
             s2.push_back(s[i]);
         }
     }

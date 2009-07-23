@@ -34,7 +34,7 @@ namespace ocropus {
     /// (both decimal and hexadecimal) are supported.
     //
     // proposed for colib
-    void xml_unescape(colib::nustring &dest, const char *src);
+    void xml_unescape(colib::ustrg &dest, const char *src);
 };
 
 #endif

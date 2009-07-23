@@ -227,16 +227,16 @@ namespace ocropus {
         bin_append(path, a);
     }
 // -- not used and deprecated -
-//    void bin_write_nustring(FILE *f, colib::nustring &a);
-//    void bin_read_nustring(FILE *f, colib::nustring &a);
+//    void bin_write_ustrg(FILE *f, colib::ustrg &a);
+//    void bin_read_ustrg(FILE *f, colib::ustrg &a);
 
     /// Read a line from the file, allocating memory with malloc().
     char *read_line_malloc(FILE *f);
     /// Write utf8-encoded string followed by a newline.
-    void write_utf8(FILE *f, colib::nustring &a);
+    void write_utf8(FILE *f, colib::ustrg &a);
     /// Read a line and decode it from utf-8.
-    bool read_utf8_line(colib::nustring &a, FILE *f);
-    bool read_utf8(colib::nustring &a, FILE *f) WARN_DEPRECATED;
+    bool read_utf8_line(colib::ustrg &a, FILE *f);
+    bool read_utf8(colib::ustrg &a, FILE *f) WARN_DEPRECATED;
 
     /// \brief Write a `checkpoint' to the file.
     /// A checkpoint is just some text lying around for 4 purposes:

@@ -52,7 +52,7 @@ namespace {
 }
 
 namespace ocropus {
-    void remove_epsilons(nustring &s, intarray &a) {
+    void remove_epsilons(ustrg &s, intarray &a) {
         s.clear();
         for(int i = 0; i < a.length(); i++) {
             if(a[i])
@@ -85,7 +85,7 @@ namespace ocropus {
     }
 
 
-    double fst_sample(nustring &result, IGenericFst &fst, int max) {
+    double fst_sample(ustrg &result, IGenericFst &fst, int max) {
         intarray tmp;
         double cost = fst_sample(tmp, fst, max);
         remove_epsilons(result, tmp);
@@ -107,7 +107,7 @@ namespace ocropus {
         fst_star(result);
     }
 
-    void fst_line(IGenericFst &fst, nustring &s) {
+    void fst_line(IGenericFst &fst, ustrg &s) {
         int n = s.length();
         intarray inputs(n);
         for(int j = 0; j < n; j++)

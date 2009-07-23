@@ -30,7 +30,7 @@ namespace ocropus {
     using namespace colib;
 
     struct ReadOnlyFst;
-    void beam_search(nustring &,IGenericFst &,int beam_width);
+    void beam_search(ustrg &,IGenericFst &,int beam_width);
     struct ReadOnlyFst : IGenericFst {
         int oops() { throw "this FST is read-only"; }
         virtual void clear() {oops();}

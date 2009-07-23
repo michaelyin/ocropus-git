@@ -34,8 +34,8 @@ using namespace ocropus;
 
 namespace {
 
-    void append_to_nustring(nustring &s, const char *p, int n = -1) {
-        nustring t;
+    void append_to_ustrg(ustrg &s, const char *p, int n = -1) {
+        ustrg t;
         if(n == -1) {
             t.utf8Decode(p, strlen(p));
         } else {
@@ -57,9 +57,9 @@ namespace {
     }
 
     // @param start     A string starting with an XML entity, e.g. "&amp;foo".
-    // @param dest      A nustring that the parsed entity will be appended to.
+    // @param dest      A ustrg that the parsed entity will be appended to.
     // @returns         The pointer to the position after the entity.
-    static char *append_XML_entity(nustring &dest, char *start) {
+    static char *append_XML_entity(ustrg &dest, char *start) {
         CHECK_ARG(*start == '&');
         start++;
         if(*start == '#') {
@@ -111,17 +111,17 @@ namespace ocropus {
     // This function probably logically belongs to Lua
     // but due to the lack of good string manipulation functions there
     // it's actually simpler in C.
-    void xml_unescape(nustring &dest, const char *src) {
+    void xml_unescape(ustrg &dest, const char *src) {
         CHECK_ARG(src);
         dest.clear();
         const char *begin = src;
         char *p;
         while((p = strchr(begin, '&'))) {
-            append_to_nustring(dest, begin, p - begin);
+            append_to_ustrg(dest, begin, p - begin);
             begin = append_XML_entity(dest, p);
             CHECK_CONDITION(begin);
         }
-        append_to_nustring(dest, begin);
+        append_to_ustrg(dest, begin);
     }
 
 };

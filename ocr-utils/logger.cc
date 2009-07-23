@@ -33,8 +33,8 @@ using namespace ocropus;
 
 namespace {
     struct Log {
-        narray<iucstring> enabled_logs;
-        iucstring dir;
+        narray<strg> enabled_logs;
+        strg dir;
         stdio file;
     };
 
@@ -119,7 +119,7 @@ namespace ocropus {
     }
 
     stdio Logger::logImage(const char *description, int w, int h) {
-        iucstring imageFile = get_log()->dir + "/ocropus-log-" + image_counter + ".png";
+        strg imageFile = get_log()->dir + "/ocropus-log-" + image_counter + ".png";
         putIndent();
         fprintf(get_log()->file, "%s:<br> <a HREF=\"ocropus-log-%d.png\">"
                 "<IMG width=\"%d\" height=\"%d\" border=\"0\" SRC=\"ocropus-log-%d.png\">"
@@ -129,7 +129,7 @@ namespace ocropus {
         return stdio(imageFile, "wb");
     }
     stdio Logger::logImageHtml() {
-        iucstring imageFile = get_log()->dir + "/ocropus-log-" + image_counter + ".png";
+        strg imageFile = get_log()->dir + "/ocropus-log-" + image_counter + ".png";
         //putIndent();
         fprintf(get_log()->file, "<IMG SRC=\"ocropus-log-%d.png\">",image_counter);
         fflush(get_log()->file);
@@ -137,7 +137,7 @@ namespace ocropus {
         return stdio(imageFile, "wb");
     }
     stdio Logger::logImageHtmlBorder() {
-        iucstring imageFile = get_log()->dir + "/ocropus-log-" + image_counter + ".png";
+        strg imageFile = get_log()->dir + "/ocropus-log-" + image_counter + ".png";
         //putIndent();
         fprintf(get_log()->file, "<IMG hspace=\"4\" vspace=\"4\" style=\"border-color:#8888FF\" SRC=\"ocropus-log-%d.png\" border=\"1\">",image_counter);
         fflush(get_log()->file);
@@ -146,7 +146,7 @@ namespace ocropus {
     }
 
     stdio Logger::logText(const char *description) {
-        iucstring textFile = get_log()->dir + "/ocropus-log-" + image_counter + ".txt";
+        strg textFile = get_log()->dir + "/ocropus-log-" + image_counter + ".txt";
         putIndent();
         fprintf(get_log()->file, "<A HREF=\"ocropus-log-%d.txt\">%s</A><BR>\n",
                 image_counter, description);
@@ -302,15 +302,15 @@ namespace ocropus {
         stdio f = logText(description);
         text_write(f, a);
     }
-    void Logger::operator()(const char *message, nustring &val) {
+    void Logger::operator()(const char *message, ustrg &val) {
         if(!enabled) return;
         utf8strg utf8;
         val.utf8EncodeTerm(utf8);
         putIndent();
-        fprintf(get_log()->file, "%s: nustring(\"%s\")<BR>\n", message, utf8.c_str());
+        fprintf(get_log()->file, "%s: ustrg(\"%s\")<BR>\n", message, utf8.c_str());
         fflush(get_log()->file);
     }
-    void Logger::html(nustring &val) {
+    void Logger::html(ustrg &val) {
         utf8strg utf8;
         val.utf8EncodeTerm(utf8);
         fprintf(get_log()->file, "%s", utf8.c_str());
@@ -326,7 +326,7 @@ namespace ocropus {
 
     void Logger::operator()(const char *message, IGenericFst &val) {
         if(!enabled) return;
-        nustring s;
+        ustrg s;
         val.bestpath(s);
         utf8strg utf8;
         s.utf8EncodeTerm(utf8);
@@ -369,11 +369,11 @@ namespace ocropus {
                     "log finished; switching to directory %s\n", path);
         }
         mkdir_if_necessary(path);
-        iucstring old_dir;
+        strg old_dir;
         if(get_log()->dir)
             old_dir = get_log()->dir;
         get_log()->dir = path;
-        iucstring html;
+        strg html;
         html = path;
         html += "/index.html";
         get_log()->file = fopen(html,"wt");
@@ -422,7 +422,7 @@ namespace ocropus {
                         fprintf(get_log()->file, "<br><table border>");
                         for(int j=0;(d_d_trans==-1)||(j<d_d_trans);j++) {       // do not display all the possible labels
                             fprintf(get_log()->file, "<tr>");                   // make a table
-                            nustring char_text;
+                            ustrg char_text;
                             char_text.resize(1);
                             char_text[0] = nuchar(charcode_t(i+j));             // with the label
                             char *buf = char_text.newUtf8Encode();              // and associated cost
@@ -485,7 +485,7 @@ namespace ocropus {
                 }
             }       // display everything or the nbest
             if ((n_disp_trans == -1) or (cuts(i) < n_disp_trans)) {
-                nustring char_text;
+                ustrg char_text;
                 char_text.resize(1);
                 char_text[0] = nuchar(charcode_t(i));
                 char *buf = char_text.newUtf8Encode();

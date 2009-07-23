@@ -37,11 +37,11 @@
 #include "bookstore.h"
 
 namespace ocropus {
-    extern void cleanup_for_eval(iucstring &);
+    extern void cleanup_for_eval(strg &);
 
     int main_evaluate(int argc,char **argv) {
         if(argc!=2) throw "usage: ... dir";
-        iucstring s;
+        strg s;
         sprintf(s, "%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
         Glob files(s);
         float total = 0.0, tchars = 0, pchars = 0, lines = 0;
@@ -49,18 +49,18 @@ namespace ocropus {
             if(index%1000==0)
                 debugf("info","%s (%d/%d)\n",files(index),index,files.length());
 
-            iucstring base = files(index);
+            strg base = files(index);
             base.erase(base.find("."));
 
-            iucstring truth;
+            strg truth;
             try {
                 fgets(truth, stdio(files(index),"r"));
             } catch(const char *error) {
                 continue;
             }
 
-            iucstring s = base + ".txt";
-            iucstring predicted;
+            strg s = base + ".txt";
+            strg predicted;
             try {
                 fgets(predicted, stdio(s,"r"));
             } catch(const char *error) {
@@ -69,8 +69,8 @@ namespace ocropus {
 
             cleanup_for_eval(truth);
             cleanup_for_eval(predicted);
-            nustring ntruth = truth;
-            nustring npredicted = predicted;
+            ustrg ntruth = truth;
+            ustrg npredicted = predicted;
             float dist = edit_distance(ntruth,npredicted);
 
             total += dist;
@@ -92,7 +92,7 @@ namespace ocropus {
 
     int main_evalconf(int argc,char **argv) {
         if(argc!=2) throw "usage: ... dir";
-        iucstring s;
+        strg s;
         sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
         Glob files(s);
         float total = 0.0, tchars = 0, pchars = 0, lines = 0;
@@ -102,18 +102,18 @@ namespace ocropus {
             if(index%1000==0)
                 debugf("info","%s (%d/%d)\n",files(index),index,files.length());
 
-            iucstring base = files(index);
+            strg base = files(index);
             base.erase(base.length()-7);
 
-            iucstring truth;
+            strg truth;
             try {
                 fgets(truth, stdio(files(index),"r"));
             } catch(const char *error) {
                 continue;
             }
 
-            iucstring s = base + ".txt";
-            iucstring predicted;
+            strg s = base + ".txt";
+            strg predicted;
             try {
                 fgets(predicted, stdio(s,"r"));
             } catch(const char *error) {
@@ -122,8 +122,8 @@ namespace ocropus {
 
             cleanup_for_eval(truth);
             cleanup_for_eval(predicted);
-            nustring ntruth = truth;
-            nustring npredicted = predicted;
+            ustrg ntruth = truth;
+            ustrg npredicted = predicted;
             float dist = edit_distance(confusion,ntruth,npredicted,1,1,1);
 
             total += dist;
@@ -179,24 +179,24 @@ namespace ocropus {
             sscanf(argv[3],"%c",&c);
             to = c;
         }
-        iucstring s;
+        strg s;
         sprintf(s,"%s/[0-9][0-9][0-9][0-9]/[0-9][0-9][0-9][0-9].gt.txt",argv[1]);
         Glob files(s);
         intarray confusion(256,256);
         for(int index=0;index<files.length();index++) {
-            iucstring base = files(index);
+            strg base = files(index);
             base.erase(base.length()-7);
 
 
-            iucstring truth;
+            strg truth;
             try {
                 fgets(truth, stdio(files(index),"r"));
             } catch(const char *error) {
                 continue;
             }
 
-            iucstring s = base + ".txt";
-            iucstring predicted;
+            strg s = base + ".txt";
+            strg predicted;
             try {
                 fgets(predicted, stdio(s,"r"));
             } catch(const char *error) {
@@ -205,8 +205,8 @@ namespace ocropus {
 
             cleanup_for_eval(truth);
             cleanup_for_eval(predicted);
-            nustring ntruth = truth;
-            nustring npredicted = predicted;
+            ustrg ntruth = truth;
+            ustrg npredicted = predicted;
             confusion = 0;
             edit_distance(confusion,ntruth,npredicted,1,1,1);
             if(confusion(from,to)>0) {
@@ -217,15 +217,15 @@ namespace ocropus {
     }
     int main_evalfiles(int argc,char **argv) {
         if(argc!=3) throw "usage: ... file1 file2";
-        iucstring truth;
+        strg truth;
         fread(truth, stdio(argv[1],"r"));
-        iucstring predicted;
+        strg predicted;
         fread(predicted, stdio(argv[2],"r"));
 
         cleanup_for_eval(truth);
         cleanup_for_eval(predicted);
-        nustring ntruth = truth;
-        nustring npredicted = predicted;
+        ustrg ntruth = truth;
+        ustrg npredicted = predicted;
 
         float dist = edit_distance(ntruth,npredicted);
         printf("dist %g tchars %d pchars %d\n",

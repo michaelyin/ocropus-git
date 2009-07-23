@@ -164,7 +164,7 @@ namespace ocropus {
     }
 
 // -- not used and deprecated -
-//    void bin_write_nustring(FILE *f, nustring &a) {
+//    void bin_write_ustrg(FILE *f, ustrg &a) {
 //        intarray dims;
 //        get_dims(dims, a);
 //        bin_write_1d(f, dims);
@@ -172,7 +172,7 @@ namespace ocropus {
 //            write_int32(a.at1d(i).ord(), f);
 //    }
 //
-//    void bin_read_nustring(FILE *f, nustring &a) {
+//    void bin_read_ustrg(FILE *f, ustrg &a) {
 //        intarray dims;
 //        bin_read_1d(f, dims);
 //        set_dims(a, dims);
@@ -180,7 +180,7 @@ namespace ocropus {
 //            a.at1d(i) = nuchar(read_int32(f));
 //    }
 //
-//    void write_utf8(FILE *f, nustring &a) {
+//    void write_utf8(FILE *f, ustrg &a) {
 //        char *p = a.newUtf8Encode();
 //        fprintf(f, "%s\n", p);
 //        delete[] p;
@@ -234,7 +234,7 @@ namespace ocropus {
 //        }
 //    }
 //
-//    bool read_utf8_line(nustring &a, FILE *f) {
+//    bool read_utf8_line(ustrg &a, FILE *f) {
 //        char *line = read_line_malloc(f);
 //        if(!line)
 //            return false;
@@ -248,7 +248,7 @@ namespace ocropus {
 //
 //    /// This function name is deprecated because it suggests reading of the
 //    /// whole file.
-//    bool read_utf8(nustring &a, FILE *f) {
+//    bool read_utf8(ustrg &a, FILE *f) {
 //        return read_utf8_line(a, f);
 //    }
 

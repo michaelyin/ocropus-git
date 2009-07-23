@@ -700,7 +700,7 @@ namespace {
         void setAccept(int node,float cost) {
             fprintf(stderr,"ACCEPT %d %g\n",node,cost);
         }
-        void bestpath(nustring &result) {
+        void bestpath(ustrg &result) {
             result.clear();
             result.utf8Decode("debug-fst-string",16);
         }
