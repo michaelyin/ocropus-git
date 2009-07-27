@@ -360,10 +360,6 @@ namespace ocropus {
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(outdir);
         int npages = bookstore->numberOfPages();
-        int nfiles = 0;
-        for(int page=0;page<bookstore->numberOfPages();page++)
-            nfiles += bookstore->linesOnPage(page);
-        CHECK(nfiles>0);
         debugf("info","found %d pages\n",npages);
         if(npages<1) throw "no pages found";
 #pragma omp parallel for private(segmenter)
