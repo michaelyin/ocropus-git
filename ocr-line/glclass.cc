@@ -3,7 +3,9 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include "glinerec.h"
+#ifdef HAVE_GSL
 #include "gsl.h"
+#endif
 
 namespace glinerec {
     // extern param_int csize_param;
@@ -1307,6 +1309,7 @@ namespace glinerec {
     ////////////////////////////////////////////////////////////////
 
     void least_square(floatarray &xf,floatarray &Af,floatarray &bf) {
+#ifdef GSL
         int N = Af.dim(1);
         gsl::vector x(N),b,S(N),work(N);
         gsl::matrix A,X(N,N),V(N,N);
@@ -1315,6 +1318,9 @@ namespace glinerec {
         gsl_linalg_SV_decomp_mod(A,X,V,S,work);
         gsl_linalg_SV_solve(A,V,S,b,x);
         x.put(xf);
+#else
+        throw "least_square AdaBoost unimplemented (define HAVE_GSL if you want this)";
+#endif
     }
 
     struct AdaBoost : IModel {

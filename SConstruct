@@ -24,18 +24,6 @@
 # Primary Repository: http://ocropus.googlecode.com/svn/trunk/
 # Web Sites: www.iupr.org, www.dfki.de
 
-# IMPORTANT
-# 
-# The official build system for OCRopus is autoconf.
-# However, OCRopus should build with this build file on Ubuntu.
-# If OCRopus doesn't build with this build file on Ubuntu,
-# chances are that some file or file name violates the coding
-# conventions or that there are new, unexpected external library
-# dependencies.
-#
-# Please do not make significant modifications to this file
-# without talking to tmb first.
-
 import os
 if os.system("uname -a | egrep 'Ubuntu.*2009' > /dev/null")!=0:
     print "WARNING: scons not supported on platforms other than Ubuntu 9.04"
@@ -63,19 +51,22 @@ headers = glob("include/*.h") + glob("ocr-utils/*.h")
 opts = Variables('custom.py')
 opts.Add('opt', 'Compiler flags for optimization/debugging', "-O2")
 opts.Add('warn', 'Compiler flags for warnings',
-         "-Wall -Wno-sign-compare -Wno-write-strings"+
+         "-Wall -Wno-sign-compare -Wno-write-strings -Wno-unknown-pragmas"+
          " -D__warn_unused_result__=__far__"+
          " -D_BACKWARD_BACKWARD_WARNING_H=1")
 ### path options
 opts.Add(PathVariable('prefix', 'The installation root for OCRopus ', "/usr/local"))
 opts.Add(PathVariable('iulib', 'The installation root of iulib', "/usr/local"))
-opts.Add(PathVariable('leptonica', 'The installation root of leptonica', "/usr/local"))
 opts.Add(PathVariable('destdir', 'Destination root directory', "", PathOption.PathAccept))
+opts.Add(PathVariable('leptonica', 'The installation root of leptonica', "/usr/local"))
 
-### configuration options
-### optional build steps
+opts.Add(BoolVariable('gsl', "use GSL-dependent features", "no"))
+opts.Add(BoolVariable('omp', "use OpenMP", "no"))
+opts.Add(BoolVariable('lept', "use Leptonica", "no"))
+
 opts.Add(BoolVariable('test', "Run some tests after the build", "no"))
 opts.Add(BoolVariable('style', 'Check style', "no"))
+
 
 destdir = "${destdir}"
 prefix = "${prefix}"
@@ -108,20 +99,9 @@ else:
 
 env.Append(LIBPATH=["${iulib}/lib"])
 env.Append(CPPPATH=["${iulib}/include"])
-env.Append(CPPPATH=["/tmp/o/include"])
 env.Append(LIBS=["iulib"])
 assert conf.CheckLibWithHeader("iulib","iulib/iulib.h","C++");
 assert conf.CheckHeader("colib/colib.h",language="C++")
-
-### OpenFST
-
-sources = [s for s in sources if not "/fst" in s]
-
-### SDL
-
-env.Append(LIBS=["SDL","SDL_gfx"])
-assert conf.CheckLibWithHeader('SDL', 'SDL/SDL.h', 'C')
-assert conf.CheckLibWithHeader('SDL_gfx', 'SDL/SDL_gfxPrimitives.h', 'C')
 
 ### TIFF, JPEG, PNG
 
@@ -131,32 +111,45 @@ assert conf.CheckLib('tiff')
 assert conf.CheckLib('jpeg')
 assert conf.CheckLib('png')
 
+# sources = [s for s in sources if not "/fst" in s]
+
+### SDL (include if it's there in case iulib needs it)
+
+if conf.CheckLibWithHeader('SDL', 'SDL/SDL.h', 'C'):
+    if conf.CheckLibWithHeader('SDL_gfx', 'SDL/SDL_gfxPrimitives.h', 'C'):
+        env.Append(LIBS=["SDL","SDL_gfx"])
+
 ### Leptonica
 
-env.Append(CPPPATH='${leptonica}/include')
-env.Append(LIBS=["lept"])
-env.Append(CPPDEFINES=['HAVE_LEPTONICA'])
-if conf.CheckLibWithHeader('lept', ['stdlib.h', 'stdio.h', 'leptonica/allheaders.h'], 'C'):
-    # This happens if you install it with apt-get install libleptonica-dev.
-    env.Append(CPPPATH=['/usr/include/leptonica',
-                        '/usr/local/include/leptonica',
-                        '${leptonica}/include/leptonica'])
-elif conf.CheckLibWithHeader('lept', ['stdlib.h', 'stdio.h', 'liblept/allheaders.h'], 'C'):
-    # This happens if you install from a tarball.
-    env.Append(CPPPATH=['/usr/include/liblept',
-                        '/usr/local/include/liblept',
-                        '${leptonica}/include/liblept'])
-else:
-    # And this probably doesn't happen unless you manually specify the path.
-    assert conf.CheckLibWithHeader('lept', ['stdlib.h', 'stdio.h', 'allheaders.h'], 'C')
+if env["lept"]:
+    env.Append(CPPPATH='${leptonica}/include')
+    env.Append(LIBS=["lept"])
+    env.Append(CPPDEFINES=['HAVE_LEPTONICA'])
+    if conf.CheckLibWithHeader('lept', ['stdlib.h', 'stdio.h', 'leptonica/allheaders.h'], 'C'):
+        # This happens if you install it with apt-get install libleptonica-dev.
+        env.Append(CPPPATH=['/usr/include/leptonica',
+                            '/usr/local/include/leptonica',
+                            '${leptonica}/include/leptonica'])
+    elif conf.CheckLibWithHeader('lept', ['stdlib.h', 'stdio.h', 'liblept/allheaders.h'], 'C'):
+        # This happens if you install from a tarball.
+        env.Append(CPPPATH=['/usr/include/liblept',
+                            '/usr/local/include/liblept',
+                            '${leptonica}/include/liblept'])
+    else:
+        # And this probably doesn't happen unless you manually specify the path.
+        assert conf.CheckLibWithHeader('lept', ['stdlib.h', 'stdio.h', 'allheaders.h'], 'C')
 
 ### gsl
 
-env.Append(LIBS=["gsl","blas"])
+if env["gsl"]:
+    env.Append(CPPDEFINES=['HAVE_GSL'])
+    env.Append(LIBS=["gsl","blas"])
 
-if re.search("-O3",env["opt"]):
+# enable OpenMP for high optimization
+
+if env["omp"]:
     env.Append(CXXFLAGS=["-fopenmp"])
-env.Append(LINKFLAGS=["-fopenmp"])
+    env.Append(LINKFLAGS=["-fopenmp"])
 
 conf.Finish()
 
