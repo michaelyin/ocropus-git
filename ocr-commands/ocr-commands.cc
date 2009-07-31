@@ -765,6 +765,7 @@ namespace ocropus {
     extern int main_evalfiles(int argc,char **argv);
     extern int main_components(int argc,char **argv);
     extern int main_cinfo(int argc,char **argv);
+    extern int main_linfo(int argc,char **argv);
     extern int main_params(int argc,char **argv);
     extern int main_align(int argc,char **argv);
     extern int main_fsts2text(int argc,char **argv);
@@ -797,6 +798,7 @@ namespace ocropus {
             if(!strcmp(argv[1],"book2pages")) return main_book2pages(argc-1,argv+1);
             if(!strcmp(argv[1],"buildhtml")) return main_buildhtml(argc-1,argv+1);
             if(!strcmp(argv[1],"cinfo")) return main_cinfo(argc-1,argv+1);
+            if(!strcmp(argv[1],"linfo")) return main_linfo(argc-1,argv+1);
             if(!strcmp(argv[1],"cleanhtml")) return main_buildhtml(argc-1,argv+1);
             if(!strcmp(argv[1],"components")) return main_components(argc-1,argv+1);
             if(!strcmp(argv[1],"evalconf")) return main_evalconf(argc-1,argv+1);
