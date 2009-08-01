@@ -37,7 +37,6 @@
 #include "grouper.h"
 #include "linesegs.h"
 #include "logger.h"
-#include "narray-io.h"
 #include "ocr-utils.h"
 #include "pages.h"
 #include "pagesegs.h"

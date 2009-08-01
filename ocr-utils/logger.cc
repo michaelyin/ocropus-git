@@ -24,7 +24,6 @@
 #include <stdarg.h>
 #include <time.h>
 #include "ocropus.h"
-#include "narray-io.h"
 #include "logger.h"
 
 using namespace colib;
@@ -72,6 +71,10 @@ namespace {
         return name[spec_len] == '.';
     }
 
+    template <class T>
+    inline void text_write(FILE *stream,narray<T> &a) {
+        fprintf(stream,"<narray %d %d %d %d>",a.dim(0),a.dim(1),a.dim(2),a.dim(3));
+    }
 };
 
 
