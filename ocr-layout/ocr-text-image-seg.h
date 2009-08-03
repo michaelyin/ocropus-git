@@ -73,6 +73,7 @@ namespace ocropus {
 
     ITextImageClassification *make_TextImageSegByLogReg();
 
+#ifdef HAVE_LEPTONICA
     struct RemoveImageRegions : virtual ICleanupBinary, ICleanupGray{
         ~RemoveImageRegions() {}
 
@@ -94,6 +95,7 @@ namespace ocropus {
 
     ICleanupBinary *make_RemoveImageRegionsBinary();
     ICleanupGray   *make_RemoveImageRegionsGray();
+#endif
 }
 
 #endif

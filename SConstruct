@@ -138,6 +138,8 @@ if env["lept"]:
     else:
         # And this probably doesn't happen unless you manually specify the path.
         assert conf.CheckLibWithHeader('lept', ['stdlib.h', 'stdio.h', 'allheaders.h'], 'C')
+else:
+    sources = [s for s in sources if not "leptonica" in s]
 
 ### gsl
 

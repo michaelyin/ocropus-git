@@ -46,10 +46,12 @@ namespace ocropus {
         component_register("PageFrameRAST",make_PageFrameRAST);
         component_register("DeskewPageByRAST",make_DeskewPageByRAST);
         component_register("DeskewGrayPageByRAST",make_DeskewGrayPageByRAST);
+        component_register("TextImageSegByLogReg",make_TextImageSegByLogReg);
+#ifdef HAVE_LEPTONICA
         component_register("RemoveImageRegionsBinary",make_RemoveImageRegionsBinary);
         component_register("RemoveImageRegionsGray",make_RemoveImageRegionsGray);
-        component_register("TextImageSegByLogReg",make_TextImageSegByLogReg);
         component_register("TextImageSegByLeptonica",make_TextImageSegByLeptonica);
+#endif
         component_register("SegmentPageByMorphTrivial",make_SegmentPageByMorphTrivial);
         component_register("SegmentPageBy1CP",make_SegmentPageBy1CP);
         component_register("SegmentPageByRAST",make_SegmentPageByRAST);

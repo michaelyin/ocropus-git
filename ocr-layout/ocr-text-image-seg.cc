@@ -269,6 +269,7 @@ namespace ocropus {
         return new TextImageSegByLogReg();
     }
 
+#ifdef HAVE_LEPTONICA
     void RemoveImageRegions::cleanup(bytearray &out, bytearray &in) {
 
         // get a binary image
@@ -304,6 +305,6 @@ namespace ocropus {
     ICleanupGray *make_RemoveImageRegionsGray() {
         return new RemoveImageRegions();
     }
-
+#endif
 }
 
