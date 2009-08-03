@@ -62,7 +62,6 @@ namespace ocropus {
 #include "grid.h"
 #include "grouper.h"
 #include "logger.h"
-#include "narray-io.h"
 #include "segmentation.h"
 #include "docproc.h"
 #include "stringutil.h"
