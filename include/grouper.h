@@ -34,6 +34,8 @@ namespace ocropus {
     void sort_by_xcenter(colib::intarray &);
 
     struct IGrouper : IComponent {
+        const char *interface() { return "IGrouper"; }
+
         // Set the grouper for iterating over the elements of the
         // segmentation.
 

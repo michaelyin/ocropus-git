@@ -97,6 +97,8 @@ namespace glinerec {
     struct IModel : IComponent {
         IModel() {}
 
+        const char *interface() { return "IModel"; }
+
         // inquiry functions
         virtual int nfeatures() {throw Unimplemented();}
         virtual int nclasses() {throw Unimplemented();}
