@@ -45,9 +45,9 @@ namespace ocropus {
         }
 
 
-        int  max_results;
-        int  gap_factor;
-        bool use_four_line_model;
+        p_int max_results;
+        p_int gap_factor;
+        p_int use_four_line_model;
 
         const char *description() {
             return "Segment page by RAST";
@@ -57,6 +57,7 @@ namespace ocropus {
         }
 
         void set(const char* var,double value){
+#if 0
             if (strcmp(var,"max_results")==0){
                 CHECK_ARG(value>=1.0 && value<=5000);
                 max_results = int(value);
@@ -67,6 +68,9 @@ namespace ocropus {
             }
             else if (strcmp(var,"use_four_line_model")==0)
                 use_four_line_model = bool(value);
+#else
+            throw "unimplemented";
+#endif
         }
 
         void segment(colib::intarray &image,colib::bytearray &in_not_inverted);
@@ -84,7 +88,6 @@ namespace ocropus {
 
 
     };
-
 }
 
 #endif

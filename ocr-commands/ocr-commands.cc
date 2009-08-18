@@ -367,7 +367,9 @@ namespace ocropus {
             bytearray page_gray,page_binary;
 #pragma omp critical
             {
-                if(!segmenter) segmenter = make_SegmentPageByRAST();
+                if(!segmenter) {
+                    make_component(csegmenter,segmenter);
+                }
                 if(!bookstore->getPage(page_gray,pageno)) {
                     if(pageno>0)
                         debugf("info","%d: page not found\n",pageno);
@@ -408,7 +410,7 @@ namespace ocropus {
                         if(abort_on_error) abort();
                     }
                 }
-                debugf("info","%4d: #lines = %d\n",pageno,regions.length());
+                debugf("info","%4d: #lines = %d\n",pageno,regions.length()-1);
                 // TODO/mezhirov output other blocks here
             }
         }

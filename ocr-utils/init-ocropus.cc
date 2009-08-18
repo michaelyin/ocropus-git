@@ -55,6 +55,7 @@ namespace ocropus {
         component_register("SegmentPageByMorphTrivial",make_SegmentPageByMorphTrivial);
         component_register("SegmentPageBy1CP",make_SegmentPageBy1CP);
         component_register("SegmentPageByRAST",make_SegmentPageByRAST);
+        component_register("SegmentPageByRAST1",make_SegmentPageByRAST1);
         component_register("SegmentPageByVORONOI",make_SegmentPageByVORONOI);
         component_register("SegmentPageByXYCUTS",make_SegmentPageByXYCUTS);
         component_register("SegmentWords",make_SegmentWords);

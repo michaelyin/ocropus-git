@@ -36,9 +36,9 @@ namespace ocropus {
     param_int  debug_layout("debug_layout",0,"print the intermediate results to stdout");
 
     SegmentPageByRAST::SegmentPageByRAST(){
-        max_results = 1000;
-        gap_factor = 10;
-        use_four_line_model = false;
+        max_results.bind(this,"max_results",1000,"maximum number of results");
+        gap_factor.bind(this,"gap_factor",10,"size of gap in xheights");
+        use_four_line_model.bind(this,"use_four_line_model",0,"use four line text model");
     }
 
     // FIXME/faisal refactor this

@@ -76,16 +76,17 @@ namespace ocropus {
     ///                   textline should be split: gap_factor*xheight
     /// @param use_four_line_model use four line model for line finding
     ISegmentPage *make_SegmentPageByRAST();
+    ISegmentPage *make_SegmentPageByRAST1();
 
     ISegmentPage *make_SegmentPageByVORONOI();
     ISegmentPage *make_SegmentPageByXYCUTS();
     ISegmentPage *make_SegmentWords();
 
     // Textline extraction using RAST
-    
-    void visualize_segmentation_by_RAST(intarray &result, 
+
+    void visualize_segmentation_by_RAST(intarray &result,
                                         bytearray &in_not_inverted);
-    void visualize_segmentation_by_RAST(intarray &result, 
+    void visualize_segmentation_by_RAST(intarray &result,
                                         bytearray &in_not_inverted,
                                         rectarray &extra_obstacles);
     void ocr_bboxes_to_charseg(intarray &cseg,

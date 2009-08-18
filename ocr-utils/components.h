@@ -16,9 +16,9 @@
 // limitations under the License.
 //
 // Project: iulib -- image understanding library
-// File: 
-// Purpose: 
-// Responsible: 
+// File:
+// Purpose:
+// Responsible:
 // Reviewer:
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de
@@ -49,10 +49,10 @@ namespace ocropus {
     /// Base class for OCR components.
 
     struct IComponent {
-	const char *verbose_pattern;
+        const char *verbose_pattern;
 
         IComponent() {
-	    verbose_pattern = "%%%";
+            verbose_pattern = "%%%";
             checked = false;
             bool enabled = true;
 #ifdef _OPENMP
@@ -67,7 +67,7 @@ namespace ocropus {
                     else
                         verbose_pattern = getenv("verbose_params");
                 }
-	    }
+            }
         }
 
         /// interface name
@@ -267,6 +267,51 @@ namespace ocropus {
         /// Get a number property or throw an exception if not implemented.
         virtual double getd(const char *key) WARN_DEPRECATED {
             return pgetf(key);
+        }
+    };
+
+    struct p_int {
+        IComponent *component;
+        const char *name;
+        p_int():component(0),name(0) {
+        }
+        void bind(IComponent *component,const char *name,int value,const char *desc) {
+            this->component = component;
+            this->name = name;
+            component->pdef(name,value,desc);
+        }
+        operator int() {
+            return component->pgetf(name);
+        }
+    };
+
+    struct p_float {
+        IComponent *component;
+        const char *name;
+        p_float():component(0),name(0) {
+        }
+        void bind(IComponent *component,const char *name,float value,const char *desc) {
+            this->component = component;
+            this->name = name;
+            component->pdef(name,value,desc);
+        }
+        operator float() {
+            return component->pgetf(name);
+        }
+    };
+
+    struct p_string {
+        IComponent *component;
+        const char *name;
+        p_string():component(0),name(0) {
+        }
+        void bind(IComponent *component,const char *name,const char *value,const char *desc) {
+            this->component = component;
+            this->name = name;
+            component->pdef(name,value,desc);
+        }
+        operator const char *() {
+            return component->pget(name);
         }
     };
 
