@@ -48,6 +48,7 @@ namespace ocropus {
     /// Should work for both gray scale and binary images.
     ///
     struct ICleanupGray : IComponent {
+        const char *interface() { return "ICleanupGray"; }
         /// Clean up a gray image.
         virtual void cleanup(bytearray &out,bytearray &in) = 0;
     };
@@ -57,6 +58,7 @@ namespace ocropus {
     /// Should throw an error when applied to grayscale.
     ///
     struct ICleanupBinary : IComponent {
+        const char *interface() { return "ICleanupBinary"; }
         /// Clean up a binary image.
         virtual void cleanup(bytearray &out,bytearray &in) = 0;
     };
@@ -67,6 +69,7 @@ namespace ocropus {
     /// for text/image segmentation (see ocropus.org)
 
     struct ITextImageClassification : IComponent {
+        const char *interface() { return "ITextImageClassification"; }
         /// Compute text/image probabilities.
         virtual void textImageProbabilities(intarray &out,bytearray &in) = 0;
     };
@@ -74,6 +77,7 @@ namespace ocropus {
     /// Perform binarization of grayscale images.
 
     struct IBinarize : IComponent {
+        const char *interface() { return "IBinarize"; }
         /// Binarize an image stored in a floatarray. Override this.
         virtual void binarize(bytearray &out,floatarray &in) = 0;
         /// \brief Binarize an image stored in a bytearray.
@@ -92,6 +96,7 @@ namespace ocropus {
     /// for page segmentation (see ocropus.org)
 
     struct ISegmentPage : IComponent {
+        const char *interface() { return "ISegmentPage"; }
         /// Segment the page.
         virtual void segment(intarray &out,bytearray &in) = 0;
         virtual void segment(intarray &out,bytearray &in,rectarray &obstacles)
@@ -104,6 +109,7 @@ namespace ocropus {
     /// for page segmentation (see ocropus.org)
 
     struct ISegmentLine : IComponent {
+        const char *interface() { return "ISegmentLine"; }
         /// Segment a line.
         virtual void charseg(intarray &out,bytearray &in) = 0;
     };
@@ -115,6 +121,7 @@ namespace ocropus {
     /// accept cost written on vertices and
     /// a fixed start vertice.
     struct IGenericFst : virtual IComponent {
+        const char *interface() { return "IGenericFst"; }
         /// Clear the language model
         virtual void clear() = 0;
 
@@ -204,6 +211,7 @@ namespace ocropus {
     /// since feature extraction is quite inefficient if it's done a character at a time.
 
     struct ICharacterClassifier : IComponent {
+        const char *interface() { return "ICharacterClassifier"; }
         /// \brief Classify a character without any information about position on the line.
         ///
         /// May throw an exception if it's not implemented.
@@ -285,6 +293,7 @@ namespace ocropus {
     /// A generic interface for text line recognition.
 
     struct IRecognizeLine : IComponent {
+        const char *interface() { return "IRecognizeLine"; }
         /// \brief Recognize a text line and return a lattice representing
         /// the recognition alternatives.
         virtual void recognizeLine(IGenericFst &result,bytearray &image) = 0;

@@ -87,21 +87,49 @@ namespace ocropus {
     }
 
     int main_components(int argc,char **argv) {
+        narray<const char *> kinds;
         narray<const char *> names;
         list_components(names);
         for(int i=0;i<names.length();i++) {
             try {
                 autodel<IComponent> p;
                 p = component_construct(names[i]);
-                strg desc(p->description());
-                int where = desc.find("\n");
-                if(where!=desc.npos) desc = desc.substr(0,where);
-                if(desc.length()>60) desc = desc.substr(0,60);
-                printf("%-32s %-32s\n    %s\n",names[i],p->name(),desc.c_str());
+                const char *kind = p->interface();
+                bool found = 0;
+                for(int i=0;i<kinds.length();i++) {
+                    if(!strcmp(kind,kinds[i])) {
+                        found = 1;
+                        break;
+                    }
+                }
+                if(!found) kinds.push(kind);
             } catch(const char *err) {
                 printf("FAILED to instantiate %-32s (%s)\n",names[i],err);
             } catch(const char *err) {
                 printf("FAILED to instantiate %s\n",names[i],err);
+            }
+        }
+        for(int j=0;j<kinds.length();j++) {
+            printf("\n");
+            printf("################################################################\n");
+            printf("### %s\n",kinds[j]);
+            printf("################################################################\n");
+            printf("\n");
+            for(int i=0;i<names.length();i++) {
+                try {
+                    autodel<IComponent> p;
+                    p = component_construct(names[i]);
+                    if(strcmp(p->interface(),kinds[j])) continue;
+                    strg desc(p->description());
+                    int where = desc.find("\n");
+                    if(where!=desc.npos) desc = desc.substr(0,where);
+                    if(desc.length()>60) desc = desc.substr(0,60);
+                    printf("%-32s %-32s\n    %s\n",names[i],p->name(),desc.c_str());
+                } catch(const char *err) {
+                    printf("FAILED to instantiate %-32s (%s)\n",names[i],err);
+                } catch(const char *err) {
+                    printf("FAILED to instantiate %s\n",names[i],err);
+                }
             }
         }
         return 0;

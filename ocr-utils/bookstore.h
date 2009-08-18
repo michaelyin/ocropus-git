@@ -6,6 +6,8 @@
 
 namespace ocropus {
     struct IBookStore : IComponent {
+        const char *interface() { return "IBookStore"; }
+
         virtual void setPrefix(const char *s) = 0;
 
         virtual bool getPage(bytearray &image,int page,const char *variant=0) = 0;

@@ -64,7 +64,7 @@ namespace ocropus {
     param_bool continue_partial("continue_partial",0,"don't compute outputs that already exist");
     param_bool old_csegs("old_csegs",0,"use old csegs (spaces are not counted)");
     param_float maxheight("max_line_height",300,"maximum line height");
-    param_float maxaspect("max_line_aspect",0.5,"maximum line aspect ratio");
+    param_float maxaspect("max_line_aspect",1.0,"maximum line aspect ratio");
 
     param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
     param_string cbinarizer("binarizer","","binarization component to use");

@@ -135,7 +135,7 @@ namespace glinerec {
             pdef("space_yes",1.0,"cost of inserting a space");
             pdef("space_no",5.0,"cost of not inserting a space");
             pdef("maxheight",300,"maximum height of input line");
-            pdef("maxaspect",0.5,"maximum height/width ratio of input line");
+            pdef("maxaspect",1.0,"maximum height/width ratio of input line");
             pdef("maxcost",20.0,"maximum cost of a character to be added to the output");
             pdef("minclass",32,"minimum output class to be added (default=unicode space)");
             segmenter = make_DpSegmenter();

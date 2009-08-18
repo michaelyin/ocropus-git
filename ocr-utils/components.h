@@ -70,6 +70,11 @@ namespace ocropus {
 	    }
         }
 
+        /// interface name
+        virtual const char *interface() {
+            return "IComponent"; // should override
+        }
+
         /// object name
         virtual const char *name() {
             return typeid(*this).name();

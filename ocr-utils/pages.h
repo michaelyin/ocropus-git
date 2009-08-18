@@ -61,6 +61,8 @@ namespace ocropus {
             make_component(binarizer,pget("binarizer"));
         }
 
+        const char *interface() { return "Pages"; }
+
         void gray_clean(bytearray &image) {
             bytearray temp;
             if(pget("cgrayclean1")) {
