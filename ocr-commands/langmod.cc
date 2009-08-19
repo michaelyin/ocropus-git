@@ -21,7 +21,7 @@
 
 namespace ocropus {
     extern param_int beam_width;
-    extern param_int abort_on_error;
+    extern param_bool abort_on_error;
     extern param_string lmodel;
     extern void ustrg_convert(strg &output,ustrg &str);
     extern void ustrg_convert(ustrg &output,strg &str);
@@ -80,10 +80,10 @@ namespace ocropus {
         extern param_string cbookstore;
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(argv[1]);
-//#pragma omp parallel for schedule(dynamic,20)
+//#pragma omp parallel for
         for(int page=0;page<bookstore->numberOfPages();page++) {
             int nlines = bookstore->linesOnPage(page);
-//#pragma omp parallel for private(linerec) shared(finished) schedule(dynamic,4)
+//#pragma omp parallel for
             for(int j=0;j<nlines;j++) {
                 int line = bookstore->getLineId(page,j);
                 debugf("progress","page %04d %06x\n",page,line);
@@ -132,7 +132,9 @@ namespace ocropus {
         if(argc!=2) throw "usage: lmodel=... ocropus fsts2text dir";
         autodel<OcroFST> langmod(make_OcroFST());
         try {
+            autodel<OcroFST> langmod(make_OcroFST());
             langmod->load(lmodel);
+            langmod = 0;
         } catch(const char *s) {
             throwf("%s: failed to load (%s)",(const char*)lmodel,s);
         } catch(...) {
@@ -143,11 +145,14 @@ namespace ocropus {
         extern param_string cbookstore;
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(argv[1]);
-//#pragma omp parallel for schedule(dynamic,20)
         for(int page=0;page<bookstore->numberOfPages();page++) {
             int nlines = bookstore->linesOnPage(page);
-//#pragma omp parallel for private(linerec) shared(finished) schedule(dynamic,4)
+#pragma omp parallel for private(langmod)
                 for(int j=0;j<nlines;j++) {
+                    if(!langmod) {
+                        autodel<OcroFST> langmod(make_OcroFST());
+                        langmod->load(lmodel);
+                    }
                     int line = bookstore->getLineId(page,j);
                     debugf("progress","page %04d %06x\n",page,line);
                     autodel<OcroFST> fst(make_OcroFST());
@@ -155,7 +160,7 @@ namespace ocropus {
                         fst->load(bookstore->path(page,line,0,"fst"));
                     } catch(const char *error) {
                         fprintf(stderr,"%04d %06x: can't load fst: %s\n",page,line,error);
-                        // if(abort_on_error) abort();
+                        if(abort_on_error) abort();
                         continue;
                     }
                     ustrg str;
@@ -206,15 +211,20 @@ namespace ocropus {
         extern param_string cbookstore;
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(argv[1]);
-//#pragma omp parallel for schedule(dynamic,20)
         for(int page=0;page<bookstore->numberOfPages();page++) {
             int nlines = bookstore->linesOnPage(page);
-//#pragma omp parallel for private(linerec) shared(finished) schedule(dynamic,4)
+#pragma omp parallel for
             for(int j=0;j<nlines;j++) {
                 int line = bookstore->getLineId(page,j);
                 debugf("progress","page %04d %06x\n",page,line);
                 autodel<OcroFST> fst(make_OcroFST());
-                fst->load(bookstore->path(page,line,0,"fst"));
+                try {
+                    fst->load(bookstore->path(page,line,0,"fst"));
+                } catch(const char *error) {
+                    fprintf(stderr,"cannot load %04d %06x: %s\n",page,line,error);
+                    if(abort_on_error) abort();
+                    continue;
+                }
                 ustrg str;
                 try {
                     fst->bestpath(str);
