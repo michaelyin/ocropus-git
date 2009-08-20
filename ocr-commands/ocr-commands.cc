@@ -702,6 +702,23 @@ namespace ocropus {
         return 0;
     }
 
+    int main_cleanupgray(int argc,char **argv) {
+        throw "unimplemented";
+        return 0;
+    }
+
+    param_string pclean("cleanup","Cleanup300dpi","cleanup component");
+
+    int main_cleanupbin(int argc,char **argv) {
+        autodel<ICleanupBinary> cleanup;
+        make_component(pclean,cleanup);
+        bytearray in,out;
+        read_image_gray(in,argv[1]);
+        cleanup->cleanup(out,in);
+        write_image_gray(argv[2],out);
+        return 0;
+    }
+
     void usage(const char *program) {
         fprintf(stderr,"usage:\n");
 #define D(s,s2) {fprintf(stderr,"    %s %s\n",program,s); fprintf(stderr,"        %s\n",s2); }
@@ -820,6 +837,8 @@ namespace ocropus {
             if(!strcmp(argv[1],"saveseg")) return main_trainseg_or_saveseg(argc-1,argv+1);
             if(!strcmp(argv[1],"trainseg")) return main_trainseg_or_saveseg(argc-1,argv+1);
             if(!strcmp(argv[1],"bookstore")) return main_bookstore(argc-1,argv+1);
+            if(!strcmp(argv[1],"cleanupgray")) return main_cleanupgray(argc-1,argv+1);
+            if(!strcmp(argv[1],"cleanupbin")) return main_cleanupbin(argc-1,argv+1);
             usage(argv[0]);
         } catch(const char *s) {
             fprintf(stderr,"FATAL: %s\n",s);

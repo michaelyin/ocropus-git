@@ -130,9 +130,9 @@ namespace ocropus {
 
     int main_fsts2text(int argc,char **argv) {
         if(argc!=2) throw "usage: lmodel=... ocropus fsts2text dir";
-        autodel<OcroFST> langmod(make_OcroFST());
+        autodel<OcroFST> langmod;
         try {
-            autodel<OcroFST> langmod(make_OcroFST());
+            langmod = make_OcroFST();
             langmod->load(lmodel);
             langmod = 0;
         } catch(const char *s) {
@@ -150,14 +150,16 @@ namespace ocropus {
 #pragma omp parallel for private(langmod)
                 for(int j=0;j<nlines;j++) {
                     if(!langmod) {
-                        autodel<OcroFST> langmod(make_OcroFST());
+                        langmod = make_OcroFST();
                         langmod->load(lmodel);
+                        CHECK(!!langmod);
                     }
                     int line = bookstore->getLineId(page,j);
                     debugf("progress","page %04d %06x\n",page,line);
                     autodel<OcroFST> fst(make_OcroFST());
                     try {
                         fst->load(bookstore->path(page,line,0,"fst"));
+                        CHECK(!!fst);
                     } catch(const char *error) {
                         fprintf(stderr,"%04d %06x: can't load fst: %s\n",page,line,error);
                         if(abort_on_error) abort();
