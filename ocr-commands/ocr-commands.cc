@@ -61,6 +61,7 @@ namespace ocropus {
     param_bool retrain_threshold("retrain_threshold",100,"only retrain on characters with a cost lower than this");
     param_int nrecognize("nrecognize",1000000,"maximum number of lines to predict (for quick testing)");
     param_int ntrain("ntrain",10000000,"max number of training examples");
+    param_int extract_grow("extract_grow",1,"amount by which to grow the mask for line extractions (-1=no mask)");
     param_bool continue_partial("continue_partial",0,"don't compute outputs that already exist");
     param_bool old_csegs("old_csegs",0,"use old csegs (spaces are not counted)");
     param_float maxheight("max_line_height",300,"maximum line height");
@@ -388,14 +389,17 @@ namespace ocropus {
                 bookstore->putPage(page_seg,pageno,"pseg");
                 RegionExtractor regions;
                 regions.setPageLines(page_seg);
+                int grow = extract_grow;
                 for(int lineno=1;lineno<regions.length();lineno++) {
                     try {
                         bytearray line_image;
-                        regions.extract(line_image,page_gray,lineno,1);
+                        if(extract_grow<0) {
+                            regions.extract(line_image,page_gray,lineno,1);
+                        } else {
+                            regions.extract_masked(line_image,page_gray,lineno,(byte)grow,255,1);
+                        }
                         CHECK_ARG(line_image.dim(1)<maxheight);
                         CHECK_ARG(line_image.dim(1)*1.0/line_image.dim(0)<maxaspect);
-                        // TODO/mezhirov output log of coordinates
-                        // here
                         int id = regions.id(lineno);
                         if(!strcmp(cbookstore,"OldBookStore")) id = lineno;
                         bookstore->putLine(line_image,pageno,id);

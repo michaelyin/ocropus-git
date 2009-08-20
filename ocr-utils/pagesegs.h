@@ -205,6 +205,15 @@ namespace ocropus {
                         output(i-r.x0,j-r.y0) = 255;
                 }
         }
+        void extract_masked(bytearray &output,bytearray &input,int index,int grow,int value,int margin=0) {
+            extract(output,input,index,margin);
+            if(grow<0) return;
+            bytearray mask;
+            this->mask(mask,index,margin);
+            binary_dilate_circle(mask,grow);
+            for(int i=0;i<mask.length();i++)
+                output[i] = mask[i] ? output[i] : value;
+        }
     };
     inline void write_page_segmentation(FILE *stream,intarray &a) {
         check_page_segmentation(a);
