@@ -87,11 +87,13 @@ namespace ocropus {
             narray<TextLine> textlines;
 
             autodel<CTextlineRAST> ctextline(make_CTextlineRAST());
+            ctextline->setDefaultParameters();
             ctextline->min_q = 2.0;
             ctextline->min_count = 2;
             ctextline->min_length= 30;
             ctextline->max_results = max_results;
             ctextline->min_gap = 20000;
+            ctextline->use_whitespace = 0;
             rectarray textline_obstacles;
             ctextline->extract(textlines,textline_obstacles,charstats);
 
@@ -105,14 +107,12 @@ namespace ocropus {
             rectarray textline_boxes;
             for(int i=0, l=textlines.length(); i<l; i++)
                 textline_boxes.push(textlines[i].bbox);
-
             autodel<ColorEncodeLayout> color_encoding(make_ColorEncodeLayout());
             copy(color_encoding->inputImage,in);
             for(int i=0, l=textlines.length(); i<l; i++)
                 color_encoding->textlines.push(textlines[i].bbox);
             for(int i=0, l=textcolumns.length(); i<l; i++)
                 color_encoding->textcolumns.push(textcolumns[i]);
-
             color_encoding->encode();
             copy(image,color_encoding->outputImage);
 

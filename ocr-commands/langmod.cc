@@ -127,6 +127,18 @@ namespace ocropus {
         return 0;
     }
 
+    void scale_fst(OcroFST &fst,float scale) {
+        if(fabs(scale-1.0)<1e-6) return;
+        for(int i=0;i<fst.nStates();i++) {
+            fst.costs(i) *= scale;
+            float accept = fst.acceptCost(i);
+            if(accept>=0 && accept<1e37)
+                fst.setAcceptCost(i,accept*scale);
+        }
+    }
+
+
+    param_float langmod_scale("langmod_scale",1.0,"scale factor for language model");
 
     int main_fsts2text(int argc,char **argv) {
         if(argc!=2) throw "usage: lmodel=... ocropus fsts2text dir";
@@ -145,6 +157,7 @@ namespace ocropus {
         extern param_string cbookstore;
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(argv[1]);
+        debugf("info","langmod_scale = %g\n",float(langmod_scale));
         for(int page=0;page<bookstore->numberOfPages();page++) {
             int nlines = bookstore->linesOnPage(page);
 #pragma omp parallel for private(langmod)
@@ -152,6 +165,7 @@ namespace ocropus {
                     if(!langmod) {
                         langmod = make_OcroFST();
                         langmod->load(lmodel);
+                        scale_fst(*langmod,langmod_scale);
                         CHECK(!!langmod);
                     }
                     int line = bookstore->getLineId(page,j);

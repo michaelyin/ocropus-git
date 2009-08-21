@@ -106,7 +106,7 @@ namespace ocropus {
             } catch(const char *err) {
                 printf("FAILED to instantiate %-32s (%s)\n",names[i],err);
             } catch(const char *err) {
-                printf("FAILED to instantiate %s\n",names[i],err);
+                printf("FAILED to instantiate %s: %s\n",names[i],err);
             }
         }
         for(int j=0;j<kinds.length();j++) {
@@ -128,7 +128,7 @@ namespace ocropus {
                 } catch(const char *err) {
                     printf("FAILED to instantiate %-32s (%s)\n",names[i],err);
                 } catch(const char *err) {
-                    printf("FAILED to instantiate %s\n",names[i],err);
+                    printf("FAILED to instantiate %s: %s\n",names[i],err);
                 }
             }
         }

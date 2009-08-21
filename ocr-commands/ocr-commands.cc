@@ -367,7 +367,7 @@ namespace ocropus {
         for(int pageno=0;pageno<npages;pageno++) {
             bytearray page_gray,page_binary;
 #pragma omp critical
-            {
+            try {
                 if(!segmenter) {
                     make_component(csegmenter,segmenter);
                 }
@@ -378,14 +378,29 @@ namespace ocropus {
                 if(!bookstore->getPage(page_binary,pageno,"bin")) {
                     page_binary = page_gray;
                 }
+            } catch(const char *s) {
+                fprintf(stderr,"ERROR: %s\n",s);
+                if(abort_on_error) abort();
+            } catch(...) {
+                fprintf(stderr,"ERROR: (no details)\n");
+                if(abort_on_error) abort();
             }
+
             if(page_gray.length()<1) continue;
 
             intarray page_seg;
-            segmenter->segment(page_seg,page_binary);
+            try {
+                segmenter->segment(page_seg,page_binary);
+            } catch(const char *s) {
+                fprintf(stderr,"ERROR in segmenter: %s\n",s);
+                if(abort_on_error) abort();
+            } catch(...) {
+                fprintf(stderr,"ERROR in segmenter: (no details)\n");
+                if(abort_on_error) abort();
+            }
 
 #pragma omp critical
-            {
+            try {
                 bookstore->putPage(page_seg,pageno,"pseg");
                 RegionExtractor regions;
                 regions.setPageLines(page_seg);
@@ -406,9 +421,6 @@ namespace ocropus {
                     } catch(const char *s) {
                         fprintf(stderr,"ERROR: %s\n",s);
                         if(abort_on_error) abort();
-                    } catch(BadTextLine &err) {
-                        fprintf(stderr,"ERROR: BadTextLine returned by recognizer\n");
-                        if(abort_on_error) abort();
                     } catch(...) {
                         fprintf(stderr,"ERROR: (no details)\n");
                         if(abort_on_error) abort();
@@ -416,6 +428,12 @@ namespace ocropus {
                 }
                 debugf("info","%4d: #lines = %d\n",pageno,regions.length()-1);
                 // TODO/mezhirov output other blocks here
+            } catch(const char *s) {
+                fprintf(stderr,"ERROR: %s\n",s);
+                if(abort_on_error) abort();
+            } catch(...) {
+                fprintf(stderr,"ERROR: (no details)\n");
+                if(abort_on_error) abort();
             }
         }
         return 0;
