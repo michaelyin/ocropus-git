@@ -19,10 +19,13 @@
 #include "glinerec.h"
 #include "bookstore.h"
 
+#ifndef DEFAULT_DATA_DIR
+#define DEFAULT_DATA_DIR "/usr/local/share/ocropus/models/"
+#endif
+
 namespace ocropus {
     extern param_int beam_width;
     extern param_bool abort_on_error;
-    extern param_string lmodel;
     extern void ustrg_convert(strg &output,ustrg &str);
     extern void ustrg_convert(ustrg &output,strg &str);
 
@@ -77,7 +80,7 @@ namespace ocropus {
 
     int main_align(int argc,char **argv) {
         autodel<IBookStore> bookstore;
-        extern param_string cbookstore;
+        param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(argv[1]);
 //#pragma omp parallel for
@@ -141,6 +144,7 @@ namespace ocropus {
     param_float langmod_scale("langmod_scale",1.0,"scale factor for language model");
 
     int main_fsts2text(int argc,char **argv) {
+        param_string lmodel("lmodel",DEFAULT_DATA_DIR "default.fst","language model used for recognition");
         if(argc!=2) throw "usage: lmodel=... ocropus fsts2text dir";
         autodel<OcroFST> langmod;
         try {
@@ -154,7 +158,7 @@ namespace ocropus {
         }
 
         autodel<IBookStore> bookstore;
-        extern param_string cbookstore;
+        param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(argv[1]);
         debugf("info","langmod_scale = %g\n",float(langmod_scale));
@@ -224,7 +228,7 @@ namespace ocropus {
     int main_fsts2bestpaths(int argc,char **argv) {
         if(argc!=2) throw "usage: ... dir";
         autodel<IBookStore> bookstore;
-        extern param_string cbookstore;
+        param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(argv[1]);
         for(int page=0;page<bookstore->numberOfPages();page++) {

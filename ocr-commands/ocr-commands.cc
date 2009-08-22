@@ -56,29 +56,14 @@ namespace ocropus {
     using namespace glinerec;
 
     param_bool abort_on_error("abort_on_error",0,"abort recognition if there is an unexpected error");
-    param_bool save_fsts("save_fsts",1,"save the fsts (set to 0 for eval-only in lines2fsts)");
-    param_bool retrain("retrain",0,"perform retraining");
-    param_bool retrain_threshold("retrain_threshold",100,"only retrain on characters with a cost lower than this");
-    param_int nrecognize("nrecognize",1000000,"maximum number of lines to predict (for quick testing)");
-    param_int ntrain("ntrain",10000000,"max number of training examples");
-    param_int extract_grow("extract_grow",1,"amount by which to grow the mask for line extractions (-1=no mask)");
-    param_bool continue_partial("continue_partial",0,"don't compute outputs that already exist");
-    param_bool old_csegs("old_csegs",0,"use old csegs (spaces are not counted)");
-    param_float maxheight("max_line_height",300,"maximum line height");
-    param_float maxaspect("max_line_aspect",1.0,"maximum line aspect ratio");
 
-    param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
-    param_string cbinarizer("binarizer","","binarization component to use");
-    param_string csegmenter("psegmenter","SegmentPageByRAST","segmenter to use at the page level");
 #ifdef DLOPEN
     param_string extension("extension",0,"preload extensions");
 #endif
 
+#ifndef DEFAULT_DATA_DIR
 #define DEFAULT_DATA_DIR "/usr/local/share/ocropus/models/"
-
-    param_string cmodel("cmodel",DEFAULT_DATA_DIR "default.model","character model used for recognition");
-    param_string lmodel("lmodel",DEFAULT_DATA_DIR "default.fst","language model used for recognition");
-
+#endif
 
     param_string eval_flags("eval_flags","space","which features to ignore during evaluation");
 
@@ -161,6 +146,7 @@ namespace ocropus {
     }
 
     int main_book2pages(int argc,char **argv) {
+        param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         int pageno = 0;
         const char *outdir = argv[1];
 
@@ -195,6 +181,12 @@ namespace ocropus {
 
 
     int main_lines2fsts(int argc,char **argv) {
+        param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
+        param_string cmodel("cmodel",DEFAULT_DATA_DIR "default.model","character model used for recognition");
+        param_bool save_fsts("save_fsts",1,"save the fsts (set to 0 for eval-only in lines2fsts)");
+        param_bool continue_partial("continue_partial",0,"don't compute outputs that already exist");
+        param_float maxheight("max_line_height",300,"maximum line height");
+        param_float maxaspect("max_line_aspect",1.0,"maximum line aspect ratio");
         if(argc!=2) throw "usage: cmodel=... ocropus lines2fsts dir";
         dinit(512,512);
         autodel<IRecognizeLine> linerec;
@@ -352,6 +344,11 @@ namespace ocropus {
     }
 
     int main_pages2lines(int argc,char **argv) {
+        param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
+        param_int extract_grow("extract_grow",1,"amount by which to grow the mask for line extractions (-1=no mask)");
+        param_float maxheight("max_line_height",300,"maximum line height");
+        param_float maxaspect("max_line_aspect",1.0,"maximum line aspect ratio");
+        param_string csegmenter("psegmenter","SegmentPageByRAST","segmenter to use at the page level");
         if(argc!=2) throw "usage: ... dir";
         dinit(1000,1000);
         const char *outdir = argv[1];
@@ -441,6 +438,8 @@ namespace ocropus {
 
 
     int main_page(int argc,char **argv) {
+        param_string cmodel("cmodel",DEFAULT_DATA_DIR "default.model","character model used for recognition");
+        param_string lmodel("lmodel",DEFAULT_DATA_DIR "default.fst","language model used for recognition");
         // create the segmenter
         autodel<ISegmentPage> segmenter;
         segmenter = make_SegmentPageByRAST();
@@ -564,6 +563,11 @@ namespace ocropus {
     }
 
     int main_trainseg_or_saveseg(int argc,char **argv) {
+        param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
+        param_bool retrain("retrain",0,"perform retraining");
+        param_bool retrain_threshold("retrain_threshold",100,"only retrain on characters with a cost lower than this");
+        param_int ntrain("ntrain",10000000,"max number of training examples");
+        param_bool old_csegs("old_csegs",0,"use old csegs (spaces are not counted)");
         if(argc!=3) throw "usage: ... model dir";
         dinit(512,512);
         autodel<IRecognizeLine> linerecp(make_Linerec());
@@ -712,6 +716,7 @@ namespace ocropus {
     }
 
     int main_bookstore(int argc,char **argv) {
+        param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         autodel<IBookStore> bookstore;
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(argv[1]);
@@ -739,6 +744,27 @@ namespace ocropus {
         cleanup->cleanup(out,in);
         write_image_gray(argv[2],out);
         return 0;
+    }
+
+    int main_recolor(int argc,char **argv) {
+        intarray segmentation;
+        read_image_packed(segmentation,argv[1]);
+        simple_recolor(segmentation);
+        write_image_packed(argv[2],segmentation);
+        return 0;
+    }
+
+    int main_pageseg(int argc,char **argv) {
+        param_bool recolor("recolor",0,"recolor segmentation");
+        param_string csegmenter("psegmenter","SegmentPageByRAST","segmenter to use at the page level");
+        bytearray image;
+        intarray segmentation;
+        read_image_gray(image,argv[1]);
+        autodel<ISegmentPage> segmenter;
+        make_component(csegmenter,segmenter);
+        segmenter->segment(segmentation,image);
+        if(recolor) simple_recolor(segmentation);
+        write_image_packed(argv[2],segmentation);
     }
 
     void usage(const char *program) {
@@ -861,6 +887,8 @@ namespace ocropus {
             if(!strcmp(argv[1],"bookstore")) return main_bookstore(argc-1,argv+1);
             if(!strcmp(argv[1],"cleanupgray")) return main_cleanupgray(argc-1,argv+1);
             if(!strcmp(argv[1],"cleanupbin")) return main_cleanupbin(argc-1,argv+1);
+            if(!strcmp(argv[1],"recolor")) return main_recolor(argc-1,argv+1);
+            if(!strcmp(argv[1],"pageseg")) return main_pageseg(argc-1,argv+1);
             usage(argv[0]);
         } catch(const char *s) {
             fprintf(stderr,"FATAL: %s\n",s);
