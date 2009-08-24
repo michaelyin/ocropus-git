@@ -1,28 +1,28 @@
 // -*- C++ -*-
 
-// Copyright 2006-2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz 
+// Copyright 2006-2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
-// 
+//
 // You may not use this file except under the terms of the accompanying license.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License"); you
 // may not use this file except in compliance with the License. You may
 // obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 // Project: OCRopus
 // File: ocr-color-encode-layout.h
 // Purpose: Color encode output of RAST layout analysis as per OCRopus
 //          color coding conventions:
 //          http://docs.google.com/Doc?id=dfxcv4vc_92c8xxp7
 // Responsible: Faisal Shafait (faisal.shafait@dfki.de)
-// Reviewer: 
-// Primary Repository: 
+// Reviewer:
+// Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include "ocropus.h"
@@ -68,7 +68,10 @@ namespace ocropus {
             column_num = (j+1)<<16;
             for(int x = r.x0, x1 = r.x1; x<x1; x++){
                 for(int y = r.y0, y1 = r.y1; y<y1; y++){
-                    if(!inputImage(x,y) && !outputImage(x,y)) {
+                    if(all) {
+                        outputImage(x,y) = (color|column_num);
+                        changed = true;
+                    } else if(!inputImage(x,y) && !outputImage(x,y)) {
                         outputImage(x,y) = (color|column_num);
                         changed = true;
                     }
@@ -91,7 +94,7 @@ namespace ocropus {
             }
         }
     }
-    
+
     void ColorEncodeLayout::encode_zones(rectarray &zones, int zone_color){
         sort_boxes_by_y0(zones);
         narray<bool> used;
@@ -114,11 +117,11 @@ namespace ocropus {
                     int zone_col = (column_num<<16) | zone_color | zone_num;
                     for(int x = r.x0, x1 = r.x1; x<x1; x++){
                         for(int y = r.y0, y1 = r.y1; y<y1; y++){
-                            if(!inputImage(x,y) && !outputImage(x,y))
+                            if(all||!inputImage(x,y)) if(!outputImage(x,y))
                                 outputImage(x,y) = zone_col;
                         }
                     }
-                    
+
                 }
             }
         }
@@ -130,30 +133,30 @@ namespace ocropus {
             if(!used[i]){
                 rectangle r = zones[i];
                 n_multicol_zones++;
-                int zone_col = MULTI_COLUMN_ELEMENT_COLOR | 
+                int zone_col = MULTI_COLUMN_ELEMENT_COLOR |
                     zone_color | n_multicol_zones ;
                 for(int x = r.x0, x1 = r.x1; x<x1; x++){
                     for(int y = r.y0, y1 = r.y1; y<y1; y++){
-                        if(!inputImage(x,y) && !outputImage(x,y))
+                        if(all||!inputImage(x,y)) if(!outputImage(x,y))
                             outputImage(x,y) = zone_col;
                     }
                 }
             }
         }
     }
-    
+
     void ColorEncodeLayout::encode_images(){
         encode_zones(images, IMAGE_COLOR);
     }
-    
+
     void ColorEncodeLayout::encode_graphics(){
         encode_zones(graphics, GRAPHICS_COLOR);
     }
-    
+
     void ColorEncodeLayout::encode_rulings(){
         encode_zones(rulings, RULING_COLOR);
     }
-    
+
     void ColorEncodeLayout::encode(){
         encode_textlines();
         encode_gutters();

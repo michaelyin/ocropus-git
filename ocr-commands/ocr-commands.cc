@@ -631,7 +631,7 @@ namespace ocropus {
 
                     if(retrain) {
                         costs.resize(10000) = 1e38;
-                        stdio stream(bookstore->path(pageno,line,"","costs"),"r");
+                        stdio stream(bookstore->path(pageno,line,0,"costs"),"r");
                         int index;
                         float cost;
                         while(fscanf(stream,"%d %g\n",&index,&cost)==2) {
@@ -749,6 +749,8 @@ namespace ocropus {
     int main_recolor(int argc,char **argv) {
         intarray segmentation;
         read_image_packed(segmentation,argv[1]);
+        for(int i=0;i<segmentation.length();i++)
+            if(segmentation[i]=0xffffff) segmentation[i] = 0;
         simple_recolor(segmentation);
         write_image_packed(argv[2],segmentation);
         return 0;
@@ -763,7 +765,10 @@ namespace ocropus {
         autodel<ISegmentPage> segmenter;
         make_component(csegmenter,segmenter);
         segmenter->segment(segmentation,image);
-        if(recolor) simple_recolor(segmentation);
+        if(recolor) {
+            make_page_segmentation_black(segmentation);
+            simple_recolor(segmentation);
+        }
         write_image_packed(argv[2],segmentation);
     }
 

@@ -30,10 +30,7 @@ namespace ocropus {
     extern void ustrg_convert(ustrg &output,strg &str);
 
     static void store_costs(const char *base, floatarray &costs) {
-        strg s;
-        s = base;
-        s.append(".costs");
-        stdio stream(s,"w");
+        stdio stream(base,"w");
         for(int i=0;i<costs.length();i++) {
             fprintf(stream,"%d %g\n",i,costs(i));
         }
@@ -79,8 +76,9 @@ namespace ocropus {
     }
 
     int main_align(int argc,char **argv) {
-        autodel<IBookStore> bookstore;
         param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
+        param_string gt_type("gt_type","transcript","kind of ground truth: transcript, fst, pagefst");
+        autodel<IBookStore> bookstore;
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(argv[1]);
 //#pragma omp parallel for
@@ -91,9 +89,27 @@ namespace ocropus {
                 int line = bookstore->getLineId(page,j);
                 debugf("progress","page %04d %06x\n",page,line);
                 autodel<OcroFST> gt_fst(make_OcroFST());
-                read_gt(*gt_fst, bookstore->path(page,line,0,""));
+                if(!strcmp(gt_type,"transcript")) {
+                    read_gt(*gt_fst, bookstore->path(page,line,0,""));
+                } else if(!strcmp(gt_type,"fst")) {
+                    throw "unimplemented";
+                } else if(!strcmp(gt_type,"pagefst")) {
+                    gt_fst->load(bookstore->path(page,-1,"gt","fst"));
+                } else {
+                    throw "unknown gt_type";
+                }
+
                 autodel<OcroFST> fst(make_OcroFST());
-                fst->load(bookstore->path(page,line,0,"fst"));
+                try {
+                    if(!file_exists(bookstore->path(page,line,0,"fst"))) continue;
+                    fst->load(bookstore->path(page,line,0,"fst"));
+                } catch(const char *error) {
+                    fprintf(stderr,"ERROR loading fst: %s\n",error);
+                    if(abort_on_error) abort();
+                } catch(...) {
+                    fprintf(stderr,"ERROR loading fst: %s\n",bookstore->path(page,line,0,"fst"));
+                    if(abort_on_error) abort();
+                }
                 ustrg str;
                 intarray v1;
                 intarray v2;
@@ -108,6 +124,7 @@ namespace ocropus {
                     fprintf(stderr,"ERROR in bestpath: %s\n",error);
                     if(abort_on_error) abort();
                 }
+                double cost = sum(costs);
                 try {
                     intarray rseg;
                     read_image_packed(rseg, bookstore->path(page,line,"rseg","png"));
@@ -116,13 +133,25 @@ namespace ocropus {
                     rseg_to_cseg(cseg, rseg, in);
                     ::make_line_segmentation_white(cseg);
                     write_image_packed(bookstore->path(page,line,"cseg","png"),cseg);
-                    store_costs(bookstore->path(page,line,0,""), costs);
+                    store_costs(bookstore->path(page,line,0,"costs"), costs);
                     debugf("dcost","--------------------------------\n");
                     for(int i=0;i<out.length();i++) {
                         debugf("dcost","%3d %10g %c\n",i,costs(i),out(i));
                     }
                 } catch(const char *err) {
                     fprintf(stderr,"ERROR in cseg reconstruction: %s\n",err);
+                    if(abort_on_error) abort();
+                }
+                try {
+                    ustrg str;
+                    remove_epsilons(str, out);
+                    utf8strg utf8Output;
+                    str.utf8EncodeTerm(utf8Output);
+                    debugf("transcript","%04d %06x\t%g\t%s\n",page,line,cost,utf8Output.c_str());
+                    strg s(bookstore->path(page,line,0,"txt"));
+                    fprintf(stdio(s,"w"),"%s\n",utf8Output.c_str());
+                } catch(const char *err) {
+                    fprintf(stderr,"ERROR in transcript output: %s\n",err);
                     if(abort_on_error) abort();
                 }
             }
@@ -141,10 +170,11 @@ namespace ocropus {
     }
 
 
-    param_float langmod_scale("langmod_scale",1.0,"scale factor for language model");
 
     int main_fsts2text(int argc,char **argv) {
+        param_float langmod_scale("langmod_scale",1.0,"scale factor for language model");
         param_string lmodel("lmodel",DEFAULT_DATA_DIR "default.fst","language model used for recognition");
+        param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         if(argc!=2) throw "usage: lmodel=... ocropus fsts2text dir";
         autodel<OcroFST> langmod;
         try {
@@ -158,7 +188,6 @@ namespace ocropus {
         }
 
         autodel<IBookStore> bookstore;
-        param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(argv[1]);
         debugf("info","langmod_scale = %g\n",float(langmod_scale));
@@ -226,9 +255,9 @@ namespace ocropus {
     }
 
     int main_fsts2bestpaths(int argc,char **argv) {
+        param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         if(argc!=2) throw "usage: ... dir";
         autodel<IBookStore> bookstore;
-        param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(argv[1]);
         for(int page=0;page<bookstore->numberOfPages();page++) {

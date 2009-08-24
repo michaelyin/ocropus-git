@@ -39,6 +39,7 @@ namespace ocropus {
         max_results.bind(this,"max_results",1000,"maximum number of results");
         gap_factor.bind(this,"gap_factor",10,"size of gap in xheights");
         use_four_line_model.bind(this,"use_four_line_model",0,"use four line text model");
+        all_pixels.bind(this,"all_pixels",0,"label all pixels in the segmentation");
     }
 
     // FIXME/faisal refactor this
@@ -180,7 +181,9 @@ namespace ocropus {
 
         // Color encode layout analysis output
         autodel<ColorEncodeLayout> color_encoding(make_ColorEncodeLayout());
+        color_encoding->all = all_pixels;
         copy(color_encoding->inputImage,in);
+        debugf("info","all = %d\n",color_encoding->all);
         for(int i=0, l=textlines.length(); i<l; i++)
             color_encoding->textlines.push(textlines[i].bbox);
         for(int i=0, l=textcolumns.length(); i<l; i++)

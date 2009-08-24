@@ -113,8 +113,31 @@ namespace ocropus {
                 color_encoding->textlines.push(textlines[i].bbox);
             for(int i=0, l=textcolumns.length(); i<l; i++)
                 color_encoding->textcolumns.push(textcolumns[i]);
+
+            color_encoding->all = true;
             color_encoding->encode();
-            copy(image,color_encoding->outputImage);
+
+            intarray &segmentation = color_encoding->outputImage;
+
+            image.makelike(segmentation);
+            image = 0xffffff;
+            for(int i=1;i<bboxes.length();i++) {
+                rectangle b = bboxes[i];
+                int xc = b.xcenter();
+                int yc = b.ycenter();
+                if(xc<0 || xc>=image.dim(0) || yc>=image.dim(1) || yc<0) continue;
+                int pixel = segmentation(xc,yc);
+                for(int x=b.x0;x<b.x1;x++) {
+                    for(int y=b.y0;y<b.y1;y++) {
+                        if(charimage(x,y)==i) image(x,y) = pixel;
+                    }
+                }
+            }
+#if 0
+            write_image_binary("_in.png",in);
+            write_image_packed("_charimage.png",charimage);
+            write_image_packed("_segmentation.png",segmentation);
+#endif
 
             replace_values(image,zero,yellow);
         }
