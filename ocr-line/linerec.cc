@@ -112,6 +112,7 @@ namespace glinerec {
         int ntrained;
 
         LinerecExtracted() {
+            pdef("container","float8buffer","container classifier");
             pdef("classifier","latin","character classifier");
             pdef("cpreload","none","classifier to be loaded prior to training");
             pdef("verbose",0,"verbose output from glinerec");
@@ -141,7 +142,7 @@ namespace glinerec {
             segmenter = make_DpSegmenter();
             grouper = make_SimpleGrouper();
             featuremap = dynamic_cast<IFeatureMap*>(component_construct(pget("fmap")));
-            classifier = make_model("float8buffer");
+            classifier = make_model(pget("container"));
             classifier->setModel(make_model(pget("classifier")),0);
             if(!classifier) throw "construct_model didn't yield an IModel";
             ntrained = 0;
@@ -164,25 +165,7 @@ namespace glinerec {
             return "Linerec";
         }
         const char *command(const char *argv[]) {
-            const char *key = argv[0];
-            const char *value = argv[1];
-            if(key && value && !strcmp(key,"save_ds8")) {
-                classifier->saveData(stdio(value,"w"));
-                return "ok";
-            } else if(key && value && !strcmp(key,"load_ds8")) {
-                classifier->loadData(stdio(value,"r"));
-                current_recognizer_ = this;
-                return "ok";
-            } else {
-                return classifier->command(argv);
-            }
-        }
-        void set(const char *key,double value) {
-            throw "unknown parameter";
-        }
-        void set(const char *key,const char *value) {
-            const char *argv[] = { key, value, 0 };
-            command(argv);
+            return classifier->command(argv);
         }
         void save(FILE *stream) {
             magic_write(stream,"linerec");

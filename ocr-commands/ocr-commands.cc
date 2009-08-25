@@ -544,7 +544,7 @@ namespace ocropus {
     }
 
     int main_loadseg(int argc,char **argv) {
-        if(argc!=3) throw "usage: ... model dir";
+        if(argc!=3) throw "usage: ... model data";
         dinit(512,512);
         autodel<IRecognizeLine> linerecp(make_Linerec());
         IRecognizeLine &linerec = *linerecp;
@@ -553,7 +553,8 @@ namespace ocropus {
             throw "output model file already exists; please remove first";
         fprintf(stderr,"loading %s\n",argv[2]);
         linerec.startTraining("");
-        linerec.set("load_ds8",argv[2]);
+        linerec.command("datafile",argv[2]);
+        linerec.command("load_data");
         linerec.finishTraining();
         fprintf(stderr,"saving %s\n",argv[1]);
         stdio stream(argv[1],"w");
@@ -585,6 +586,7 @@ namespace ocropus {
         int total_chars = 0;
         int total_lines = 0;
         linerec.startTraining("");
+        linerec.command("datafile",argv[1]);
         strg cseg_variant = "cseg.gt";
         strg text_variant = "gt";
         if(retrain) {
@@ -594,8 +596,10 @@ namespace ocropus {
         int next = 1000;
         floatarray costs;
         for(int pageno=0;pageno<bookstore->numberOfPages();pageno++) {
+            if(total_chars>=ntrain) break;
             for(int lineno=0;lineno<bookstore->linesOnPage(pageno);lineno++) {
                 int line = bookstore->getLineId(pageno,lineno);
+                if(total_chars>=ntrain) break;
                 try {
                     if(!bookstore->getLine(cseg,pageno,line,cseg_variant)) {
                         debugf("info","%04d %06x: no such cseg\n",pageno,line);
@@ -692,7 +696,6 @@ namespace ocropus {
                 } catch(const char *msg) {
                     printf("%04d %06x: %s FIXME\n",pageno,line,msg);
                 }
-                if(total_chars>=ntrain) break;
             }
         }
         if(!strcmp(argv[0],"trainseg")) {
@@ -708,9 +711,7 @@ namespace ocropus {
             fprintf(stderr,"saving %d characters, %d lines\n",
                     total_chars,total_lines);
             fprintf(stderr,"saving %s\n",argv[1]);
-            linerec.set("save_ds8",argv[1]);
-            // stdio stream(argv[1],"w");
-            // linerec.save(stream);
+            linerec.command("save_data");
             return 0;
         } else throw "oops";
     }
@@ -750,7 +751,7 @@ namespace ocropus {
         intarray segmentation;
         read_image_packed(segmentation,argv[1]);
         for(int i=0;i<segmentation.length();i++)
-            if(segmentation[i]=0xffffff) segmentation[i] = 0;
+            if(segmentation[i]==0xffffff) segmentation[i] = 0;
         simple_recolor(segmentation);
         write_image_packed(argv[2],segmentation);
         return 0;
@@ -863,6 +864,7 @@ namespace ocropus {
             command = argv[0];
             init_ocropus_components();
             init_glclass();
+            init_glclass2();
             init_glfmaps();
             init_linerec();
             if(argc<2) usage(argv[0]);

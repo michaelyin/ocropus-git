@@ -110,6 +110,7 @@ assert conf.CheckLib('gif')
 assert conf.CheckLib('tiff')
 assert conf.CheckLib('jpeg')
 assert conf.CheckLib('png')
+assert conf.CheckLib('sqlite3')
 
 # sources = [s for s in sources if not "/fst" in s]
 

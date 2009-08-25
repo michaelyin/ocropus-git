@@ -140,12 +140,6 @@ namespace glinerec {
             rowpush(batch_data,v);
             batch_classes.push(c);
         }
-        virtual void saveData(FILE *stream) {
-            throw Unimplemented();
-        }
-        virtual void loadData(FILE *stream) {
-            throw Unimplemented();
-        }
         virtual void updateModel() {
             debugf("info","[batch training with n=%d]\n",batch_data.dim(0));
             Dataset<float> ds(batch_data,batch_classes);

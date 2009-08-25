@@ -107,7 +107,8 @@ namespace ocropus {
                     fprintf(stderr,"ERROR loading fst: %s\n",error);
                     if(abort_on_error) abort();
                 } catch(...) {
-                    fprintf(stderr,"ERROR loading fst: %s\n",bookstore->path(page,line,0,"fst"));
+                    strg s = bookstore->path(page,line,0,"fst");
+                    fprintf(stderr,"ERROR loading fst: %s\n",s.c_str());
                     if(abort_on_error) abort();
                 }
                 ustrg str;

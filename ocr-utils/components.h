@@ -251,6 +251,7 @@ namespace ocropus {
             return command(argv);
         }
 
+#if 1
         /// Set a string property or throw an exception if not implemented.
         virtual void set(const char *key,const char *value) WARN_DEPRECATED {
             pset(key,value);
@@ -268,6 +269,7 @@ namespace ocropus {
         virtual double getd(const char *key) WARN_DEPRECATED {
             return pgetf(key);
         }
+#endif
     };
 
     struct p_int {

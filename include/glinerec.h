@@ -63,6 +63,7 @@ namespace {
 namespace glinerec {
     void init_linerec();
     void init_glclass();
+    void init_glclass2();
 }
 
 #endif

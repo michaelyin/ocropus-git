@@ -1227,6 +1227,7 @@ namespace glinerec {
         autodel<IModel> cf;
         RowDataset<float8> ds8;
         Float8Buffer() {
+            pdef("data","data","datafile");
         }
         void info(int depth,FILE *stream) {
             iprintf(stream,depth,"Float8Buffer (incremental training with 8bit buffering)\n");
@@ -1238,6 +1239,14 @@ namespace glinerec {
             if(!strcmp(argv[0],"total")) {
                 sprintf(buf,"%d",ds8.nsamples());
                 return buf;
+            } else if(!strcmp(argv[0],"datafile")) {
+                pset("data",argv[1]);
+            } else if(!strcmp(argv[0],"save_data")) {
+                saveData(stdio(pget("data"),"w"));
+                return "ok";
+            } else if(!strcmp(argv[0],"load_data")) {
+                loadData(stdio(pget("data"),"r"));
+                return "ok";
             } else {
                 return cf->command(argv);
             }
@@ -1270,11 +1279,11 @@ namespace glinerec {
             CHECK_ARG(!!cf);
         }
         void pset(const char *name,const char *value) {
-            if(pexists(name)) pset(name,value);
+            if(pexists(name)) this->IModel::pset(name,value);
             if(cf->pexists(name)) cf->pset(name,value);
         }
         void pset(const char *name,double value) {
-            if(pexists(name)) pset(name,value);
+            if(pexists(name)) this->IModel::pset(name,value);
             if(cf->pexists(name)) cf->pset(name,value);
         }
         int classify(floatarray &x) {
