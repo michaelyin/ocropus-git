@@ -1224,92 +1224,57 @@ namespace glinerec {
     ////////////////////////////////////////////////////////////////
 
     struct Float8Buffer : IModel {
-        autodel<IModel> cf;
         RowDataset<float8> ds8;
+        int nf,nc,n;
         Float8Buffer() {
             pdef("data","data","datafile");
-        }
-        void info(int depth,FILE *stream) {
-            iprintf(stream,depth,"Float8Buffer (incremental training with 8bit buffering)\n");
-            pprint(stream,depth);
-            if(!!cf) cf->info(depth+1,stream);
-        }
-        const char *command(const char *argv[]) {
-            static char buf[100];
-            if(!strcmp(argv[0],"total")) {
-                sprintf(buf,"%d",ds8.nsamples());
-                return buf;
-            } else if(!strcmp(argv[0],"datafile")) {
-                pset("data",argv[1]);
-            } else if(!strcmp(argv[0],"save_data")) {
-                saveData(stdio(pget("data"),"w"));
-                return "ok";
-            } else if(!strcmp(argv[0],"load_data")) {
-                loadData(stdio(pget("data"),"r"));
-                return "ok";
-            } else {
-                return cf->command(argv);
-            }
-        }
-        int nmodels() {
-            return 1;
-        }
-        void setModel(IModel *cf,int which) {
-            this->cf = cf;
-        }
-        IModel &getModel(int i) {
-            return *cf;
-        }
-        int nfeatures() {
-            return cf->nfeatures();
-        }
-        int nclasses() {
-            return cf->nclasses();
+            nf = -1;
+            nc = -1;
+            n = 0;
         }
         const char *name() {
             return "float8buffer";
         }
-        void save(FILE *stream) {
-            psave(stream);
-            save_component(stream,cf.ptr());
+        void info(int depth,FILE *stream) {
+            iprintf(stream,depth,"Float8Buffer (incremental training with 8bit buffering)\n");
+            pprint(stream,depth);
         }
-        void load(FILE *stream) {
-            pload(stream);
-            cf = dynamic_cast<IModel*>(load_component(stream));
-            CHECK_ARG(!!cf);
+        int nfeatures() {
+            return nf;
         }
-        void pset(const char *name,const char *value) {
-            if(pexists(name)) this->IModel::pset(name,value);
-            if(cf->pexists(name)) cf->pset(name,value);
-        }
-        void pset(const char *name,double value) {
-            if(pexists(name)) this->IModel::pset(name,value);
-            if(cf->pexists(name)) cf->pset(name,value);
-        }
-        int classify(floatarray &x) {
-            return cf->classify(x);
-        }
-        float outputs(floatarray &z,floatarray &x) {
-            return cf->outputs(z,x);
+        int nclasses() {
+            return nc;
         }
         void train(IDataset &ds) {
-            cf->train(ds);
+            floatarray v;
+            for(int i=0;i<ds.nsamples();i++) {
+                int c = ds.cls(i);
+                ds.input(v,i);
+                add(v,c);
+            }
         }
         void add(floatarray &v,int c) {
+            if(c>=nc) nc = c+1;
+            if(nf<0) nf = v.length();
+            else CHECK(nf==v.length());
             ds8.add(v,c);
         }
         void updateModel() {
-            train(ds8);
+            debugf("info","%s: Float8Buffer saving: %d samples, %d features, %d classes\n",
+                   pget("data"),ds8.nsamples(),ds8.nfeatures(),ds8.nclasses());
+            ds8.save(stdio(pget("data"),"w"));
         }
-        void saveData(FILE *stream) {
-            debugf("info","Float8Buffer saving %d samples with %d features and %d classes\n",
-                   ds8.nsamples(),ds8.nfeatures(),ds8.nclasses());
-            ds8.save(stream);
+        // ignore these
+        void save(FILE *stream) {
         }
-        void loadData(FILE *stream) {
-            ds8.load(stream);
-            debugf("info","Float8Buffer loaded %d samples with %d features and %d classes\n",
-                   ds8.nsamples(),ds8.nfeatures(),ds8.nclasses());
+        void load(FILE *stream) {
+        }
+        // we can't classify
+        int classify(floatarray &x) {
+            throw Unimplemented();
+        }
+        float outputs(floatarray &z,floatarray &x) {
+            throw Unimplemented();
         }
     };
 
@@ -1831,6 +1796,9 @@ namespace glinerec {
         component_register2<MappedClassifier,CascadedMLP>("cascadedmlp");
 
         component_register<LatinClassifier>("latin");
+
+        typedef RowDataset<float8> RowDataset8;
+        component_register<RowDataset8>("rowdataset8");
     }
 
     IRecognizeLine *current_recognizer_ = 0;

@@ -95,7 +95,9 @@ namespace glinerec {
     // Classifier and density estimation.
 
     struct IModel : IComponent {
-        IModel() {}
+        IModel() {
+            pdef("cds","float8dataset","default dataset buffer class");
+        }
 
         const char *interface() { return "IModel"; }
 
@@ -134,18 +136,15 @@ namespace glinerec {
         virtual void train(IDataset &dataset) = 0;
 
         // incremental training & default implementation in terms of batch
-        floatarray batch_data;
-        intarray batch_classes;
+        autodel<IExtDataset> ds;
         virtual void add(floatarray &v,int c) {
-            rowpush(batch_data,v);
-            batch_classes.push(c);
+            if(!ds) make_component(pget("cds"),ds);
+            ds->add(v,c);
         }
         virtual void updateModel() {
-            debugf("info","[batch training with n=%d]\n",batch_data.dim(0));
-            Dataset<float> ds(batch_data,batch_classes);
-            train(ds);
-            batch_data.clear();
-            batch_classes.clear();
+            debugf("info","[batch training with n=%d]\n",ds->nsamples());
+            train(*ds);
+            ds->clear();
         }
     };
 

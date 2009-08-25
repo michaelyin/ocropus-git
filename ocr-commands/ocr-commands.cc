@@ -543,27 +543,7 @@ namespace ocropus {
         return 0;
     }
 
-    int main_loadseg(int argc,char **argv) {
-        if(argc!=3) throw "usage: ... model data";
-        dinit(512,512);
-        autodel<IRecognizeLine> linerecp(make_Linerec());
-        IRecognizeLine &linerec = *linerecp;
-        struct stat sbuf;
-        if(argv[1][0]!='.' && !stat(argv[1],&sbuf))
-            throw "output model file already exists; please remove first";
-        fprintf(stderr,"loading %s\n",argv[2]);
-        linerec.startTraining("");
-        linerec.command("datafile",argv[2]);
-        linerec.command("load_data");
-        linerec.finishTraining();
-        fprintf(stderr,"saving %s\n",argv[1]);
-        stdio stream(argv[1],"w");
-        // linerec.save(stream);
-        save_component(stream,&linerec);
-        return 0;
-    }
-
-    int main_trainseg_or_saveseg(int argc,char **argv) {
+    int main_trainseg(int argc,char **argv) {
         param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         param_bool retrain("retrain",0,"perform retraining");
         param_bool retrain_threshold("retrain_threshold",100,"only retrain on characters with a cost lower than this");
@@ -571,8 +551,9 @@ namespace ocropus {
         param_bool old_csegs("old_csegs",0,"use old csegs (spaces are not counted)");
         if(argc!=3) throw "usage: ... model dir";
         dinit(512,512);
-        autodel<IRecognizeLine> linerecp(make_Linerec());
-        IRecognizeLine &linerec = *linerecp;
+        autodel<IRecognizeLine> linerec;
+        linerec = make_Linerec();
+        autodel<IDataset> dataset;
         autodel<IBookStore> bookstore;
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(argv[2]);
@@ -585,8 +566,7 @@ namespace ocropus {
         bytearray image;
         int total_chars = 0;
         int total_lines = 0;
-        linerec.startTraining("");
-        linerec.command("datafile",argv[1]);
+        if(linerec) linerec->startTraining("");
         strg cseg_variant = "cseg.gt";
         strg text_variant = "gt";
         if(retrain) {
@@ -675,15 +655,14 @@ namespace ocropus {
                                nutranscript.length(),max(cseg),utf8Transcript.c_str());
                     }
                     if(total_chars>=next) {
-                        debugf("info","loaded %d chars, %s total\n",
-                               total_chars,linerec.command("total"));
+                        debugf("info","loaded %d chars\n",total_chars);
                         next += 1000;
                     }
 
                     // now, actually add the segmented characters to the line recognizer
 
                     try {
-                        linerec.addTrainingLine(cseg,image,nutranscript);
+                        linerec->addTrainingLine(cseg,image,nutranscript);
                         total_chars += max(cseg);
                         total_lines++;
                     } catch(const char *s) {
@@ -698,22 +677,29 @@ namespace ocropus {
                 }
             }
         }
-        if(!strcmp(argv[0],"trainseg")) {
-            linerec.finishTraining();
-            fprintf(stderr,"trained %d characters, %d lines\n",
-                    total_chars,total_lines);
-            fprintf(stderr,"saving %s\n",argv[1]);
-            stdio stream(argv[1],"w");
-            // linerec.save(stream);
-            save_component(stream,&linerec);
-            return 0;
-        } else if(!strcmp(argv[0],"saveseg")) {
-            fprintf(stderr,"saving %d characters, %d lines\n",
-                    total_chars,total_lines);
-            fprintf(stderr,"saving %s\n",argv[1]);
-            linerec.command("save_data");
-            return 0;
-        } else throw "oops";
+        linerec->finishTraining();
+        fprintf(stderr,"trained %d characters, %d lines\n",
+                total_chars,total_lines);
+        fprintf(stderr,"saving %s\n",argv[1]);
+        save_component(stdio(argv[1],"w"),linerec);
+        return 0;
+    }
+
+    int main_trainmodel(int argc,char **argv) {
+        param_string cmodel("cmodel","latin","classifier component");
+        param_string cdataset("cdataset","rowdataset8","dataset component");
+        if(argc!=3) throw "usage: ... model dataset";
+        if(file_exists(argv[1])) throwf("%s: already exists",argv[1]);
+        autodel<IDataset> ds;
+        make_component(cdataset,ds);
+        ds->load(argv[2]);
+        debugf("info","%d nsamples, %d nfeatures, %d nclasses\n",
+               ds->nsamples(),ds->nfeatures(),ds->nclasses());
+        autodel<IModel> model;
+        make_component(cmodel,model);
+        model->train(*ds);
+        save_component(stdio(argv[1],"w"),model);
+        return 0;
     }
 
     int main_bookstore(int argc,char **argv) {
@@ -882,15 +868,14 @@ namespace ocropus {
             if(!strcmp(argv[1],"fsts2bestpaths")) return main_fsts2bestpaths(argc-1,argv+1);
             if(!strcmp(argv[1],"fsts2text")) return main_fsts2text(argc-1,argv+1);
             if(!strcmp(argv[1],"lines2fsts")) return main_lines2fsts(argc-1,argv+1);
-            if(!strcmp(argv[1],"loadseg")) return main_loadseg(argc-1,argv+1);
+            if(!strcmp(argv[1],"trainmodel")) return main_trainmodel(argc-1,argv+1);
             if(!strcmp(argv[1],"align")) return main_align(argc-1,argv+1);
             if(!strcmp(argv[1],"page")) return main_page(argc-1,argv+1);
             if(!strcmp(argv[1],"pages2images")) return main_pages2images(argc-1,argv+1);
             if(!strcmp(argv[1],"pages2lines")) return main_pages2lines(argc-1,argv+1);
             if(!strcmp(argv[1],"params")) return main_params(argc-1,argv+1);
             if(!strcmp(argv[1],"recognize1")) return main_recognize1(argc-1,argv+1);
-            if(!strcmp(argv[1],"saveseg")) return main_trainseg_or_saveseg(argc-1,argv+1);
-            if(!strcmp(argv[1],"trainseg")) return main_trainseg_or_saveseg(argc-1,argv+1);
+            if(!strcmp(argv[1],"trainseg")) return main_trainseg(argc-1,argv+1);
             if(!strcmp(argv[1],"bookstore")) return main_bookstore(argc-1,argv+1);
             if(!strcmp(argv[1],"cleanupgray")) return main_cleanupgray(argc-1,argv+1);
             if(!strcmp(argv[1],"cleanupbin")) return main_cleanupbin(argc-1,argv+1);

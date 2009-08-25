@@ -112,7 +112,6 @@ namespace glinerec {
         int ntrained;
 
         LinerecExtracted() {
-            pdef("container","float8buffer","container classifier");
             pdef("classifier","latin","character classifier");
             pdef("cpreload","none","classifier to be loaded prior to training");
             pdef("verbose",0,"verbose output from glinerec");
@@ -142,8 +141,7 @@ namespace glinerec {
             segmenter = make_DpSegmenter();
             grouper = make_SimpleGrouper();
             featuremap = dynamic_cast<IFeatureMap*>(component_construct(pget("fmap")));
-            classifier = make_model(pget("container"));
-            classifier->setModel(make_model(pget("classifier")),0);
+            classifier = make_model(pget("classifier"));
             if(!classifier) throw "construct_model didn't yield an IModel";
             ntrained = 0;
         }
