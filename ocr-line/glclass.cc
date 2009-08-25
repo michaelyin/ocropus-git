@@ -1839,8 +1839,12 @@ namespace glinerec {
         }
 
         void updateModel() {
-            if(nclassifiers>0)
-                classifiers[nclassifiers-1]->updateModel();
+            if(nclassifiers>0) {
+                if(count>100)
+                    classifiers[nclassifiers-1]->updateModel();
+                else
+                    debugf("info","not updating last classifier since there are only %d samples\n",count);
+            }
         }
 
 
