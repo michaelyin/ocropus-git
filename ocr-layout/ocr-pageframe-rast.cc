@@ -272,7 +272,8 @@ namespace ocropus {
         if(!contains_only(in,byte(0),byte(255))){
             fprintf(stderr,"Error: Page frame detection ");
             fprintf(stderr,"needs binary image as input.\n");
-            exit(1);
+			return;
+            //exit(1);
         }
 
         intarray lineimage,zoneimage;

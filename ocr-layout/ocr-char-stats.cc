@@ -190,7 +190,8 @@ namespace ocropus {
 
         if(!comps.length()){
             fprintf(stderr,"Empty connected components array. Aborting ...\n");
-            exit(1);
+			return;
+            //exit(1);
         }
         img_width  = comps[0].x1;
         img_height = comps[0].y1;
