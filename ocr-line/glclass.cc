@@ -1180,7 +1180,7 @@ namespace glinerec {
                     nets(i).train(ds);
                     errs(i) = estimate_errors(nets(i),ts);
 
-                    debugf("info","   [net %d (%d/%d) %g %g %g]\n",i,THREAD,NTHREADS,
+                    debugf("detail","   [net %d (%d/%d) %g %g %g]\n",i,THREAD,NTHREADS,
                            errs(i),nets(i).complexity(),etas(i));
                     // errs(i) += regularizer * nets(i).nhidden();
                     if(debug("training-detail")) {
@@ -1794,7 +1794,10 @@ namespace glinerec {
             return classifiers[0]->nfeatures();
         }
         int nclasses() {
-            return classifiers[0]->nclasses();
+            int nc = 0;
+            for(int i=0;i<nclassifiers;i++)
+                nc = max(nc,classifiers[i]->nclasses());
+            return nc;
         }
         const char *name() {
             return "avgclass";
@@ -1866,10 +1869,14 @@ namespace glinerec {
         }
 
         float outputs(floatarray &result,floatarray &v) {
+            int nc = nclasses();
+            result.resize(nc);
+            result = 0;
+            floatarray w;
             for(int i=0;i<nclassifiers-1;i++) {
-                classifiers[i]->outputs(result,v);
-                if(i==0) result = v;
-                else result += v;
+                classifiers[i]->outputs(w,v);
+                while(w.length()<nc) w.push(0.0);
+                result += w;
             }
             result /= nclassifiers;
             return 0.0;
