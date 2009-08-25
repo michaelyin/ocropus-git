@@ -566,7 +566,7 @@ namespace ocropus {
             make_component(bookstores[index],cbookstore);
             bookstores[index]->setPrefix(books[index]);
             CHECK(bookstores[index]->numberOfPages()>0);
-            debugf("info","book %s: %d pages\n",books[index],bookstores[index]->numberOfPages());
+            debugf("info","%s: %d pages\n",books[index],bookstores[index]->numberOfPages());
         }
 
         // compute a list of all lines
