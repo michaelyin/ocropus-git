@@ -96,7 +96,7 @@ namespace glinerec {
 
     struct IModel : IComponent {
         IModel() {
-            pdef("cds","float8dataset","default dataset buffer class");
+            pdef("cds","rowdataset8","default dataset buffer class");
         }
 
         const char *interface() { return "IModel"; }

@@ -480,21 +480,19 @@ namespace ocropus {
         label_components(image);
         narray<rectangle> rects;
         bounding_boxes(rects,image);
+        if(rects.length()==0) return;
         bytearray good(rects.length());
         for(int i=0;i<good.length();i++)
             good[i] = 1;
-        for(int i=0;i<rects.length();i++) {
-            if(rects[i].width()<mw && rects[i].height()<mh) {
-                // printf("*** %d %d %d\n",i,rects[i].width(),rects[i].height());
+        for(int i=0;i<rects.length();i++)
+            if(rects[i].width()<mw && rects[i].height()<mh)
                 good[i] = 0;
-            }
-        }
-        for(int i=0;i<image.length1d();i++) {
-            if(!good(image.at1d(i)))
-                image.at1d(i) = 0;
-        }
+        for(int i=0;i<image.length();i++)
+            if(!good(image[i]))
+                image[i] = 0;
         for(int i=0;i<image.length1d();i++)
-            if(!image.at1d(i)) bimage.at1d(i) = 0;
+            if(!image[i])
+                bimage[i] = 0;
     }
     template void remove_small_components<byte>(narray<byte> &,int,int);
     template void remove_small_components<int>(narray<int> &,int,int);
