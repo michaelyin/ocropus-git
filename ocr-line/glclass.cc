@@ -1650,19 +1650,26 @@ namespace glinerec {
         autodel<IModel> junkclass;
         autodel<IModel> charclass;
         autodel<IModel> ulclass;
+        int junkchar;
 
         LatinClassifier() {
+            pdef("junkchar",'~',"junk character");
             pdef("junkclass","mlp","junk classifier");
             pdef("charclass","mappedmlp","character classifier");
             pdef("junk",1,"train a separate junk classifier");
             pdef("ul",0,"do upper/lower reclassification");
             pdef("ulclass","mlp","upper/lower classifier");
+            junkchar = -1;
+        }
+        int jc() {
+            if(junkchar<0) junkchar = int(pgetf("junkchar"));
+            return junkchar;
         }
         int nfeatures() {
             return charclass->nfeatures();
         }
         int nclasses() {
-            return charclass->nclasses();
+            return max(jc()+1,charclass->nclasses());
         }
         const char *name() {
             return "latin";
@@ -1709,7 +1716,7 @@ namespace glinerec {
             if(pgetf("junk") && junkclass) {
                 intarray nonjunk;
                 for(int i=0;i<ds.nsamples();i++)
-                    if(ds.cls(i)!='~')
+                    if(ds.cls(i)!=jc())
                         nonjunk.push(i);
                 Datasubset nonjunkds(ds,nonjunk);
                 charclass->train(nonjunkds);
@@ -1721,7 +1728,7 @@ namespace glinerec {
                 debugf("info","training junk classifier\n");
                 intarray isjunk;
                 for(int i=0;i<ds.nsamples();i++)
-                    isjunk.push((ds.cls(i)=='~'));
+                    isjunk.push((ds.cls(i)==jc()));
                 MappedDataset junkds(ds,isjunk);
                 junkclass->train(junkds);
             }
@@ -1756,8 +1763,8 @@ namespace glinerec {
                 junkclass->outputs(junk,v);
                 chars /= sum(chars);
                 chars *= junk(0);
-                while(chars.length()<='~') chars.push(0);
-                chars('~') = junk(1);
+                while(chars.length()<=jc()) chars.push(0);
+                chars(jc()) = junk(1);
             }
 
             if(pgetf("ul") && ulclass) {
@@ -1795,8 +1802,9 @@ namespace glinerec {
         }
         int nclasses() {
             int nc = 0;
-            for(int i=0;i<nclassifiers;i++)
+            for(int i=0;i<nclassifiers;i++) {
                 nc = max(nc,classifiers[i]->nclasses());
+            }
             return nc;
         }
         const char *name() {
