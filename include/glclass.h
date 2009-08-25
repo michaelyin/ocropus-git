@@ -138,11 +138,17 @@ namespace glinerec {
         // incremental training & default implementation in terms of batch
         autodel<IExtDataset> ds;
         virtual void add(floatarray &v,int c) {
-            if(!ds) make_component(pget("cds"),ds);
+            if(!ds) {
+                debugf("info","allocating %s buffer for classifier\n",pget("cds"));
+                make_component(pget("cds"),ds);
+            }
             ds->add(v,c);
         }
         virtual void updateModel() {
-            debugf("info","[batch training with n=%d]\n",ds->nsamples());
+            debugf("info","updateModel %d samples, %d features, %d classes\n",
+                   ds->nsamples(),ds->nfeatures(),ds->nclasses());
+            debugf("info","updateModel memory status %d Mbytes, %d Mvalues\n",
+                   int((long long)sbrk(0)/1000000), (ds->nsamples() * ds->nfeatures())/1000000);
             train(*ds);
             ds->clear();
         }
