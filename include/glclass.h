@@ -151,7 +151,7 @@ namespace glinerec {
                    int((long long)sbrk(0)/1000000),
                    (ds->nsamples() * ds->nfeatures())/1000000);
             train(*ds);
-            ds->clear();
+            ds = 0;
         }
     };
 
