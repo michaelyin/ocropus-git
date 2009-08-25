@@ -148,7 +148,8 @@ namespace glinerec {
             debugf("info","updateModel %d samples, %d features, %d classes\n",
                    ds->nsamples(),ds->nfeatures(),ds->nclasses());
             debugf("info","updateModel memory status %d Mbytes, %d Mvalues\n",
-                   int((long long)sbrk(0)/1000000), (ds->nsamples() * ds->nfeatures())/1000000);
+                   int((long long)sbrk(0)/1000000),
+                   (ds->nsamples() * ds->nfeatures())/1000000);
             train(*ds);
             ds->clear();
         }

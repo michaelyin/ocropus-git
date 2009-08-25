@@ -1775,28 +1775,120 @@ namespace glinerec {
         }
     };
 
+    ////////////////////////////////////////////////////////////////
+    // train multiple classifiers and average
+    ////////////////////////////////////////////////////////////////
+
+    struct AveragingClassifier : IModel {
+        int nclassifiers;
+        narray< autodel<IModel> > classifiers;
+        int count;
+        AveragingClassifier() {
+            pdef("classifier","latin","base classifier");
+            pdef("chunk",100000,"size of each training chunk");
+            classifiers.resize(1000);
+            nclassifiers = 0;
+            count = 0;
+        }
+        int nfeatures() {
+            return classifiers[0]->nfeatures();
+        }
+        int nclasses() {
+            return classifiers[0]->nclasses();
+        }
+        const char *name() {
+            return "avgclass";
+        }
+        void info(int depth,FILE *stream) {
+            for(int i=0;i<nclassifiers;i++)
+                classifiers[i]->info();
+        }
+        int nmodels() {
+            return nclassifiers;
+        }
+        void setModel(IModel *cf,int which) {
+            classifiers[which] = cf;
+        }
+        IModel &getModel(int which) {
+            return *classifiers[which];
+        }
+
+        void save(FILE *stream) {
+            magic_write(stream,"avgclass");
+            psave(stream);
+            scalar_write(stream,nclassifiers);
+            for(int i=0;i<nclassifiers;i++)
+                save_component(stream,classifiers[i]);
+        }
+
+        void load(FILE *stream) {
+            magic_read(stream,"avgclass");
+            pload(stream);
+            scalar_read(stream,nclassifiers);
+            for(int i=0;i<nclassifiers;i++)
+                load_component(stream,classifiers[i]);
+        }
+
+        void train(IDataset &ds) {
+            floatarray v;
+            for(int i=0;i<ds.nsamples();i++) {
+                int c = ds.cls(i);
+                ds.input(v,i);
+                add(v,c);
+            }
+        }
+
+        void updateModel() {
+            if(nclassifiers>0)
+                classifiers[nclassifiers-1]->updateModel();
+        }
+
+
+        void add(floatarray &v,int c) {
+            if(nclassifiers==0) {
+                debugf("info","avgclass starting chunk %d\n",nclassifiers);
+                nclassifiers++;
+                make_component(classifiers[nclassifiers-1],pget("classifier"));
+                count = 0;
+            } if(count>=pgetf("chunk")) {
+                classifiers[nclassifiers-1]->updateModel();
+                debugf("info","avgclass starting chunk %d\n",nclassifiers);
+                nclassifiers++;
+                make_component(classifiers[nclassifiers-1],pget("classifier"));
+                count = 0;
+            }
+            classifiers[nclassifiers-1]->add(v,c);
+            count++;
+        }
+
+        float outputs(floatarray &result,floatarray &v) {
+            for(int i=0;i<nclassifiers-1;i++) {
+                classifiers[i]->outputs(result,v);
+                if(i==0) result = v;
+                else result += v;
+            }
+            result /= nclassifiers;
+            return 0.0;
+        }
+    };
+
     void init_glclass() {
         static bool init = false;
         if(init) return;
         init = true;
 
         component_register<MappedClassifier>("mapped");
+        component_register<AveragingClassifier>("avgclass");
         component_register<Float8Buffer>("float8buffer");
-
         component_register<KnnClassifier>("knn");
         component_register<BitNN>("bit");
-
         component_register<AutoMlpClassifier>("mlp");
         component_register2<MappedClassifier,AutoMlpClassifier>("mappedmlp");
-
         component_register<AdaBoost>("adaboost");
         component_register2<MappedClassifier,AdaBoost>("boosted");
-
         component_register<CascadedMLP>("cmlp");
         component_register2<MappedClassifier,CascadedMLP>("cascadedmlp");
-
         component_register<LatinClassifier>("latin");
-
         typedef RowDataset<float8> RowDataset8;
         component_register<RowDataset8>("rowdataset8");
     }
