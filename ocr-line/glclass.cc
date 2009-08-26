@@ -1814,19 +1814,33 @@ namespace glinerec {
         }
 
         void save(FILE *stream) {
-            magic_write(stream,"avgclass");
+            debugf("iodetail","save avgclass\n");
+            magic_write(stream,"[avgclass1]");
             psave(stream);
+            magic_write(stream,"[avgclass2]");
             scalar_write(stream,nclassifiers);
-            for(int i=0;i<nclassifiers;i++)
+            magic_write(stream,"[avgclass3]");
+            debugf("iodetail","wrote %d classifiers\n",nclassifiers);
+            for(int i=0;i<nclassifiers;i++) {
+                magic_write(stream,"[avgclass4]");
                 save_component(stream,classifiers[i]);
+            }
+            debugf("iodetail","done");
         }
 
         void load(FILE *stream) {
-            magic_read(stream,"avgclass");
+            debugf("iodetail","load avgclass\n");
+            magic_read(stream,"[avgclass1]");
             pload(stream);
+            magic_read(stream,"[avgclass2]");
             scalar_read(stream,nclassifiers);
-            for(int i=0;i<nclassifiers;i++)
+            magic_read(stream,"[avgclass3]");
+            debugf("iodetail","got %d classifiers\n",nclassifiers);
+            for(int i=0;i<nclassifiers;i++) {
+                magic_read(stream,"[avgclass4]");
                 load_component(stream,classifiers[i]);
+            }
+            debugf("iodetail","done");
         }
 
         void train(IDataset &ds) {

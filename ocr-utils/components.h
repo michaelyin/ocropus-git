@@ -126,6 +126,9 @@ namespace ocropus {
         void pdef(const char *name,const char *value,const char *doc) {
             if(name[0]=='%') throwf("pdef: %s must not start with %%",name);
             if(params.find(name)) throwf("pdefs: %s: parameter already defined");
+            CHECK(!strchr(name,'\n'));
+            CHECK(!strchr(name,'='));
+            CHECK(!strchr(value,'\n'));
             params(name) = value;
             strg key;
             key = this->name();
@@ -168,8 +171,12 @@ namespace ocropus {
         // system if they want to change a parameter value.
         // These are virtual so that classes can forward them if necessary.
         virtual void pset(const char *name,const char *value) {
-            if(name[0]!='%' && !params.find(name)) throwf("pset: %s: no such parameter",name);
+            if(name[0]!='%' && !params.find(name))
+                throwf("pset: %s: no such parameter",name);
             params(name) = value;
+            CHECK(!strchr(name,'\n'));
+            CHECK(!strchr(name,'='));
+            CHECK(!strchr(value,'\n'));
             if(strstr(name,verbose_pattern))
                 fprintf(stderr,"set %s_%s=%s\n",this->name(),name,value);
         }

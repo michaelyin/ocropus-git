@@ -694,7 +694,7 @@ namespace ocropus {
 
                 try {
                     linerec->addTrainingLine(cseg,image,nutranscript);
-                    total_chars += max(cseg);
+                    total_chars += nutranscript.length();
                     total_lines++;
                 } catch(const char *s) {
                     fprintf(stderr,"ERROR: %s\n",s);

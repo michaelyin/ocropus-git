@@ -16,9 +16,9 @@
 // limitations under the License.
 //
 // Project: iulib -- image understanding library
-// File: 
-// Purpose: 
-// Responsible: 
+// File:
+// Purpose:
+// Responsible:
 // Reviewer:
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de
@@ -58,7 +58,9 @@ namespace narray_io {
         char buf[100];
         CHECK(n<99);
         CHECK(fread(buf,1,n,stream)==unsigned(n));
-        CHECK(!strncmp(buf,str,n));
+        buf[n] = 0;
+        if(strncmp(buf,str,n))
+            throwf("magic_read: wanted '%s', got '%s'",str,buf);
     }
 
     inline void magic_write(FILE *stream,const char *str) {
