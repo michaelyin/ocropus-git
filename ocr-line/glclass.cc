@@ -1875,6 +1875,12 @@ namespace glinerec {
                     sprintf(file,pget("tempsave"),nclassifiers);
                     debugf("info","saving %s\n",file.c_str());
                     save_component(stdio(file.c_str(),"w"),current_recognizer_);
+#if 1
+                    // load it back right away to debug I/O problems
+                    autodel<IRecognizeLine> model;
+                    load_component(stdio(file.c_str(),"r"),model);
+                    debugf("info","%s loaded OK\n",file.c_str());
+#endif
                 }
                 debugf("info","avgclass starting chunk %d\n",nclassifiers);
                 nclassifiers++;
