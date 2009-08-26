@@ -592,9 +592,6 @@ namespace ocropus {
         randomly_permute(permutation);
         rowpermute(all_lines,permutation);
 
-        intarray cseg;
-        bytearray image;
-
         int total_chars = 0;
         int total_lines = 0;
         if(linerec) linerec->startTraining("");
@@ -606,14 +603,16 @@ namespace ocropus {
         }
 
         int next = 1000;
-        floatarray costs;
-        intarray pages;
         for(int index=0;index<all_lines.dim(0);index++) {
+            // intarray pages;
+            intarray cseg;
+            bytearray image;
+            floatarray costs;
+
             int bookno = all_lines(index,0);
             int pageno = all_lines(index,1);
             int lineno_ = all_lines(index,2);
             int lineno = bookstores[bookno]->getLineId(pageno,lineno_);
-            if(total_chars>=ntrain) break;
             try {
                 if(!bookstores[bookno]->getLine(cseg,pageno,lineno,cseg_variant)) {
                     debugf("info","%04d %06x: no such cseg\n",pageno,lineno);
@@ -628,21 +627,19 @@ namespace ocropus {
                 // read the ground truth segmentation
 
                 ustrg nutranscript;
-                {
-                    bookstores[bookno]->getLine(nutranscript,pageno,lineno,text_variant);
-                    // FIXME this is an awful hack and won't work with unicode
-                    char transcript[10000];
-                    for(int i=0;i<nutranscript.length();i++)
-                        transcript[i] = nutranscript[i].ord();
-                    transcript[nutranscript.length()] = 0;
-                    chomp(transcript);
-                    if(old_csegs) remove_spaces(transcript);
-                    nutranscript.assign(transcript);
-                    if(nutranscript.length()!=max(cseg)) {
-                        debugf("debug","transcript = '%s'\n",transcript);
-                        throwf("transcript doesn't agree with cseg (transcript %d, cseg %d)",
-                               nutranscript.length(),max(cseg));
-                    }
+                bookstores[bookno]->getLine(nutranscript,pageno,lineno,text_variant);
+                // FIXME this is an awful hack and won't work with unicode
+                char transcript[10000];
+                for(int i=0;i<nutranscript.length();i++)
+                    transcript[i] = nutranscript[i].ord();
+                transcript[nutranscript.length()] = 0;
+                chomp(transcript);
+                if(old_csegs) remove_spaces(transcript);
+                nutranscript.assign(transcript);
+                if(nutranscript.length()!=max(cseg)) {
+                    debugf("debug","transcript = '%s'\n",transcript);
+                    throwf("transcript doesn't agree with cseg (transcript %d, cseg %d)",
+                           nutranscript.length(),max(cseg));
                 }
 
                 // for retraining, read the cost file
@@ -709,6 +706,8 @@ namespace ocropus {
             } catch(const char *msg) {
                 printf("%04d %06x: %s\n",pageno,lineno,msg);
             }
+            // if we have enough characters, let the loop wind down
+            if(total_chars>ntrain) index = all_lines.dim(0);
         }
         linerec->finishTraining();
         fprintf(stderr,"trained %d characters, %d lines\n",

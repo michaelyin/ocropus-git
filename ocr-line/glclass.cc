@@ -812,8 +812,8 @@ namespace glinerec {
             pdef("eta_init",0.5,"initial eta");
             pdef("eta_varlog",1.5,"eta variance in lognormal");
             pdef("hidden_varlog",1.2,"nhidden variance in lognormal");
-            pdef("rounds",12,"number of training rounds");
-            pdef("miters",10,"number of presentations in multiple of training set");
+            pdef("rounds",8,"number of training rounds");
+            pdef("miters",8,"number of presentations in multiple of training set");
             pdef("nensemble",4,"number of mlps in ensemble");
             pdef("hidden_min",5,"minimum number of hidden units");
             pdef("hidden_lo",20,"minimum number of hidden units at start");
@@ -1175,20 +1175,14 @@ namespace glinerec {
                 errs.fill(-1);
 #pragma omp parallel for
                 for(int i=0;i<nn;i++) {
-                    // nets(i).trainEpoch(data,classes,training,niters,etas(i)); // FIXME
                     nets(i).pset("eta",etas(i));
                     nets(i).train(ds);
                     errs(i) = estimate_errors(nets(i),ts);
-
                     debugf("detail","   [net %d (%d/%d) %g %g %g]\n",i,THREAD,NTHREADS,
                            errs(i),nets(i).complexity(),etas(i));
-                    // errs(i) += regularizer * nets(i).nhidden();
-                    if(debug("training-detail")) {
-                        for(int j=0;j<nn;j++) printf(" %7.2f",100*errs(j)); printf("\n");
-                        for(int j=0;j<nn;j++) printf(" %7d",nets(j).nhidden()); printf("\n");
-                        for(int j=0;j<nn;j++) printf(" %7.3f",etas(j)); printf("\n");
-                        fflush(stdout);
-                    }
+                    for(int j=0;j<nn;j++) debugf("detail","%7.2f",100*errs(j)); printf("\n");
+                    for(int j=0;j<nn;j++) debugf("detail"," %7d",nets(j).nhidden()); printf("\n");
+                    for(int j=0;j<nn;j++) debugf("detail"," %7.3f",etas(j)); printf("\n");
                 }
                 quicksort(index,errs);
                 if(errs(index(0))<best) {
@@ -1208,11 +1202,8 @@ namespace glinerec {
                         etas(index(j)) = rlognormal(etas(index(i)),eta_varlog);
                     }
                 }
-                if(debug("info")) {
-                    printf("[mlp round %d err %g nhidden %d]\n",round,best,nhidden());
-                    fflush(stdout);
-                    pset("%error",best);
-                }
+                debugf("info","mlp round %d err %g nhidden %d\n",round,best,nhidden());
+                pset("%error",best);
             }
         }
 
@@ -1791,6 +1782,7 @@ namespace glinerec {
         narray< autodel<IModel> > classifiers;
         int count;
         AveragingClassifier() {
+            pdef("tempsave","_tempsave_%03d.model","pattern for temporary save files");
             pdef("classifier","latin","base classifier");
             pdef("chunk",100000,"size of each training chunk");
             classifiers.resize(1000);
@@ -1867,6 +1859,12 @@ namespace glinerec {
                 count = 0;
             } if(count>=pgetf("chunk")) {
                 classifiers[nclassifiers-1]->updateModel();
+                if(pget("tempsave") && current_recognizer_) {
+                    strg file;
+                    sprintf(file,pget("tempsave"),nclassifiers);
+                    debugf("info","saving %s\n",file.c_str());
+                    save_component(stdio(file.c_str(),"w"),current_recognizer_);
+                }
                 debugf("info","avgclass starting chunk %d\n",nclassifiers);
                 nclassifiers++;
                 make_component(classifiers[nclassifiers-1],pget("classifier"));
