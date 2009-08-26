@@ -1170,7 +1170,7 @@ namespace glinerec {
                 etas(i) = rlognormal(eta_init,eta_varlog);
             }
 
-            debugf("info","[mlp training n %d nc %d]\n",ds.nsamples(),nclasses);
+            debugf("info","mlp training n %d nc %d\n",ds.nsamples(),nclasses);
             for(int round=0;round<rounds;round++) {
                 errs.fill(-1);
 #pragma omp parallel for
@@ -1178,11 +1178,8 @@ namespace glinerec {
                     nets(i).pset("eta",etas(i));
                     nets(i).train(ds);
                     errs(i) = estimate_errors(nets(i),ts);
-                    debugf("detail","   [net %d (%d/%d) %g %g %g]\n",i,THREAD,NTHREADS,
+                    debugf("detail","net %d (%d/%d) %g %g %g\n",i,THREAD,NTHREADS,
                            errs(i),nets(i).complexity(),etas(i));
-                    for(int j=0;j<nn;j++) debugf("detail","%7.2f",100*errs(j)); printf("\n");
-                    for(int j=0;j<nn;j++) debugf("detail"," %7d",nets(j).nhidden()); printf("\n");
-                    for(int j=0;j<nn;j++) debugf("detail"," %7.3f",etas(j)); printf("\n");
                 }
                 quicksort(index,errs);
                 if(errs(index(0))<best) {
