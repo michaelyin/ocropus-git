@@ -165,36 +165,38 @@ env.Append(CPPPATH=["include","ocr-utils"])
 #env.Append(CPPPATH=glob("ocr-*"))
 env.Append(LIBPATH=['.'])
 
-libocropus = env.StaticLibrary('libocropus.a',sources)
-env.Prepend(LIBS=[File("libocropus.a")])
+# libocropus = env.StaticLibrary('libocropus.a',sources)
+libocropus = env.SharedLibrary('libocropus',sources)
+penv = env.Copy()
+penv.Prepend(LIBS=[File("libocropus.so")])
 
 ################################################################
 ### install
 ################################################################
 
-env.Install(destdir+libdir,libocropus)
-env.Install(destdir+datadir + '/models', glob('data/models/*'))
-env.Install(destdir+datadir + '/words', glob('data/words/*'))
+penv.Install(destdir+libdir,libocropus)
+penv.Install(destdir+datadir + '/models', glob('data/models/*'))
+penv.Install(destdir+datadir + '/words', glob('data/words/*'))
 for header in headers: env.Install(destdir+incdir,header)
 for file in glob('data/models/*.gz'):
     base = re.sub(r'\.gz$','',file)
     base = re.sub(r'^[./]*data/','',base)
     base = destdir+datadir+"/"+base
-    env.Command(base,file,"gunzip -9v < %s > %s" % (file,base))
-    env.Alias('install',base)
+    penv.Command(base,file,"gunzip -9v < %s > %s" % (file,base))
+    penv.Alias('install',base)
 
-env.Alias('install',destdir+bindir)
-env.Alias('install',destdir+libdir)
-env.Alias('install',destdir+incdir)
-env.Alias('install',destdir+datadir)
+penv.Alias('install',destdir+bindir)
+penv.Alias('install',destdir+libdir)
+penv.Alias('install',destdir+incdir)
+penv.Alias('install',destdir+datadir)
 
 ################################################################
 ### commands
 ################################################################
 
 for cmd in glob("commands/*.cc"): 
-    env.Program(cmd)
-    env.Install(destdir+bindir,re.sub('.cc$','',cmd))
+    penv.Program(cmd)
+    penv.Install(destdir+bindir,re.sub('.cc$','',cmd))
 
 ################################################################
 ### unit tests

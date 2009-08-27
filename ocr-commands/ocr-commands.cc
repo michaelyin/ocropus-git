@@ -64,6 +64,10 @@ namespace ocropus {
 #ifndef DEFAULT_DATA_DIR
 #define DEFAULT_DATA_DIR "/usr/local/share/ocropus/models/"
 #endif
+#ifndef DEFAULT_EXT_DIR
+#define DEFAULT_EXT_DIR "/usr/local/share/ocropus/extensions/"
+#endif
+
 
     param_string eval_flags("eval_flags","space","which features to ignore during evaluation");
 
@@ -863,10 +867,16 @@ namespace ocropus {
     extern int main_fsts2text(int argc,char **argv);
     extern int main_fsts2bestpaths(int argc,char **argv);
 
-    int main_ocropus(int argc,char **argv) {
+    void load_extensions(const char *dir) {
 #ifdef DLOPEN
-        if(extension) {
-            void *handle = dlopen(extension,RTLD_LAZY);
+        strg pattern;
+        pattern = dir;
+        pattern += "/*.so";
+        Glob glob(pattern);
+        for(int i=0;i<glob.length();i++) {
+            const char *so = glob(i);
+            debugf("info","loading %s\n",so);
+            void *handle = dlopen(so,RTLD_LAZY);
             if(!handle) {
                 fprintf(stderr,"%s: cannot load\n",dlerror());
                 exit(1);
@@ -879,6 +889,9 @@ namespace ocropus {
             init();
         }
 #endif
+    }
+
+    int main_ocropus(int argc,char **argv) {
         try {
             command = argv[0];
             init_ocropus_components();
@@ -886,6 +899,7 @@ namespace ocropus {
             init_glclass2();
             init_glfmaps();
             init_linerec();
+            load_extensions(DEFAULT_EXT_DIR);
             if(argc<2) usage(argv[0]);
             if(!strcmp(argv[1],"threshold")) return main_threshold(argc-1,argv+1);
             if(!strcmp(argv[1],"book2pages")) return main_book2pages(argc-1,argv+1);

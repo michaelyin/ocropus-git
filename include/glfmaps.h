@@ -16,7 +16,6 @@ namespace glinerec {
     };
 
     IFeatureMap *make_SimpleFeatureMap();
-    IFeatureMap *make_RidgeFeatureMap();
     void init_glfmaps();
 }
 
