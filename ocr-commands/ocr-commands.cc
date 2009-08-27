@@ -57,10 +57,6 @@ namespace ocropus {
 
     param_bool abort_on_error("abort_on_error",0,"abort recognition if there is an unexpected error");
 
-#ifdef DLOPEN
-    param_string extension("extension",0,"preload extensions");
-#endif
-
 #ifndef DEFAULT_DATA_DIR
 #define DEFAULT_DATA_DIR "/usr/local/share/ocropus/models/"
 #endif
@@ -882,8 +878,9 @@ namespace ocropus {
                 exit(1);
             }
             void (*init)() = (void(*)())dlsym(handle,"ocropus_init_dl");
-            if(dlerror()!=NULL) {
-                fprintf(stderr,"%s: cannot init library\n",dlerror());
+            const char *err = dlerror();
+            if(err!=NULL) {
+                fprintf(stderr,"%s: cannot init library\n",err);
                 exit(1);
             }
             init();

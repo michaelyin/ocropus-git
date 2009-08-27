@@ -167,35 +167,37 @@ env.Append(LIBPATH=['.'])
 
 # libocropus = env.StaticLibrary('libocropus.a',sources)
 libocropus = env.SharedLibrary('libocropus',sources)
-penv = env.Copy()
-penv.Prepend(LIBS=[File("libocropus.so")])
+# env.Prepend(LIBS=[File("libocropus.so")])
 
 ################################################################
 ### install
 ################################################################
 
-penv.Install(destdir+libdir,libocropus)
-penv.Install(destdir+datadir + '/models', glob('data/models/*'))
-penv.Install(destdir+datadir + '/words', glob('data/words/*'))
+env.Install(destdir+libdir,libocropus)
+env.Install(destdir+datadir + '/models', glob('data/models/*'))
+env.Install(destdir+datadir + '/words', glob('data/words/*'))
 for header in headers: env.Install(destdir+incdir,header)
 for file in glob('data/models/*.gz'):
     base = re.sub(r'\.gz$','',file)
     base = re.sub(r'^[./]*data/','',base)
     base = destdir+datadir+"/"+base
-    penv.Command(base,file,"gunzip -9v < %s > %s" % (file,base))
-    penv.Alias('install',base)
+    env.Command(base,file,"gunzip -9v < %s > %s" % (file,base))
+    env.Alias('install',base)
 
-penv.Alias('install',destdir+bindir)
-penv.Alias('install',destdir+libdir)
-penv.Alias('install',destdir+incdir)
-penv.Alias('install',destdir+datadir)
+env.Alias('install',destdir+bindir)
+env.Alias('install',destdir+libdir)
+env.Alias('install',destdir+incdir)
+env.Alias('install',destdir+datadir)
 
 ################################################################
 ### commands
 ################################################################
 
+penv = env.Copy()
+penv.Append(LIBS=[File("libocropus.so")])
+
 for cmd in glob("commands/*.cc"): 
-    penv.Program(cmd)
+    penv.Program(cmd,LIBS=File("libocropus.so"))
     penv.Install(destdir+bindir,re.sub('.cc$','',cmd))
 
 ################################################################
@@ -210,10 +212,10 @@ if env["test"]:
     env.Append(BUILDERS={'Test':test_builder})
     for cmd in Glob("*/test-*.cc")+Glob("*/test*/test-*.cc"):
         cmd = str(cmd)
-        env.Program(cmd)
+        penv.Program(cmd)
         print cmd
         cmd = re.sub('.cc$','',cmd)
-        env.Test(cmd)
+        penv.Test(cmd)
 
 ################################################################
 ### style checking
