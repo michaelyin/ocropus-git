@@ -138,6 +138,7 @@ namespace glinerec {
             pdef("maxaspect",1.0,"maximum height/width ratio of input line");
             pdef("maxcost",20.0,"maximum cost of a character to be added to the output");
             pdef("minclass",32,"minimum output class to be added (default=unicode space)");
+            pdef("minprob",1e-6,"minimum probability for a character to appear in the output at all");
             segmenter = make_DpSegmenter();
             grouper = make_SimpleGrouper();
             featuremap = dynamic_cast<IFeatureMap*>(component_construct(pget("fmap")));
@@ -526,6 +527,7 @@ namespace glinerec {
             int ncomponents = grouper->length();
             rectangle b;
             int minclass = pgetf("minclass");
+            float minprob = pgetf("minprob");
             float space_yes = pgetf("space_yes");
             float space_no = pgetf("space_no");
             float maxcost = pgetf("maxcost");
@@ -554,12 +556,18 @@ namespace glinerec {
                 {
                     if(use_reject) {
                         ccost = 0;
-                        p.values /= sum(p.values);
+                        float total = sum(p.values);
+                        if(total>1e-11)
+                            p.values /= total;
+                        else
+                            p.values = 0.0;
                     }
                     int count = 0;
+#if 0
                     for(int j=minclass;j<p.length();j++) {
                         if(j==reject_class) continue;
-                        float pcost = p(j)>1e-6?-log(p(j)):-log(1e-6);
+                        if(p(j)<minprob) continue;
+                        float pcost = -log(p(j));
                         debugf("dcost","%3d %10g %c\n",j,pcost+ccost,(j>32?j:'_'));
                         double total_cost = pcost+ccost;
                         if(total_cost<maxcost) {
@@ -567,6 +575,25 @@ namespace glinerec {
                             count++;
                         }
                     }
+#else
+                    debugf("dcost","output %d\n",p.keys.length());
+                    for(int index=0;index<p.keys.length();index++) {
+                        int j = p.keys[index];
+                        if(j<minclass) continue;
+                        if(j==reject_class) continue;
+                        float value = p.values[index];
+                        if(value<=0.0) continue;
+                        if(value<minprob) continue;
+                        float pcost = -log(value);
+                        debugf("dcost","%3d %10g %c\n",j,pcost+ccost,(j>32?j:'_'));
+                        double total_cost = pcost+ccost;
+                        if(total_cost<maxcost) {
+                            grouper->setClass(i,j,total_cost);
+                            count++;
+                        }
+                    }
+                    debugf("dcost","\n");
+#endif
                     if(count==0) {
                         if(b.height()<xheight/2 && b.width()<xheight/2) {
                             grouper->setClass(i,'~',high_cost/2);

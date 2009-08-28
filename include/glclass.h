@@ -111,7 +111,20 @@ namespace glinerec {
             values.resize(n);
             values = 0;
         }
-        void copy(floatarray &v) {
+        void clear() {
+            keys.clear();
+            values.clear();
+        }
+        void copy(floatarray &v,float eps=1e-11) {
+            clear();
+            int n = v.length();
+            for(int i=0;i<n;i++) {
+                float value = v[i];
+                if(fabs(value)>=eps) {
+                    keys.push(i);
+                    values.push(value);
+                }
+            }
             len = v.length();
             keys.resize(len);
             for(int i=0;i<len;i++) keys[i] = i;
