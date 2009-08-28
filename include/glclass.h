@@ -56,6 +56,7 @@ namespace {
         ctranslate_vec(temp,v,translation);
         v.move(temp);
     }
+
     // translate classes using a translation map
 
     void ctranslate(intarray &values,intarray &translation) {
@@ -94,12 +95,92 @@ namespace {
 namespace glinerec {
     // Classifier and density estimation.
 
+    struct OutputVector {
+        int len;
+        intarray keys;
+        floatarray values;
+        OutputVector() {
+        }
+        OutputVector(int n) {
+            init(n);
+            len = 0;
+        }
+        void init(int n=0) {
+            keys.resize(n);
+            for(int i=0;i<n;i++) keys[i] = i;
+            values.resize(n);
+            values = 0;
+        }
+        void copy(floatarray &v) {
+            len = v.length();
+            keys.resize(len);
+            for(int i=0;i<len;i++) keys[i] = i;
+            values = v;
+        }
+        void operator=(floatarray &v) {
+            copy(v);
+        }
+        int length() {
+            return len;
+        }
+        int dim(int i) {
+            CHECK_ARG(i==0);
+            return len;
+        }
+        float &operator()(int index) {
+            for(int j=0;j<keys.length();j++)
+                if(keys[j]==index) return values[j];
+            keys.push(index);
+            values.push(0);
+            if(index>=len) len = index+1;
+            return values.last();
+        }
+        float &operator[](int i) {
+            return operator()(i);
+        }
+        void operator/=(float value) {
+            values /= value;
+        }
+        int argmax() {
+            int index = iulib::argmax(values);
+            return keys[index];
+        }
+        float max() {
+            return iulib::max(values);
+        }
+        floatarray as_array() {
+            floatarray result;
+            result.resize(length());
+            result = 0;
+            for(int i=0;i<keys.length();i++)
+                result[keys[i]] = values[i];
+            return result;
+        }
+        void as_array(floatarray &result) {
+            result.resize(length());
+            result = 0;
+            for(int i=0;i<keys.length();i++)
+                result[keys[i]] = values[i];
+        }
+    };
+
+    inline float sum(OutputVector &v) {
+        return iulib::sum(v.values);
+    }
+
+    inline void ctranslate_vec(OutputVector &v,intarray &translation) {
+        for(int i=0;i<v.keys.length();i++)
+            v.keys[i] = translation[v.keys[i]];
+        v.len = max(v.keys)+1;
+    }
+
     struct IModel : IComponent {
         IModel() {
             pdef("cds","rowdataset8","default dataset buffer class");
         }
 
-        const char *interface() { return "IModel"; }
+        virtual const char *name() { return "IModel"; }
+        virtual const char *interface() { return "IModel"; }
 
         // inquiry functions
         virtual int nfeatures() {throw Unimplemented();}
@@ -116,17 +197,19 @@ namespace glinerec {
 
         // output of the classifier: should be posterior probabilities,
         // but some classifiers may just output discriminant values
-        virtual float outputs(floatarray &result,floatarray &v) { throw Unimplemented(); }
+        virtual float outputs(OutputVector &result,floatarray &v) {
+            throw Unimplemented();
+        }
         virtual float cost(floatarray &v) {
-            floatarray temp;
+            OutputVector temp;
             return outputs(temp,v);
         }
 
         // convenience function
         virtual int classify(floatarray &v) {
-            floatarray p;
+            OutputVector p;
             outputs(p,v);
-            return argmax(p);
+            return p.argmax();
         }
 
         // estimate the cross validated error from the training data seen
@@ -221,7 +304,7 @@ namespace glinerec {
         int classify(floatarray &x) {
             return i2c(cf->classify(x));
         }
-        float outputs(floatarray &z,floatarray &x) {
+        float outputs(OutputVector &z,floatarray &x) {
             float result = cf->outputs(z,x);
             ctranslate_vec(z,i2c);
             return result;
@@ -264,6 +347,10 @@ namespace glinerec {
             }
             MappedDataset mds(ds,c2i);
             cf->train(mds);
+        }
+    private:
+        float outputs(floatarray &z,floatarray &x) DEPRECATED {
+            throw "obsolete method";
         }
     };
 

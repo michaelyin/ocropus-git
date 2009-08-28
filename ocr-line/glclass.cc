@@ -391,7 +391,8 @@ namespace glinerec {
         }
         void updateModel() {
         }
-        float outputs(floatarray &result,floatarray &v) {
+        float outputs(OutputVector &result_,floatarray &v) {
+            floatarray result;
             int k = pgetf("k");
             CHECK(min(v)>-100 && max(v)<100);
             CHECK(v.dim(0)==ndim);
@@ -414,6 +415,7 @@ namespace glinerec {
             dshown(temp,"d");
             for(int i=0;i<ndim;i++) temp.at1d(i) = v.at1d(i);
             dshown(temp,"c");
+            result_ = result;
             return nbest.value(0);
         }
         float crossValidatedError() {
@@ -641,7 +643,8 @@ namespace glinerec {
         }
         void updateModel() {
         }
-        float outputs(floatarray &p,floatarray &v) {
+        float outputs(OutputVector &result,floatarray &v) {
+            floatarray p;
             int k = pgetf("k");
             bitvec bv;
             bv.set(v);
@@ -660,6 +663,7 @@ namespace glinerec {
             fprintf(stderr,"match %d %c %g\n",nearest,argmax(p),cost);
             dwait();
 #endif
+            result = p;
             return cost;
         }
     };
@@ -909,7 +913,8 @@ namespace glinerec {
             narray_read(stream,b2);
         }
 
-        float outputs(floatarray &z,floatarray &x_raw) {
+        float outputs(OutputVector &result,floatarray &x_raw) {
+            floatarray z;
             int sparse = pgetf("sparse");
             floatarray y,x;
             x.copy(x_raw);
@@ -920,6 +925,7 @@ namespace glinerec {
             mvmul0(z,w2,y);
             z += b2;
             for(int i=0;i<z.length();i++) z(i) = sigmoid(z(i));
+            result = z;
             return fabs(sum(z)-1.0);
         }
 
@@ -1215,7 +1221,7 @@ namespace glinerec {
         RowDataset<float8> ds8;
         int nf,nc,n;
         Float8Buffer() {
-            pdef("data","data","datafile");
+            pdef("datafile","","datafile where the data is to be saved");
             nf = -1;
             nc = -1;
             n = 0;
@@ -1247,22 +1253,32 @@ namespace glinerec {
             else CHECK(nf==v.length());
             ds8.add(v,c);
         }
+        // NB: there is currently no way of saving the model and
+        // then training on it separately
+        autodel<IModel> cf;
         void updateModel() {
-            debugf("info","%s: Float8Buffer saving: %d samples, %d features, %d classes\n",
-                   pget("data"),ds8.nsamples(),ds8.nfeatures(),ds8.nclasses());
-            ds8.save(stdio(pget("data"),"w"));
+            const char *datafile = pget("datafile");
+            if(datafile && datafile[0]) {
+                debugf("info","%s: Float8Buffer saving: %d samples, %d features, %d classes\n",
+                       pget("data"),ds8.nsamples(),ds8.nfeatures(),ds8.nclasses());
+                save_component(stdio(datafile,"w"),&ds8);
+            } else {
+                throwf("float8buffer can only save, not train; use new dataset variable in IModel");
+            }
         }
-        // ignore these
         void save(FILE *stream) {
+            psave(stream);
+            save_component(stream,cf);
         }
         void load(FILE *stream) {
+            pload(stream);
+            load_component(stream,cf);
         }
-        // we can't classify
         int classify(floatarray &x) {
-            throw Unimplemented();
+            return cf->classify(x);
         }
-        float outputs(floatarray &z,floatarray &x) {
-            throw Unimplemented();
+        float outputs(OutputVector &z,floatarray &x) {
+            return cf->outputs(z,x);
         }
     };
 
@@ -1378,7 +1394,8 @@ namespace glinerec {
             debugf("info","starting prediction for reweighting\n");
 #pragma omp parallel for
             for(int sample=0;sample<ds.nsamples();sample++) {
-                floatarray v,p;
+                floatarray v;
+                OutputVector p;
                 ds.input(v,sample);
                 int cls = ds.cls(sample);
                 for(int k=0;k<models.length();k++) {
@@ -1498,10 +1515,11 @@ namespace glinerec {
             }
         }
 
-        float outputs(floatarray &result,floatarray &v) {
+        float outputs(OutputVector &result_,floatarray &v) {
+            floatarray result;
             result.resize(nclasses());
             result = 0;
-            floatarray p;
+            OutputVector p;
             for(int round=0;round<models.length();round++) {
                 models(round)->outputs(p,v);
                 double alpha = alphas(round);
@@ -1510,6 +1528,7 @@ namespace glinerec {
             }
             result += min(result);
             result /= sum(result);
+            result_ = result;
             return 0.0;
         }
 
@@ -1518,10 +1537,10 @@ namespace glinerec {
         float outputs1(floatarray &result,floatarray &v) {
             result.resize(nclasses());
             result = 0;
-            floatarray p;
+            OutputVector p;
             for(int round=0;round<models.length();round++) {
                 models(round)->outputs(p,v);
-                result(argmax(p)) += alphas(round);
+                result(p.argmax()) += alphas(round);
             }
             result /= sum(result);
             return 0.0;
@@ -1598,9 +1617,12 @@ namespace glinerec {
                 int errs = 0;
 #pragma omp parallel for
                 for(int i=0;i<ds.nsamples();i++) {
-                    floatarray v,p;
+                    floatarray v;
+                    OutputVector out;
+                    floatarray p;
                     ads.input(v,i);
-                    net->outputs(p,v);
+                    net->outputs(out,v);
+                    out.as_array(p);
                     if(argmax(p)!=ds.cls(i))
                         errs++;
                     ads.augment(i,p);
@@ -1611,19 +1633,23 @@ namespace glinerec {
             }
         }
 
-        float outputs(floatarray &result,floatarray &v) {
+        float outputs(OutputVector &result_,floatarray &v) {
+            floatarray result;
             int lrounds = pgetf("lrounds");
             result.resize(nclasses());
             result = 0;
             floatarray a;
             a = v;
+            OutputVector out;
             floatarray p;
             for(int round=0;round<lrounds && round<models.length();round++) {
                 if(round>0) a.append(p);
-                models(round)->outputs(p,a);
+                models(round)->outputs(out,a);
+                out.as_array(p);
             }
             result = p;
             result /= sum(result);
+            result_ = result;
             return 0.0;
         }
     };
@@ -1740,15 +1766,18 @@ namespace glinerec {
             }
         }
 
-        float outputs(floatarray &result,floatarray &v) {
+        float outputs(OutputVector &result,floatarray &v) {
+            OutputVector out;
             floatarray chars;
             floatarray ul;
             floatarray junk;
 
-            charclass->outputs(chars,v);
+            charclass->outputs(out,v);
+            out.as_array(chars);
 
             if(pgetf("junk") && junkclass) {
-                junkclass->outputs(junk,v);
+                junkclass->outputs(out,v);
+                out.as_array(junk);
                 chars /= sum(chars);
                 chars *= junk(0);
                 while(chars.length()<=jc()) chars.push(0);
@@ -1756,7 +1785,8 @@ namespace glinerec {
             }
 
             if(pgetf("ul") && ulclass) {
-                ulclass->outputs(ul,v);
+                ulclass->outputs(out,v);
+                out.as_array(ul);
                 ul /= sum(ul);
                 for(int c='A';c<='Z';c++) {
                     float total = chars(c) + chars(c-'A'+'a');
@@ -1895,9 +1925,11 @@ namespace glinerec {
             int nc = nclasses();
             result.resize(nc);
             result = 0;
+            OutputVector out;
             floatarray w;
             for(int i=0;i<nclassifiers-1;i++) {
-                classifiers[i]->outputs(w,v);
+                classifiers[i]->outputs(out,v);
+                out.as_array(w);
                 while(w.length()<nc) w.push(0.0);
                 result += w;
             }

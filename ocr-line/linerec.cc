@@ -521,7 +521,8 @@ namespace glinerec {
             setLine(image);
             segmentation_ = segmentation;
             bytearray available;
-            floatarray v,p,cp,ccosts,props;
+            floatarray v,cp,ccosts,props;
+            OutputVector p;
             int ncomponents = grouper->length();
             rectangle b;
             int minclass = pgetf("minclass");
@@ -553,7 +554,7 @@ namespace glinerec {
                 {
                     if(use_reject) {
                         ccost = 0;
-                        p /= sum(p);
+                        p.values /= sum(p.values);
                     }
                     int count = 0;
                     for(int j=minclass;j<p.length();j++) {

@@ -122,6 +122,7 @@ namespace ocropus {
         if(strcmp(buf,"OBJ:NULL")) {
             level++;
             CHECK(!strncmp(buf,"OBJ:",4));
+            debugf("iodetail","%*s[constructing %s]\n",level,"",buf+4);
             result = component_construct(buf+4);
             result->load(stream);
             fgets(buf,sizeof buf,stream);
