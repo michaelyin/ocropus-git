@@ -105,6 +105,15 @@ namespace glinerec {
             init(n);
             len = 0;
         }
+        int nkeys() {
+            return keys.length();
+        }
+        int key(int i) {
+            return keys[i];
+        }
+        float value(int i) {
+            return values[i];
+        }
         void init(int n=0) {
             keys.resize(n);
             for(int i=0;i<n;i++) keys[i] = i;

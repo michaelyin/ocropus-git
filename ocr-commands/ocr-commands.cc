@@ -544,6 +544,7 @@ namespace ocropus {
     }
 
     int main_trainseg(int argc,char **argv) {
+        param_bool randomize("randomize_lines",1,"randomize the order of lines before training");
         param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         param_bool retrain("retrain",0,"perform retraining");
         param_bool retrain_threshold("retrain_threshold",100,"only retrain on characters with a cost lower than this");
@@ -587,10 +588,12 @@ namespace ocropus {
 
         // randomly permute it so that we train in random order
 
-        intarray permutation;
-        for(int i=0;i<all_lines.dim(0);i++) permutation.push(i);
-        randomly_permute(permutation);
-        rowpermute(all_lines,permutation);
+        if(randomize) {
+            intarray permutation;
+            for(int i=0;i<all_lines.dim(0);i++) permutation.push(i);
+            randomly_permute(permutation);
+            rowpermute(all_lines,permutation);
+        }
 
         int total_chars = 0;
         int total_lines = 0;
