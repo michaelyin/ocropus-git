@@ -391,8 +391,7 @@ namespace glinerec {
         }
         void updateModel() {
         }
-        float outputs(OutputVector &result_,floatarray &v) {
-            floatarray result;
+        float outputs_impl(floatarray &result,floatarray &v) {
             int k = pgetf("k");
             CHECK(min(v)>-100 && max(v)<100);
             CHECK(v.dim(0)==ndim);
@@ -415,7 +414,6 @@ namespace glinerec {
             dshown(temp,"d");
             for(int i=0;i<ndim;i++) temp.at1d(i) = v.at1d(i);
             dshown(temp,"c");
-            result_ = result;
             return nbest.value(0);
         }
         float crossValidatedError() {
@@ -643,7 +641,7 @@ namespace glinerec {
         }
         void updateModel() {
         }
-        float outputs(OutputVector &result,floatarray &v) {
+        float outputs_impl(floatarray &result,floatarray &v) {
             floatarray p;
             int k = pgetf("k");
             bitvec bv;
@@ -913,7 +911,7 @@ namespace glinerec {
             narray_read(stream,b2);
         }
 
-        float outputs(OutputVector &result,floatarray &x_raw) {
+        float outputs_impl(floatarray &result,floatarray &x_raw) {
             floatarray z;
             int sparse = pgetf("sparse");
             floatarray y,x;
@@ -1277,7 +1275,7 @@ namespace glinerec {
         int classify(floatarray &x) {
             return cf->classify(x);
         }
-        float outputs(OutputVector &z,floatarray &x) {
+        float outputs_impl(OutputVector &z,InputVector &x) {
             return cf->outputs(z,x);
         }
     };
@@ -1395,7 +1393,7 @@ namespace glinerec {
 #pragma omp parallel for
             for(int sample=0;sample<ds.nsamples();sample++) {
                 floatarray v;
-                OutputVector p;
+                floatarray p;
                 ds.input(v,sample);
                 int cls = ds.cls(sample);
                 for(int k=0;k<models.length();k++) {
@@ -1515,32 +1513,31 @@ namespace glinerec {
             }
         }
 
-        float outputs(OutputVector &result_,floatarray &v) {
-            floatarray result;
+        float outputs_impl(floatarray &result,floatarray &v) {
             result.resize(nclasses());
             result = 0;
             OutputVector p;
             for(int round=0;round<models.length();round++) {
-                models(round)->outputs(p,v);
+                InputVector temp(v);
+                models(round)->outputs(p,temp);
                 double alpha = alphas(round);
                 for(int i=0;i<p.length();i++)
                     result(i) += alpha * p(i);
             }
             result += min(result);
             result /= sum(result);
-            result_ = result;
             return 0.0;
         }
 
         // alternative classification
 
-        float outputs1(floatarray &result,floatarray &v) {
+        float outputs_impl1(floatarray &result,floatarray &v) {
             result.resize(nclasses());
             result = 0;
-            OutputVector p;
+            floatarray p;
             for(int round=0;round<models.length();round++) {
                 models(round)->outputs(p,v);
-                result(p.argmax()) += alphas(round);
+                result(argmax(p)) += alphas(round);
             }
             result /= sum(result);
             return 0.0;
@@ -1548,7 +1545,7 @@ namespace glinerec {
 
         int classify1(floatarray &v) {
             floatarray p;
-            outputs1(p,v);
+            outputs_impl1(p,v);
             return argmax(p);
         }
     };
@@ -1618,11 +1615,9 @@ namespace glinerec {
 #pragma omp parallel for
                 for(int i=0;i<ds.nsamples();i++) {
                     floatarray v;
-                    OutputVector out;
                     floatarray p;
                     ads.input(v,i);
-                    net->outputs(out,v);
-                    out.as_array(p);
+                    net->outputs(p,v);
                     if(argmax(p)!=ds.cls(i))
                         errs++;
                     ads.augment(i,p);
@@ -1633,8 +1628,7 @@ namespace glinerec {
             }
         }
 
-        float outputs(OutputVector &result_,floatarray &v) {
-            floatarray result;
+        float outputs_impl(floatarray &result,floatarray &v) {
             int lrounds = pgetf("lrounds");
             result.resize(nclasses());
             result = 0;
@@ -1644,12 +1638,10 @@ namespace glinerec {
             floatarray p;
             for(int round=0;round<lrounds && round<models.length();round++) {
                 if(round>0) a.append(p);
-                models(round)->outputs(out,a);
-                out.as_array(p);
+                models(round)->outputs(p,a);
             }
             result = p;
             result /= sum(result);
-            result_ = result;
             return 0.0;
         }
     };
@@ -1766,18 +1758,15 @@ namespace glinerec {
             }
         }
 
-        float outputs(OutputVector &result,floatarray &v) {
-            OutputVector out;
+        float outputs_impl(floatarray &result,floatarray &v) {
             floatarray chars;
             floatarray ul;
             floatarray junk;
 
-            charclass->outputs(out,v);
-            out.as_array(chars);
+            charclass->outputs(chars,v);
 
             if(pgetf("junk") && junkclass) {
-                junkclass->outputs(out,v);
-                out.as_array(junk);
+                junkclass->outputs(junk,v);
                 chars /= sum(chars);
                 chars *= junk(0);
                 while(chars.length()<=jc()) chars.push(0);
@@ -1785,8 +1774,7 @@ namespace glinerec {
             }
 
             if(pgetf("ul") && ulclass) {
-                ulclass->outputs(out,v);
-                out.as_array(ul);
+                ulclass->outputs(ul,v);
                 ul /= sum(ul);
                 for(int c='A';c<='Z';c++) {
                     float total = chars(c) + chars(c-'A'+'a');
@@ -1921,15 +1909,13 @@ namespace glinerec {
             count++;
         }
 
-        float outputs(floatarray &result,floatarray &v) {
+        float outputs_impl(floatarray &result,floatarray &v) {
             int nc = nclasses();
             result.resize(nc);
             result = 0;
-            OutputVector out;
             floatarray w;
             for(int i=0;i<nclassifiers-1;i++) {
-                classifiers[i]->outputs(out,v);
-                out.as_array(w);
+                classifiers[i]->outputs(w,v);
                 while(w.length()<nc) w.push(0.0);
                 result += w;
             }

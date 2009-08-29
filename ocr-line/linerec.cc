@@ -453,6 +453,15 @@ namespace glinerec {
                 floatarray v;
                 for(int k=0;k<njitter;k++) {
                     extractFeatures(v,i);
+                    {
+                        dsection("lfeats");
+                        int csize = pgetf("csize");
+                        floatarray image;
+                        image = v;
+                        image.resize(image.length()/csize,csize);
+                        dshown(image);
+                    }
+
                     v.reshape(v.length());
                     if(use_props) pushProps(v,i);
 #pragma omp atomic
@@ -551,7 +560,11 @@ namespace glinerec {
                 }
                 v.reshape(v.length());
                 pushProps(v,i);
-                float ccost = classifier->outputs(p,v);
+                float ccost = 0.0;
+                {
+                    InputVector temp(v);
+                    ccost = classifier->outputs(p,temp);
+                }
 #pragma omp critical
                 {
                     if(use_reject) {
