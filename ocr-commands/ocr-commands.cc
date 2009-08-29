@@ -43,6 +43,22 @@
 #include <dlfcn.h>
 #endif
 
+namespace {
+    const char *exception_context = "";
+}
+
+#define CATCH_COMMON(ACTION) \
+catch(const char *s) { \
+    fprintf(stderr,"ERROR: %s [%s]\n",s,exception_context); ACTION; \
+} catch(Unimplemented &err) { \
+    fprintf(stderr,"ERROR: Unimplemented [%s]\n",exception_context); ACTION; \
+} catch(BadTextLine &err) { \
+    fprintf(stderr,"ERROR: BadTextLine [%s]\n",exception_context); ACTION; \
+} catch(...) { \
+    fprintf(stderr,"ERROR: %s\n",exception_context); ACTION;     \
+} \
+exception_context = ""
+
 namespace glinerec {
     IRecognizeLine *make_Linerec();
     const char *command = "???";
@@ -290,23 +306,23 @@ namespace ocropus {
                     ustrg truth;
 #pragma omp critical
                     if(bookstore->getLine(truth,page,line,"gt")) try {
-                        // FIXME not unicode clean
-                        cleanup_for_eval(truth);
-                        cleanup_for_eval(predicted);
-                        debugf("truth","%04d %04d\t%s\n",page,line,truth.c_str());
-                        float dist = edit_distance(truth,predicted);
+                            // FIXME not unicode clean
+                            cleanup_for_eval(truth);
+                            cleanup_for_eval(predicted);
+                            debugf("truth","%04d %04d\t%s\n",page,line,truth.c_str());
+                            float dist = edit_distance(truth,predicted);
 #pragma omp atomic
-                        eval_total += dist;
+                            eval_total += dist;
 #pragma omp atomic
-                        eval_tchars += truth.length();
+                            eval_tchars += truth.length();
 #pragma omp atomic
-                        eval_pchars += predicted.length();
+                            eval_pchars += predicted.length();
 #pragma omp atomic
-                        eval_lines++;
-                    } catch(...) {
+                            eval_lines++;
+                        } catch(...) {
 #pragma omp atomic
-                        eval_no_ground_truth++;
-                    }
+                            eval_no_ground_truth++;
+                        }
 
 #pragma omp critical (finished_counter)
                     {
@@ -314,9 +330,9 @@ namespace ocropus {
                         if(finished%100==0) {
                             if(eval_total>0)
                                 debugf("info","finished %d/%d estimate %g errs %d ntrue %d npred %d lines %d nogt %d\n",
-                                        finished,nfiles,
-                                        eval_total/float(eval_tchars),eval_total,eval_tchars,eval_pchars,
-                                        eval_lines,eval_no_ground_truth);
+                                       finished,nfiles,
+                                       eval_total/float(eval_tchars),eval_total,eval_tchars,eval_pchars,
+                                       eval_lines,eval_no_ground_truth);
                             else
                                 debugf("info","finished %d/%d\n",finished,nfiles);
                         }
@@ -334,8 +350,8 @@ namespace ocropus {
         }
 
         debugf("info","rate %g errs %d ntrue %d npred %d lines %d nogt %d\n",
-                eval_total/float(eval_tchars),eval_total,eval_tchars,eval_pchars,
-                eval_lines,eval_no_ground_truth);
+               eval_total/float(eval_tchars),eval_total,eval_tchars,eval_pchars,
+               eval_lines,eval_no_ground_truth);
         return 0;
     }
 
@@ -543,6 +559,161 @@ namespace ocropus {
         return 0;
     }
 
+    struct LineSource : IComponent {
+        narray< autodel<IBookStore> > bookstores;
+        int index;
+        strg cseg_variant;
+        strg text_variant;
+        intarray all_lines;
+
+        LineSource() {
+            pdef("retrain",0,"set parameters for retraining");
+            pdef("randomize",1,"randomize lines");
+            pdef("cbookstore","SmartBookStore","bookstore using for reading pages");
+        }
+        const char *name() {
+            return "linesource";
+        }
+
+        void init(char **books) {
+            bool retrain = pgetf("retrain");
+            bool randomize = pgetf("randomize");
+            const char *cbookstore = pget("cbookstore");
+            bookstores.clear();
+            all_lines.clear();
+            cseg_variant = "cseg.gt";
+            text_variant = "gt";
+            if(retrain) {
+                cseg_variant = "cseg";
+                text_variant = "";
+            }
+
+            int nbooks = 0;
+            while(books[nbooks]) nbooks++;
+            bookstores.resize(nbooks);
+            for(int i=0;books[i];i++) {
+                make_component(bookstores[i],cbookstore);
+                bookstores[i]->setPrefix(books[i]);
+                CHECK(bookstores[i]->numberOfPages()>0);
+                debugf("info","%s: %d pages\n",books[i],bookstores[i]->numberOfPages());
+            }
+
+            // compute a list of all lines
+
+            intarray triple(3);
+            for(int i=0;i<nbooks;i++) {
+                for(int j=0;j<bookstores[i]->numberOfPages();j++) {
+                    for(int k=0;k<bookstores[i]->linesOnPage(j);k++) {
+                        triple[0] = i;
+                        triple[1] = j;
+                        triple[2] = k;
+                        rowpush(all_lines,triple);
+                    }
+                }
+            }
+            debugf("info","got %d lines\n",all_lines.dim(0));
+
+            // randomly permute it so that we train in random order
+
+            if(randomize) {
+                intarray permutation;
+                for(int i=0;i<all_lines.dim(0);i++) permutation.push(i);
+                randomly_permute(permutation);
+                rowpermute(all_lines,permutation);
+            }
+
+            index = -1;
+        }
+
+        bool done() {
+            return index+1>=all_lines.dim(0);
+        }
+
+        int bookno;
+        int pageno;
+        int lineno_;
+        int lineno;
+
+        void next() {
+            index++;
+            bookno = all_lines(index,0);
+            pageno = all_lines(index,1);
+            lineno_ = all_lines(index,2);
+            lineno = bookstores[bookno]->getLineId(pageno,lineno_);
+        }
+
+        void get(strg &str,const char *variant) {
+            str.clear();
+            str = bookstores[bookno]->path(pageno,lineno,0,variant);
+        }
+
+        void get(ustrg &str,const char *variant) {
+            str.clear();
+            CHECK(!strcmp(variant,"transcript"));
+            bookstores[bookno]->getLine(str,pageno,lineno,text_variant);
+        }
+
+        void get(bytearray &image,const char *variant) {
+            image.clear();
+            CHECK(!strcmp(variant,"image"));
+            bookstores[bookno]->getLine(image,pageno,lineno,"");
+        }
+
+        void get(intarray &image,const char *variant) {
+            image.clear();
+            CHECK(!strcmp(variant,"cseg"));
+            bookstores[bookno]->getLine(image,pageno,lineno,cseg_variant);
+        }
+
+        void get(floatarray &costs,const char *variant) {
+            costs.clear();
+            CHECK(!strcmp(variant,"costs"));
+            costs.resize(10000) = 1e38;
+            stdio stream(bookstores[bookno]->path(pageno,lineno,0,"costs"),"r");
+            int index;
+            float cost;
+            while(fscanf(stream,"%d %g\n",&index,&cost)==2) {
+                costs(index) = cost;
+            }
+        }
+    };
+
+    void remove_high_cost_segments(ustrg &nutranscript,floatarray &costs,
+                                   intarray cseg,float retrain_threshold) {
+        int old_length = nutranscript.length();
+        for(int i=0;i<nutranscript.length();i++) {
+            if(costs[i]>retrain_threshold)
+                nutranscript[i] = nuchar(' ');
+        }
+        for(int i=0;i<cseg.length();i++) {
+            if(costs(cseg[i])>retrain_threshold)
+                cseg[i] = 0;
+        }
+        int delta = old_length - nutranscript.length();
+        if(delta>0) {
+            debugf("info","removed %d exceeding cost\n",delta);
+        }
+        debugf("dcost","--------------------------------\n");
+        for(int i=0;i<nutranscript.length();i++) {
+            debugf("dcost","%3d %10g %c\n",i,costs(i),nutranscript(i).ord());
+        }
+        {
+            dsection("dcost");
+            dshowr(cseg);
+            dwait();
+        }
+    }
+
+    void fixup_transcript(ustrg &nutranscript,bool old_csegs) {
+        char transcript[10000];
+        for(int i=0;i<nutranscript.length();i++)
+            transcript[i] = nutranscript[i].ord();
+        transcript[nutranscript.length()] = 0;
+        chomp(transcript);
+        if(old_csegs) remove_spaces(transcript);
+        nutranscript.assign(transcript);
+    }
+
     int main_trainseg(int argc,char **argv) {
         param_bool randomize("randomize_lines",1,"randomize the order of lines before training");
         param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
@@ -556,138 +727,63 @@ namespace ocropus {
         autodel<IRecognizeLine> linerec;
         linerec = make_Linerec();
         autodel<IDataset> dataset;
-
-        // load information about all the books on the command line
-
-        narray< autodel<IBookStore> > bookstores;
-        int nbooks = argc-2;
-        char **books = argv+2;
-        bookstores.resize(nbooks);
-        for(int index=0;index<nbooks;index++) {
-            make_component(bookstores[index],cbookstore);
-            bookstores[index]->setPrefix(books[index]);
-            CHECK(bookstores[index]->numberOfPages()>0);
-            debugf("info","%s: %d pages\n",books[index],bookstores[index]->numberOfPages());
-        }
-
-        // compute a list of all lines
-
-        intarray triple(3);
-        intarray all_lines;
-        for(int i=0;i<nbooks;i++) {
-            for(int j=0;j<bookstores[i]->numberOfPages();j++) {
-                for(int k=0;k<bookstores[i]->linesOnPage(j);k++) {
-                    triple[0] = i;
-                    triple[1] = j;
-                    triple[2] = k;
-                    rowpush(all_lines,triple);
-                }
-            }
-        }
-        debugf("info","got %d lines\n",all_lines.dim(0));
-
-        // randomly permute it so that we train in random order
-
-        if(randomize) {
-            intarray permutation;
-            for(int i=0;i<all_lines.dim(0);i++) permutation.push(i);
-            randomly_permute(permutation);
-            rowpermute(all_lines,permutation);
-        }
+        if(linerec) linerec->startTraining("");
 
         int total_chars = 0;
         int total_lines = 0;
-        if(linerec) linerec->startTraining("");
-        strg cseg_variant = "cseg.gt";
-        strg text_variant = "gt";
-        if(retrain) {
-            cseg_variant = "cseg";
-            text_variant = "";
-        }
-
         int next = 1000;
-        for(int index=0;index<all_lines.dim(0);index++) {
-            // intarray pages;
+
+        LineSource lines;
+        char **books = argv+2;
+        lines.init(books);
+
+        while(!lines.done()) {
+            lines.next();
+
+            strg path;
             intarray cseg;
             bytearray image;
             floatarray costs;
+            ustrg nutranscript;
 
-            int bookno = all_lines(index,0);
-            int pageno = all_lines(index,1);
-            int lineno_ = all_lines(index,2);
-            int lineno = bookstores[bookno]->getLineId(pageno,lineno_);
             try {
-                if(!bookstores[bookno]->getLine(cseg,pageno,lineno,cseg_variant)) {
-                    debugf("info","%04d %06x: no such cseg\n",pageno,lineno);
-                    continue;
-                }
+                lines.get(path,"path");
+                lines.get(image,"image");
+                lines.get(nutranscript,"transcript");
+                lines.get(cseg,"cseg");
+            } catch(...) {
+                debugf("info","skipping %s\n",path.c_str());
+                continue;
+            }
+
+            try {
                 make_line_segmentation_black(cseg);
                 CHECK(cseg.length()>100);
                 image.makelike(cseg);
                 for(int i=0;i<image.length1d();i++)
                     image.at1d(i) = 255*!cseg.at1d(i);
 
-                // read the ground truth segmentation
+                fixup_transcript(nutranscript,old_csegs);
 
-                ustrg nutranscript;
-                bookstores[bookno]->getLine(nutranscript,pageno,lineno,text_variant);
-                // FIXME this is an awful hack and won't work with unicode
-                char transcript[10000];
-                for(int i=0;i<nutranscript.length();i++)
-                    transcript[i] = nutranscript[i].ord();
-                transcript[nutranscript.length()] = 0;
-                chomp(transcript);
-                if(old_csegs) remove_spaces(transcript);
-                nutranscript.assign(transcript);
                 if(nutranscript.length()!=max(cseg)) {
-                    debugf("debug","transcript = '%s'\n",transcript);
+                    debugf("debug","transcript = '%s'\n",nutranscript.c_str());
                     throwf("transcript doesn't agree with cseg (transcript %d, cseg %d)",
                            nutranscript.length(),max(cseg));
                 }
 
-                // for retraining, read the cost file
-
                 if(retrain) {
-                    costs.resize(10000) = 1e38;
-                    stdio stream(bookstores[bookno]->path(pageno,lineno,0,"costs"),"r");
-                    int index;
-                    float cost;
-                    while(fscanf(stream,"%d %g\n",&index,&cost)==2) {
-                        costs(index) = cost;
-                    }
-                    // remove all segments whose costs are too high
-                    int old_length = nutranscript.length();
-                    for(int i=0;i<nutranscript.length();i++) {
-                        if(costs[i]>retrain_threshold)
-                            nutranscript[i] = nuchar(' ');
-                    }
-                    for(int i=0;i<cseg.length();i++) {
-                        if(costs(cseg[i])>retrain_threshold)
-                            cseg[i] = 0;
-                    }
-                    int delta = old_length - nutranscript.length();
-                    if(delta>0) {
-                        debugf("info","removed %d exceeding cost\n",delta);
-                    }
-                    debugf("dcost","--------------------------------\n");
-                    for(int i=0;i<nutranscript.length();i++) {
-                        debugf("dcost","%3d %10g %c\n",i,costs(i),nutranscript(i).ord());
-                    }
-                    {
-                        dsection("dcost");
-                        dshowr(cseg);
-                        dwait();
-                    }
+                    lines.get(costs,"costs");
+                    remove_high_cost_segments(nutranscript,costs,cseg,retrain_threshold);
                 }
 
                 // let the user know about progress
 
-                {
-                    utf8strg utf8Transcript;
-                    nutranscript.utf8EncodeTerm(utf8Transcript);
-                    debugf("transcript","%04d %06x (%d) [%2d,%2d] %s\n",pageno,lineno,total_chars,
-                           nutranscript.length(),max(cseg),utf8Transcript.c_str());
-                }
+                utf8strg utf8Transcript;
+                nutranscript.utf8EncodeTerm(utf8Transcript);
+                debugf("transcript","%04d %06x (%d) [%2d,%2d] %s\n",
+                       lines.pageno,lines.lineno,total_chars,
+                       nutranscript.length(),max(cseg),utf8Transcript.c_str());
+
                 if(total_chars>=next) {
                     debugf("info","loaded %d chars\n",total_chars);
                     next += 1000;
@@ -699,18 +795,12 @@ namespace ocropus {
                     linerec->addTrainingLine(cseg,image,nutranscript);
                     total_chars += nutranscript.length();
                     total_lines++;
-                } catch(const char *s) {
-                    fprintf(stderr,"ERROR: %s\n",s);
-                } catch(BadTextLine &err) {
-                    fprintf(stderr,"ERROR: BadTextLine\n");
-                } catch(...) {
-                    fprintf(stderr,"ERROR: (no details)\n");
-                }
+                } CATCH_COMMON(continue);
             } catch(const char *msg) {
-                printf("%04d %06x: %s\n",pageno,lineno,msg);
+                printf("%04d %06x: %s\n",lines.pageno,lines.lineno,msg);
             }
             // if we have enough characters, let the loop wind down
-            if(total_chars>ntrain) index = all_lines.dim(0);
+            if(total_chars>ntrain) break;
         }
         linerec->finishTraining();
         fprintf(stderr,"trained %d characters, %d lines\n",
