@@ -288,7 +288,7 @@ namespace ocropus {
             }
 
         autodel<ISegmentPage> voronoi(make_SegmentPageByVORONOI());
-        voronoi->set("remove_noise",true);
+        voronoi->pset("remove_noise",true);
         voronoi->segment(zoneimage,in);
         bounding_boxes(zoneboxesall,zoneimage);
         for(int i=0,l=zoneboxesall.length()-1;i<l;i++){

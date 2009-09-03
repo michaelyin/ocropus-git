@@ -555,7 +555,7 @@ namespace glinerec {
                     extractFeatures(v,i);
 #endif
                 } catch(const char *msg) {
-                    debugf("info","WARNING: feature extraction failed [%d]: %s\n",i,msg);
+                    debugf("warn","feature extraction failed [%d]: %s\n",i,msg);
                     continue;
                 }
                 v.reshape(v.length());

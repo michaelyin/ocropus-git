@@ -61,7 +61,7 @@ namespace ocropus {
                                    "(set fatal_unknown_params=0 to disable this check)\n",
                                    entry.c_str(),name());
                         else
-                            debugf("info","%s: unknown environment variable for %s\n",
+                            debugf("warn","%s: unknown environment variable for %s\n",
                                    entry.c_str(),name());
                     }
                 }

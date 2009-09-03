@@ -243,7 +243,7 @@ namespace ocropus {
                             strg s(bookstore->path(page,line,0,"txt"));
                             fprintf(stdio(s,"w"),"%s\n",utf8Output.c_str());
                         } else {
-                            debugf("info","%04d %06x failed to match language model\n",page,line);
+                            debugf("warn","%04d %06x failed to match language model\n",page,line);
                         }
                     } catch(const char *error) {
                         fprintf(stderr,"ERROR in bestpath: %s\n",error);

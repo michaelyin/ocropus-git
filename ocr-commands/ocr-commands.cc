@@ -49,13 +49,13 @@ namespace {
 
 #define CATCH_COMMON(ACTION) \
 catch(const char *s) { \
-    fprintf(stderr,"ERROR: %s [%s]\n",s,exception_context); ACTION; \
+    debugf("error","%s [%s]\n",s,exception_context); ACTION; \
 } catch(Unimplemented &err) { \
-    fprintf(stderr,"ERROR: Unimplemented [%s]\n",exception_context); ACTION; \
+    debugf("error","Unimplemented [%s]\n",exception_context); ACTION; \
 } catch(BadTextLine &err) { \
-    fprintf(stderr,"ERROR: BadTextLine [%s]\n",exception_context); ACTION; \
+    debugf("error","BadTextLine [%s]\n",exception_context); ACTION; \
 } catch(...) { \
-    fprintf(stderr,"ERROR: %s\n",exception_context); ACTION;     \
+    debugf("error","%s\n",exception_context); ACTION;    \
 } \
 exception_context = ""
 
@@ -259,14 +259,14 @@ namespace ocropus {
                             linerec->recognizeLine(*result,image);
                         }
                     } catch(BadTextLine &error) {
-                        fprintf(stderr,"skipping line: %s (bad text line)\n",line_path);
+                        debugf("warn","skipping %s (bad text line)\n",line_path);
                         continue;
                     } catch(const char *error) {
-                        fprintf(stderr,"skipping line: %s (%s)\n",line_path,error);
+                        debugf("warn","skipping %s (%s)\n",line_path,error);
                         if(abort_on_error) abort();
                         continue;
                     } catch(...) {
-                        fprintf(stderr,"skipping line: %s (unknown exception)\n",line_path);
+                        debugf("warn","skipping %s (unknown exception)\n",line_path);
                         if(abort_on_error) abort();
                         continue;
                     }
@@ -294,11 +294,11 @@ namespace ocropus {
 #pragma omp critical
                         if(save_fsts) bookstore->putLine(predicted,page,line);
                     } catch(const char *error) {
-                        debugf("info","ERROR in bestpath: %s\n",error);
+                        debugf("warn","%s in bestpath\n",error);
                         if(abort_on_error) abort();
                         continue;
                     } catch(...) {
-                        debugf("info","ERROR in bestpath\n",error);
+                        debugf("warn","error in bestpath\n",error);
                         if(abort_on_error) abort();
                         continue;
                     }
@@ -338,11 +338,11 @@ namespace ocropus {
                         }
                     }
                 } catch(const char *error) {
-                    fprintf(stderr,"ERROR in recognizeLine: %s\n",error);
+                    debugf("error","%s in recognizeLine\n",error);
                     if(abort_on_error) abort();
                     continue;
                 } catch(...) {
-                    fprintf(stderr,"ERROR in recognizeLine\n");
+                    debugf("error","error in recognizeLine\n");
                     if(abort_on_error) abort();
                     continue;
                 }
@@ -386,16 +386,16 @@ namespace ocropus {
                 }
                 if(!bookstore->getPage(page_gray,pageno)) {
                     if(pageno>0)
-                        debugf("info","%d: page not found\n",pageno);
+                        debugf("warn","%d: page not found\n",pageno);
                 }
                 if(!bookstore->getPage(page_binary,pageno,"bin")) {
                     page_binary = page_gray;
                 }
             } catch(const char *s) {
-                fprintf(stderr,"ERROR: %s\n",s);
+                debugf("error","page %d: %s\n",pageno,s);
                 if(abort_on_error) abort();
             } catch(...) {
-                fprintf(stderr,"ERROR: (no details)\n");
+                debugf("error","page %d (no details)\n",pageno);
                 if(abort_on_error) abort();
             }
 
@@ -405,10 +405,10 @@ namespace ocropus {
             try {
                 segmenter->segment(page_seg,page_binary);
             } catch(const char *s) {
-                fprintf(stderr,"ERROR in segmenter: %s\n",s);
+                fprintf(stderr,"%s: segmentation of page %d\n",s,pageno);
                 if(abort_on_error) abort();
             } catch(...) {
-                fprintf(stderr,"ERROR in segmenter: (no details)\n");
+                fprintf(stderr,"error in segmentation of page %d\n",pageno);
                 if(abort_on_error) abort();
             }
 
@@ -432,20 +432,20 @@ namespace ocropus {
                         if(!strcmp(cbookstore,"OldBookStore")) id = lineno;
                         bookstore->putLine(line_image,pageno,id);
                     } catch(const char *s) {
-                        fprintf(stderr,"ERROR: %s\n",s);
+                        debugf("error","%s: page %d line %d\n",s,pageno,lineno);
                         if(abort_on_error) abort();
                     } catch(...) {
-                        fprintf(stderr,"ERROR: (no details)\n");
+                        debugf("error","page %d line %d\n",pageno,lineno);
                         if(abort_on_error) abort();
                     }
                 }
                 debugf("info","%4d: #lines = %d\n",pageno,regions.length()-1);
                 // TODO/mezhirov output other blocks here
             } catch(const char *s) {
-                fprintf(stderr,"ERROR: %s\n",s);
+                debugf("error","%s: page %d\n",s,pageno);
                 if(abort_on_error) abort();
             } catch(...) {
-                fprintf(stderr,"ERROR: (no details)\n");
+                debugf("error","error in page %d\n",pageno);
                 if(abort_on_error) abort();
             }
         }
@@ -500,7 +500,7 @@ namespace ocropus {
                         str.utf8EncodeTerm(utf8Output);
                         printf("%s\n",utf8Output.c_str());
                     } catch(const char *error) {
-                        fprintf(stderr,"[%s]\n",error);
+                        debugf("error","%s\n",error);
                     }
                 }
             }
@@ -643,26 +643,31 @@ namespace ocropus {
         }
 
         void get(strg &str,const char *variant) {
+            CHECK(!strcmp(variant,"path"));
             str.clear();
-            str = bookstores[bookno]->path(pageno,lineno,0,variant);
+            str = bookstores[bookno]->path(pageno,lineno,0,0);
         }
 
         void get(ustrg &str,const char *variant) {
             str.clear();
             CHECK(!strcmp(variant,"transcript"));
-            bookstores[bookno]->getLine(str,pageno,lineno,text_variant);
+            const char *v = text_variant;
+            if(text_variant=="") v = 0;
+            bookstores[bookno]->getLine(str,pageno,lineno,v);
         }
 
         void get(bytearray &image,const char *variant) {
             image.clear();
             CHECK(!strcmp(variant,"image"));
-            bookstores[bookno]->getLine(image,pageno,lineno,"");
+            bookstores[bookno]->getLine(image,pageno,lineno,0);
         }
 
         void get(intarray &image,const char *variant) {
             image.clear();
             CHECK(!strcmp(variant,"cseg"));
-            bookstores[bookno]->getLine(image,pageno,lineno,cseg_variant);
+            const char *v = cseg_variant;
+            if(cseg_variant=="") v = 0;
+            bookstores[bookno]->getLine(image,pageno,lineno,v);
         }
 
         void get(floatarray &costs,const char *variant) {
@@ -749,16 +754,21 @@ namespace ocropus {
             try {
                 lines.get(path,"path");
                 lines.get(image,"image");
+                if(image.length()==0) throw "no or bad line image";
                 lines.get(nutranscript,"transcript");
+                if(nutranscript.length()==0) throw "no transcription";
                 lines.get(cseg,"cseg");
+                if(cseg.length()==0) throw "no or bad cseg";
+            } catch(const char *s) {
+                debugf("warn","skipping %s (%s)\n",path.c_str(),s);
+                continue;
             } catch(...) {
-                debugf("info","skipping %s\n",path.c_str());
+                debugf("warn","skipping %s\n",path.c_str());
                 continue;
             }
 
             try {
                 make_line_segmentation_black(cseg);
-                CHECK(cseg.length()>100);
                 image.makelike(cseg);
                 for(int i=0;i<image.length1d();i++)
                     image.at1d(i) = 255*!cseg.at1d(i);
@@ -797,7 +807,7 @@ namespace ocropus {
                     total_lines++;
                 } CATCH_COMMON(continue);
             } catch(const char *msg) {
-                printf("%04d %06x: %s\n",lines.pageno,lines.lineno,msg);
+                debugf("error","%04d %06x: %s\n",lines.pageno,lines.lineno,msg);
             }
             // if we have enough characters, let the loop wind down
             if(total_chars>ntrain) break;

@@ -31,6 +31,7 @@ using namespace iulib;
 using namespace colib;
 
 namespace ocropus {
+#if 0
     static void remove_noise_boxes(bytearray &image,int mw,int mh){
         intarray segmentation;
         segmentation = image;
@@ -50,6 +51,7 @@ namespace ocropus {
             }
         }
     }
+#endif
 
     static void count_noise_boxes(intarray &counts,bytearray &image,int mw,int mh){
         intarray segmentation;

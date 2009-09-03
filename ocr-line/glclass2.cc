@@ -137,10 +137,10 @@ namespace glinerec {
         }
         // ignore these
         void save(FILE *stream) {
-            debugf("info","%s: ignoring save; data in %s",name(),pget("data"));
+            debugf("warn","%s: ignoring save; data in %s",name(),pget("data"));
         }
         void load(FILE *stream) {
-            debugf("info","%s: ignoring load; data in %s",name(),pget("data"));
+            debugf("warn","%s: ignoring load; data in %s",name(),pget("data"));
         }
         // we can't classify
         int classify(floatarray &x) {
