@@ -87,7 +87,7 @@ namespace ocropus {
 //#pragma omp parallel for
             for(int j=0;j<nlines;j++) {
                 int line = bookstore->getLineId(page,j);
-                debugf("progress","page %04d %06x\n",page,line);
+                debugf("progress","align %04d %06x\n",page,line);
                 autodel<OcroFST> gt_fst(make_OcroFST());
                 if(!strcmp(gt_type,"transcript")) {
                     read_gt(*gt_fst, bookstore->path(page,line,0,""));
@@ -100,19 +100,18 @@ namespace ocropus {
                 }
 
                 autodel<OcroFST> fst(make_OcroFST());
+                strg path = bookstore->path(page,line,0,"fst");
                 try {
-                    if(!file_exists(bookstore->path(page,line,0,"fst"))) {
-                        debugf("warn","%s: not found, needed for alignment",
-                               bookstore->path(page,line,0,"fst"));
+                    if(!file_exists(path)) {
+                        debugf("warn","%s: not found\n",path.c_str());
                         continue;
                     }
-                    fst->load(bookstore->path(page,line,0,"fst"));
+                    fst->load(path);
                 } catch(const char *error) {
-                    fprintf(stderr,"ERROR loading fst: %s\n",error);
+                    fprintf(stderr,"%s: %s\n",path.c_str(),error);
                     if(abort_on_error) abort();
                 } catch(...) {
-                    strg s = bookstore->path(page,line,0,"fst");
-                    fprintf(stderr,"ERROR loading fst: %s\n",s.c_str());
+                    fprintf(stderr,"%s: cannot load\n",path.c_str());
                     if(abort_on_error) abort();
                 }
                 ustrg str;

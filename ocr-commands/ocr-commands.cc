@@ -651,9 +651,12 @@ namespace ocropus {
         void get(ustrg &str,const char *variant) {
             str.clear();
             CHECK(!strcmp(variant,"transcript"));
-            const char *v = text_variant;
-            if(text_variant=="") v = 0;
-            bookstores[bookno]->getLine(str,pageno,lineno,v);
+            str.clear();
+            bookstores[bookno]->getLine(str,pageno,lineno,"gt");
+            if(str.length()>0) return;
+            bookstores[bookno]->getLine(str,pageno,lineno,0);
+            if(str.length()>0) return;
+            throw "cannot find either .gt.txt or .txt file";
         }
 
         void get(bytearray &image,const char *variant) {
@@ -665,9 +668,12 @@ namespace ocropus {
         void get(intarray &image,const char *variant) {
             image.clear();
             CHECK(!strcmp(variant,"cseg"));
-            const char *v = cseg_variant;
-            if(cseg_variant=="") v = 0;
-            bookstores[bookno]->getLine(image,pageno,lineno,v);
+            image.clear();
+            bookstores[bookno]->getLine(image,pageno,lineno,"cseg.gt");
+            if(image.length()>0) return;
+            bookstores[bookno]->getLine(image,pageno,lineno,"cseg");
+            if(image.length()>0) return;
+            throw "cannot find either .cseg.gt.png or .cseg.png";
         }
 
         void get(floatarray &costs,const char *variant) {
@@ -725,7 +731,9 @@ namespace ocropus {
         param_bool retrain("retrain",0,"perform retraining");
         param_bool retrain_threshold("retrain_threshold",100,"only retrain on characters with a cost lower than this");
         param_int ntrain("ntrain",10000000,"max number of training examples");
-        param_bool old_csegs("old_csegs",0,"use old csegs (spaces are not counted)");
+        param_bool old_csegs("old_csegs",0,"(obsolete, old vs new csegs is now determined automatically)");
+        int nold_csegs = 0;
+
         if(argc!=3) throw "usage: ... model books...";
 
         dinit(512,512);
@@ -773,6 +781,15 @@ namespace ocropus {
                 for(int i=0;i<image.length1d();i++)
                     image.at1d(i) = 255*!cseg.at1d(i);
 
+                // try to convert it to see whether it's an old_cseg
+                // or new cseg
+
+                ustrg s;
+                s = nutranscript;
+                fixup_transcript(s,false);
+                bool old_csegs = (s.length()!=max(cseg));
+                if(old_csegs) nold_csegs++;
+
                 fixup_transcript(nutranscript,old_csegs);
 
                 if(nutranscript.length()!=max(cseg)) {
@@ -813,9 +830,11 @@ namespace ocropus {
             if(total_chars>ntrain) break;
         }
         linerec->finishTraining();
-        fprintf(stderr,"trained %d characters, %d lines\n",
+        debugf("info","trained %d characters, %d lines\n",
                 total_chars,total_lines);
-        fprintf(stderr,"saving %s\n",argv[1]);
+        if(nold_csegs>total_lines/100)
+            debugf("warn","%d old csegs",nold_csegs);
+        debugf("info","saving %s\n",argv[1]);
         save_component(stdio(argv[1],"w"),linerec);
         return 0;
     }
