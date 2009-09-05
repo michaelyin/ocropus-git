@@ -68,7 +68,7 @@ namespace ocropus {
     void read_gt(IGenericFst &fst, const char *base) {
         strbuf gt_path;
         gt_path = base;
-        gt_path += ".gt.txt";
+        gt_path += "gt.txt";
 
         read_transcript(fst, gt_path);
         for(int i = 0; i < fst.nStates(); i++)
@@ -101,7 +101,11 @@ namespace ocropus {
 
                 autodel<OcroFST> fst(make_OcroFST());
                 try {
-                    if(!file_exists(bookstore->path(page,line,0,"fst"))) continue;
+                    if(!file_exists(bookstore->path(page,line,0,"fst"))) {
+                        debugf("warn","%s: not found, needed for alignment",
+                               bookstore->path(page,line,0,"fst"));
+                        continue;
+                    }
                     fst->load(bookstore->path(page,line,0,"fst"));
                 } catch(const char *error) {
                     fprintf(stderr,"ERROR loading fst: %s\n",error);
