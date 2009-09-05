@@ -179,6 +179,7 @@ namespace glinerec {
             // FIXME load grouper and segmenter here
             featuremap = dynamic_cast<IFeatureMap*>(load_component(stream));
             classifier = dynamic_cast<IModel*>(load_component(stream));
+            reimport();
         }
 
         void startTraining(const char *) {
@@ -329,7 +330,10 @@ namespace glinerec {
                 dshown(temp,"c");
                 dwait();
             }
-            CHECK_ARG(b.height()<pgetf("maxheight"));
+            if(b.height()>=pgetf("maxheight")) {
+                throwf("feature extraction: bbox height %d > maxheight %g",
+                       b.height(),pgetf("maxheight"));
+            }
             featuremap->extractFeatures(v,b,mask);
         }
 

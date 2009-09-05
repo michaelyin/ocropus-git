@@ -130,21 +130,26 @@ namespace ocropus {
             CHECK(!strchr(name,'='));
             CHECK(!strchr(value,'\n'));
             params(name) = value;
+            import(name,doc);
+        }
+        void import(const char *name,const char *doc="") {
             strg key;
             key = this->name();
             key += "_";
             key += name;
             bool altered = false;
-            if(getenv(key.c_str())) {
-                const char *evalue = getenv(key.c_str());
+            if(getenv(key)) {
+                const char *evalue = getenv(key);
+                const char *value = params(name).c_str();
+                CHECK(value!=0);
                 if(strcmp(evalue,value)) altered = true;
                 params(name) = evalue;
             }
-            if(!shown.find(key.c_str())) {
+            if(!shown.find(key)) {
                 if(altered && !strcmp(verbose_pattern,"?")) {
                     fprintf(stderr,"param altered %s=%s # %s\n",
                             key.c_str(),params(name).c_str(),doc);
-                } else if(strstr(key.c_str(),verbose_pattern)!=0) {
+                } else if(strstr(key,verbose_pattern)!=0) {
                     fprintf(stderr,"param default %s=%s # %s\n",
                             key.c_str(),params(name).c_str(),doc);
                 }
@@ -238,6 +243,13 @@ namespace ocropus {
                 fprintf(stream,"%*s",depth,"");
                 fprintf(stream,"%s_%s=%s\n",this->name(),keys(i),params(keys(i)).c_str());
             }
+        }
+        // Reimport all the parameters from the environment.
+        void reimport() {
+            narray<const char *> keys;
+            params.keys(keys);
+            for(int i=0;i<keys.length();i++)
+                import(keys[i]);
         }
 
         virtual ~IComponent() {}
