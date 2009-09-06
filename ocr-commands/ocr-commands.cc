@@ -454,11 +454,12 @@ namespace ocropus {
 
 
     int main_page(int argc,char **argv) {
+        param_string csegmenter("csegmenter","SegmentPageByRAST","page segmentation component");
         param_string cmodel("cmodel",DEFAULT_DATA_DIR "default.model","character model used for recognition");
         param_string lmodel("lmodel",DEFAULT_DATA_DIR "default.fst","language model used for recognition");
         // create the segmenter
         autodel<ISegmentPage> segmenter;
-        segmenter = make_SegmentPageByRAST();
+        make_component(segmenter,csegmenter);
         // load the line recognizer
         autodel<IRecognizeLine> linerec;
         linerec_load(linerec,cmodel);

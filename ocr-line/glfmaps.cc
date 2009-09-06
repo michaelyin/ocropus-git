@@ -496,8 +496,8 @@ namespace glinerec {
                 floatarray temp;
                 temp = v;
                 temp.reshape(temp.length()/csize,csize);
-                dshown(temp,"c");
-                dshown(mask,"d");
+                dshown(temp,"y");
+                dshown(mask,"Y");
                 dwait();
             }
         }

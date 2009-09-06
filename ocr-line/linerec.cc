@@ -142,6 +142,7 @@ namespace glinerec {
             pdef("maxcost",20.0,"maximum cost of a character to be added to the output");
             pdef("minclass",32,"minimum output class to be added (default=unicode space)");
             pdef("minprob",1e-6,"minimum probability for a character to appear in the output at all");
+            pdef("minsize_factor",1.3,"minimum size of bounding box in terms of xheight");
             segmenter = make_DpSegmenter();
             grouper = make_SimpleGrouper();
             featuremap = dynamic_cast<IFeatureMap*>(component_construct(pget("fmap")));
@@ -196,9 +197,10 @@ namespace glinerec {
             featuremap = dynamic_cast<IFeatureMap*>(load_component(stream));
             classifier = dynamic_cast<IModel*>(load_component(stream));
 
-            // FIXME -- this is temporary
             counts.clear();
-            if(magic=="linerc2") {
+            if(magic=="linerec") {
+                pset("minsize_factor",0.0);
+            } else if(magic=="linerc2") {
                 narray_read(stream,counts);
             }
 
@@ -291,6 +293,7 @@ namespace glinerec {
                 correct_extended_line_info(intercept,slope,xheight,
                                            descender_sink,ascender_rise,segmentation);
             debugf("detail","LineInfo %g %g %g %g %g\n",intercept,slope,xheight,descender_sink,ascender_rise);
+
             if(xheight<4) throw BadTextLine();
             show_baseline(slope,intercept,xheight,image,"YYY");
             bytearray baseline_image;
@@ -339,6 +342,21 @@ namespace glinerec {
                 b.x1 += r;
                 b.y1 += r;
             }
+#if 1
+            float minsize_factor = pgetf("minsize_factor");
+            int minsize = int(minsize_factor*xheight);
+
+            int p = max(minsize-b.width(),minsize-b.height());
+            debugf("minsize","w=%d h=%d xh=%d f=%g p=%d\n",
+                   b.width(),b.height(),int(xheight),minsize_factor,p);
+            if(p>0) {
+                pad_by(mask,p,p);
+                b.x0 -= p;
+                b.y0 -= p;
+                b.x1 += p;
+                b.y1 += p;
+            }
+#endif
             if(dactive()) {
                 floatarray temp,mtemp;
                 temp.resize(b.width(),b.height()) = 0;
@@ -373,14 +391,17 @@ namespace glinerec {
             CHECK_ARG(b.height()<pgetf("maxheight"));
             dshown(mask,"b");
             centroid(x,y,mask);
+
             CHECK(x>=0 && y>=0);
             x += b.x0;
             y += b.y0;
             int xi = int(x);
             int yi = int(y);
             int r;
+
             float abs_xhmul = pgetf("abs_xhmul");
             bool abs_truncate = pgetf("abs_truncate");
+
             r = int(abs_xhmul*xheight/2);
             if(!abs_truncate) r = max(max(r,b.width()),b.height());
             CHECK(r>0 && r<1000);
@@ -388,6 +409,23 @@ namespace glinerec {
             b.y0 = yi-r;
             b.x1 = xi+r;
             b.y1 = yi+r;
+
+#if 1
+            float minsize_factor = pgetf("minsize_factor");
+            int minsize = int(minsize_factor*xheight);
+
+            int p = max(minsize-b.width(),minsize-b.height());
+            debugf("minsize","w=%d h=%d xh=%d f=%g p=%d\n",
+                   b.width(),b.height(),int(xheight),minsize_factor,p);
+            if(p>0) {
+                pad_by(mask,p,p);
+                b.x0 -= p;
+                b.y0 -= p;
+                b.x1 += p;
+                b.y1 += p;
+            }
+#endif
+
             CHECK(b.x0>-1000 && b.x1<10000 && b.y0>-1000 && b.y1<10000);
             grouper->getMaskAt(mask,i,b);
             dshown(mask,"d");
