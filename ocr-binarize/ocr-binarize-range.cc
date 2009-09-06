@@ -72,7 +72,9 @@ namespace ocropus {
             // nothing to be done
         }
 
-        void binarize(bytearray &out,floatarray &in) {
+        void binarize(bytearray &out,bytearray &in_) {
+            floatarray in;
+            in_ = in;
             binarize_by_range(out,in,fraction);
         }
 

@@ -870,19 +870,35 @@ namespace ocropus {
         return 0;
     }
 
-    int main_cleanupgray(int argc,char **argv) {
-        throw "unimplemented";
+    int main_cleanup(int argc,char **argv) {
+        param_string pclean("cleanup","StandardPreprocessing","cleanup component");
+        autodel<IBinarize> cleanup;
+        make_component(pclean,cleanup);
+        bytearray in,out;
+        read_image_gray(in,argv[1]);
+        cleanup->binarize(out,in);
+        write_image_gray(argv[2],out);
         return 0;
     }
 
-    param_string pclean("cleanup","Cleanup300dpi","cleanup component");
-
     int main_cleanupbin(int argc,char **argv) {
+        param_string pclean("cleanup","StandardPreprocessing","cleanup component");
         autodel<ICleanupBinary> cleanup;
         make_component(pclean,cleanup);
         bytearray in,out;
         read_image_gray(in,argv[1]);
         cleanup->cleanup(out,in);
+        write_image_gray(argv[2],out);
+        return 0;
+    }
+
+    int main_cleanupgray(int argc,char **argv) {
+        param_string pclean("cleanup","StandardPreprocessing","cleanup component");
+        autodel<ICleanupGray> cleanup;
+        make_component(pclean,cleanup);
+        bytearray in,out;
+        read_image_gray(in,argv[1]);
+        cleanup->cleanup_gray(out,in);
         write_image_gray(argv[2],out);
         return 0;
     }
@@ -1043,6 +1059,7 @@ namespace ocropus {
             if(!strcmp(argv[1],"recognize1")) return main_recognize1(argc-1,argv+1);
             if(!strcmp(argv[1],"trainseg")) return main_trainseg(argc-1,argv+1);
             if(!strcmp(argv[1],"bookstore")) return main_bookstore(argc-1,argv+1);
+            if(!strcmp(argv[1],"cleanup")) return main_cleanup(argc-1,argv+1);
             if(!strcmp(argv[1],"cleanupgray")) return main_cleanupgray(argc-1,argv+1);
             if(!strcmp(argv[1],"cleanupbin")) return main_cleanupbin(argc-1,argv+1);
             if(!strcmp(argv[1],"recolor")) return main_recolor(argc-1,argv+1);

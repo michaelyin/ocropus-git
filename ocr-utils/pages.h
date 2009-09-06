@@ -68,19 +68,19 @@ namespace ocropus {
             if(pget("cgrayclean1")) {
                 autodel<ICleanupGray> cleaner;
                 load_component(cleaner,stdio(pget("cgrayclean1"),"r"));
-                cleaner->cleanup(temp,image);
+                cleaner->cleanup_gray(temp,image);
                 temp.move(image);
             }
             if(pget("cgrayclean2")) {
                 autodel<ICleanupGray> cleaner;
                 load_component(cleaner,stdio(pget("cgrayclean2"),"r"));
-                cleaner->cleanup(temp,image);
+                cleaner->cleanup_gray(temp,image);
                 temp.move(image);
             }
             if(pget("cgrayclean3")) {
                 autodel<ICleanupGray> cleaner;
                 load_component(cleaner,stdio(pget("cgrayclean3"),"r"));
-                cleaner->cleanup(temp,image);
+                cleaner->cleanup_gray(temp,image);
                 temp.move(image);
             }
         }
@@ -211,9 +211,7 @@ namespace ocropus {
                 for(int i=0;i<gray.length1d();i++)
                     binary.at1d(i) = (gray.at1d(i) > threshold) ? 255:0;
             } else {
-                floatarray temp;
-                copy(temp,gray);
-                binarizer->binarize(binary,temp);
+                binarizer->binarize(binary,gray);
             }
         }
         const char *getFileName() {

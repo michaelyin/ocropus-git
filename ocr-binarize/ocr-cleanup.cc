@@ -65,7 +65,7 @@ namespace ocropus {
         counts = 0;
         for(int i=1;i<bboxes.length();i++) {
             rectangle b = bboxes(i);
-            if(b.width()<=mw && b.height()<=mh) 
+            if(b.width()<=mw && b.height()<=mh)
                 counts(0)++;
             else
                 counts(1)++;
@@ -215,6 +215,111 @@ namespace ocropus {
         }
     };
 
+    struct StandardPreprocessing : virtual IBinarize,virtual ICleanupGray,virtual ICleanupBinary {
+        autodel<ICleanupGray> graydeskew;
+        autodel<ICleanupBinary> bindeskew;
+        autodel<IBinarize> binarizer;
+        narray< autodel<ICleanupGray> > grayclean;
+        narray< autodel<ICleanupBinary> > binclean;
+        const char *interface() {
+            return "IBinarize";
+        }
+        const char *name() {
+            return "preproc";
+        }
+        StandardPreprocessing() {
+            pdef("grayclean0","","grayscale page cleanup");
+            pdef("grayclean1","","grayscale page cleanup");
+            pdef("grayclean2","","grayscale page cleanup");
+            pdef("grayclean3","","grayscale page cleanup");
+            pdef("grayclean4","","grayscale page cleanup");
+            pdef("grayclean5","","grayscale page cleanup");
+            pdef("grayclean6","","grayscale page cleanup");
+            pdef("grayclean7","","grayscale page cleanup");
+            pdef("grayclean8","","grayscale page cleanup");
+            pdef("grayclean9","","grayscale page cleanup");
+            pdef("graydeskew","DeskewPageByRAST","grayscale deskewing");
+            pdef("binarizer","BinarizeBySauvola","binarizer used for pages");
+            pdef("binclean0","AutoInvert","binary page cleanup");
+            pdef("binclean1","RmHalftone","binary page cleanup");
+            pdef("binclean2","RmBig","binary page cleanup");
+            pdef("binclean3","","binary page cleanup");
+            pdef("binclean4","","binary page cleanup");
+            pdef("binclean5","","binary page cleanup");
+            pdef("binclean6","","binary page cleanup");
+            pdef("binclean7","","binary page cleanup");
+            pdef("binclean8","","binary page cleanup");
+            pdef("binclean9","","binary page cleanup");
+            pdef("bindeskew","DeskewPageByRAST","binary deskewing");
+            import();
+        }
+        void import() {
+            make_component(binarizer,pget("binarizer"));
+            make_component(bindeskew,pget("bindeskew"));
+            make_component(graydeskew,pget("graydeskew"));
+            // pprint();
+            grayclean.resize(10);
+            binclean.resize(10);
+            for(int i=0;i<10;i++) {
+                strg s;
+                sprintf(s,"grayclean%d",i);
+                const char *key;
+                key = pget(s);
+                if(key && strcmp(key,""))
+                    make_component(grayclean[i],pget(s));
+                sprintf(s,"binclean%d",i);
+                key = pget(s);
+                if(key && strcmp(key,""))
+                    make_component(binclean[i],pget(s));
+            }
+        }
+        void cleanup_gray(bytearray &out,bytearray &in) {
+            bytearray temp;
+            out = in;
+            for(int i=0;i<grayclean.length();i++) {
+                if(!grayclean[i]) continue;
+                grayclean[i]->cleanup_gray(temp,out);
+                out.move(temp);
+            }
+        }
+        void cleanup(bytearray &out,bytearray &in) {
+            bytearray temp;
+            out = in;
+            for(int i=0;i<binclean.length();i++) {
+                if(!binclean[i]) continue;
+                binclean[i]->cleanup(temp,out);
+                out.move(temp);
+            }
+        }
+        void binarize(bytearray &out,bytearray &in) {
+            if(contains_only(in,0,255)) {
+                bytearray temp;
+                cleanup(out,in);
+                if(bindeskew) {
+                    temp.move(out);
+                    bindeskew->cleanup(out,temp);
+                }
+            } else {
+                bool deskewed = 0;
+                bytearray temp;
+                cleanup_gray(out,in);
+                if(graydeskew) {
+                    temp.move(out);
+                    graydeskew->cleanup_gray(out,temp);
+                    deskewed = 1;
+                }
+                temp.move(out);
+                binarizer->binarize(out,temp);
+                temp.move(out);
+                cleanup(out,temp);
+                if(!deskewed && bindeskew) {
+                    temp.move(out);
+                    bindeskew->cleanup(out,temp);
+                }
+            }
+        }
+    };
+
     ICleanupBinary *make_RmBig() {
         return new RmBig();
     }
@@ -229,5 +334,9 @@ namespace ocropus {
 
     ICleanupBinary *make_AutoInvert() {
         return new AutoInvert();
+    }
+
+    IBinarize *make_StandardPreprocessing() {
+        return new StandardPreprocessing();
     }
 }

@@ -33,8 +33,12 @@ namespace ocropus {
 
     using namespace colib;
 
-    struct DeskewPageByRAST : ICleanupBinary, ICleanupGray {
+    struct DeskewPageByRAST : virtual ICleanupBinary, virtual ICleanupGray {
         ~DeskewPageByRAST() {
+        }
+
+        const char *interface() {
+            return "ICleanupBinary";
         }
 
         const char *name() {
@@ -51,6 +55,7 @@ namespace ocropus {
 
         double getSkewAngle(bytearray &in);
         double getSkewAngle(rectarray &bboxes);
+        void cleanup_gray(bytearray &image, bytearray &in);
         void cleanup(bytearray &image, bytearray &in);
     };
 

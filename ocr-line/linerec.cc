@@ -109,6 +109,8 @@ namespace glinerec {
         autodel<IGrouper> grouper;
         autodel<IModel> classifier;
         autodel<IFeatureMap> featuremap;
+        intarray counts;
+        bool counts_warned;
         int ntrained;
 
         LinerecExtracted() {
@@ -117,6 +119,7 @@ namespace glinerec {
             pdef("verbose",0,"verbose output from glinerec");
             pdef("mode","centered-scaled","line recognition mode");
             pdef("use_props",1,"use character properties (aspect ratio, etc.)");
+            pdef("use_priors",0,"correct the classifier output by priors");
             pdef("use_reject",1,"use a reject class (use posteriors only and train on junk chars)");
             pdef("njitter",1,"#repeat presentations (use with jitter in the feature map)");
             pdef("csize",40,"target character size after rescaling");
@@ -145,10 +148,17 @@ namespace glinerec {
             classifier = make_model(pget("classifier"));
             if(!classifier) throw "construct_model didn't yield an IModel";
             ntrained = 0;
+            counts_warned = 0;
         }
 
         const char *name() {
             return "linerec";
+        }
+
+        void inc_class(int c) {
+            while(counts.length()<=c)
+                counts.push(0);
+            counts(c)++;
         }
 
         void info(int depth,FILE *stream) {
@@ -167,18 +177,34 @@ namespace glinerec {
             return classifier->command(argv);
         }
         void save(FILE *stream) {
-            magic_write(stream,"linerec");
+            // NB: to be backwards compatible, all magic strings have
+            // the same size
+            magic_write(stream,"linerc2");
             psave(stream);
             // FIXME save grouper and segmenter here
             save_component(stream,featuremap.ptr());
             save_component(stream,classifier.ptr());
+            narray_write(stream,counts);
         }
         void load(FILE *stream) {
-            magic_read(stream,"linerec");
+            strg magic;
+            // NB: to be backwards compatible, all magic strings must
+            // have the same size
+            magic_get(stream,magic,strlen("linerec"));
+            CHECK(magic=="linerec" || magic=="linerc2");
             pload(stream);
-            // FIXME load grouper and segmenter here
             featuremap = dynamic_cast<IFeatureMap*>(load_component(stream));
             classifier = dynamic_cast<IModel*>(load_component(stream));
+
+            // FIXME -- this is temporary
+            counts.clear();
+            if(magic=="linerc2") {
+                narray_read(stream,counts);
+            }
+
+            // FIXME load grouper and segmenter here
+
+            // now reload the environment variables
             reimport();
         }
 
@@ -478,6 +504,7 @@ namespace glinerec {
                             if(c!=reject_class)
                                 classifier->add(v,c);
                         }
+                        if(c!=reject_class) inc_class(c);
                     }
                 }
 #pragma omp atomic
@@ -545,6 +572,22 @@ namespace glinerec {
             float space_no = pgetf("space_no");
             float maxcost = pgetf("maxcost");
 
+            // compute priors if possible; fall back on
+            // using no priors if no counts are available
+            floatarray priors;
+            bool use_priors = pgetf("use_priors");
+            if(use_priors) {
+                if(counts.length()>0) {
+                    priors = counts;
+                    priors /= sum(priors);
+                } else {
+                    if(!counts_warned)
+                        debugf("warn","use_priors specified but priors unavailable (old model)\n");
+                    use_priors = 0;
+                    counts_warned = 1;
+                }
+            }
+
             estimateSpaceSize();
 
 #pragma omp parallel for schedule(dynamic,10) private(p,v,b,props)
@@ -605,6 +648,9 @@ namespace glinerec {
                         debugf("dcost","%3d %10g %c\n",j,pcost+ccost,(j>32?j:'_'));
                         double total_cost = pcost+ccost;
                         if(total_cost<maxcost) {
+                            if(use_priors) {
+                                total_cost -= -log(priors(j));
+                            }
                             grouper->setClass(i,j,total_cost);
                             count++;
                         }

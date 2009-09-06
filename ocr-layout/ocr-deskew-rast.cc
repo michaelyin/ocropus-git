@@ -85,6 +85,10 @@ namespace ocropus {
         }
     }
 
+    void DeskewPageByRAST::cleanup_gray(bytearray &image, bytearray &in) {
+        cleanup(image,in);
+    }
+
     void DeskewPageByRAST::cleanup(bytearray &image, bytearray &in) {
         makelike(image, in);
         float angle = (float) getSkewAngle(in);
