@@ -230,14 +230,11 @@ namespace ocropus {
                     debugf("progress","page %04d line %06x\n",page,line);
                     if(continue_partial) {
                         strg s;
-                        stdio stream;
-#pragma omp critical
-                        stream = bookstore->open("r",page,line,0,"fst");
+                        FILE *stream = bookstore->open("r",page,line,0,"fst");
                         if(stream) {
-#pragma omp atomic
-                            finished++;
-#pragma omp atomic
-                            eval_lines++;
+                            fclose(stream);
+                            // finished++;
+                            // eval_lines++;
                             continue;
                         }
                     }
