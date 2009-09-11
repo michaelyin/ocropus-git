@@ -54,6 +54,7 @@ namespace {
     void fix_diacritics(intarray &segmentation) {
         narray<rectangle> bboxes;
         bounding_boxes(bboxes,segmentation);
+        if(bboxes.length()<1) return;
         intarray assignments(bboxes.length());
         for(int i=0;i<assignments.length();i++)
             assignments(i) = i;
@@ -370,12 +371,15 @@ namespace glinerec {
             wimage.resize(w,h);
             fill(wimage, 0);
             float s1 = 0.0, sy = 0.0;
-            for(int i=1;i<w;i++) for(int j=0;j<h;j++) {
+            for(int i=1;i<w;i++) {
+                for(int j=0;j<h;j++) {
                     if(image(i,j)) { s1++; sy += j; }
                     if(image(i,j)) wimage(i,j) = inside_weight;
                     else wimage(i,j) = outside_weight;
                 }
-            where = int(sy/s1);
+            }
+            if(s1==0) where = image.dim(1)/2;
+            else where = int(sy/s1);
             for(int i=0;i<dimage.dim(0);i++) dimage(i,where) = 0x008000;
         }
 

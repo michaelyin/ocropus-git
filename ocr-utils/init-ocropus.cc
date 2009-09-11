@@ -82,5 +82,7 @@ namespace ocropus {
         component_register("RmBig",make_RmBig);
         extern ICleanupBinary *make_AutoInvert();
         component_register("AutoInvert",make_AutoInvert);
+        IBinarize *make_StandardPreprocessing();
+        component_register("StandardPreprocessing",make_StandardPreprocessing);
     }
 }

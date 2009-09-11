@@ -57,7 +57,7 @@ opts.Add('warn', 'Compiler flags for warnings',
 ### path options
 opts.Add(PathVariable('prefix', 'The installation root for OCRopus ', "/usr/local"))
 opts.Add(PathVariable('iulib', 'The installation root of iulib', "/usr/local"))
-opts.Add(PathVariable('destdir', 'Destination root directory', "", PathOption.PathAccept))
+opts.Add(PathVariable('destdir', 'Destination root directory', "", PathVariable.PathAccept))
 opts.Add(PathVariable('leptonica', 'The installation root of leptonica', "/usr/local"))
 
 opts.Add(BoolVariable('gsl', "use GSL-dependent features", "no"))
@@ -84,12 +84,13 @@ env.Append(CXXFLAGS=env["warn"])
 conf = Configure(env)
 Help(opts.GenerateHelpText(env))
 
-if "-DUNSAFE" in env["opt"]:
-    print "WARNING: do not compile with -DUNSAFE except for benchmarking or profiling"
-if re.search(r'-O[234]',env["opt"]):
-    print "NOTE: compile with high optimization only for production use"
-else:
-    print "NOTE: compiling for development (slower but safer)"
+if 0:
+    if "-DUNSAFE" in env["opt"]:
+        print "WARNING: do not compile with -DUNSAFE except for benchmarking or profiling"
+    if re.search(r'-O[234]',env["opt"]):
+        print "NOTE: compile with high optimization only for production use"
+    else:
+        print "NOTE: compiling for development (slower but safer)"
 
 ################################################################
 ### libraries
@@ -110,6 +111,7 @@ assert conf.CheckLib('gif')
 assert conf.CheckLib('tiff')
 assert conf.CheckLib('jpeg')
 assert conf.CheckLib('png')
+assert conf.CheckLib('sqlite3')
 
 # sources = [s for s in sources if not "/fst" in s]
 
@@ -164,8 +166,9 @@ env.Append(CPPPATH=["include","ocr-utils"])
 #env.Append(CPPPATH=glob("ocr-*"))
 env.Append(LIBPATH=['.'])
 
-libocropus = env.StaticLibrary('libocropus.a',sources)
-env.Prepend(LIBS=[File("libocropus.a")])
+# libocropus = env.StaticLibrary('libocropus.a',sources)
+libocropus = env.SharedLibrary('libocropus',sources)
+# env.Prepend(LIBS=[File("libocropus.so")])
 
 ################################################################
 ### install
@@ -191,9 +194,12 @@ env.Alias('install',destdir+datadir)
 ### commands
 ################################################################
 
+penv = env.Clone()
+penv.Append(LIBS=[File("libocropus.so")])
+
 for cmd in glob("commands/*.cc"): 
-    env.Program(cmd)
-    env.Install(destdir+bindir,re.sub('.cc$','',cmd))
+    penv.Program(cmd,LIBS=File("libocropus.so"))
+    penv.Install(destdir+bindir,re.sub('.cc$','',cmd))
 
 ################################################################
 ### unit tests
@@ -207,10 +213,10 @@ if env["test"]:
     env.Append(BUILDERS={'Test':test_builder})
     for cmd in Glob("*/test-*.cc")+Glob("*/test*/test-*.cc"):
         cmd = str(cmd)
-        env.Program(cmd)
+        penv.Program(cmd)
         print cmd
         cmd = re.sub('.cc$','',cmd)
-        env.Test(cmd)
+        penv.Test(cmd)
 
 ################################################################
 ### style checking

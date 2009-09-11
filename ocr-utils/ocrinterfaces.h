@@ -47,17 +47,17 @@ namespace ocropus {
 
     /// Should work for both gray scale and binary images.
     ///
-    struct ICleanupGray : IComponent {
+    struct ICleanupGray : virtual IComponent {
         const char *interface() { return "ICleanupGray"; }
         /// Clean up a gray image.
-        virtual void cleanup(bytearray &out,bytearray &in) = 0;
+        virtual void cleanup_gray(bytearray &out,bytearray &in) = 0;
     };
 
     /// Cleanup for binary document images.
 
     /// Should throw an error when applied to grayscale.
     ///
-    struct ICleanupBinary : IComponent {
+    struct ICleanupBinary : virtual IComponent {
         const char *interface() { return "ICleanupBinary"; }
         /// Clean up a binary image.
         virtual void cleanup(bytearray &out,bytearray &in) = 0;
@@ -68,7 +68,7 @@ namespace ocropus {
     /// The output is in the standard RGB format
     /// for text/image segmentation (see ocropus.org)
 
-    struct ITextImageClassification : IComponent {
+    struct ITextImageClassification : virtual IComponent {
         const char *interface() { return "ITextImageClassification"; }
         /// Compute text/image probabilities.
         virtual void textImageProbabilities(intarray &out,bytearray &in) = 0;
@@ -76,18 +76,14 @@ namespace ocropus {
 
     /// Perform binarization of grayscale images.
 
-    struct IBinarize : IComponent {
+    struct IBinarize : virtual IComponent {
         const char *interface() { return "IBinarize"; }
         /// Binarize an image stored in a floatarray. Override this.
-        virtual void binarize(bytearray &out,floatarray &in) = 0;
+        // virtual void binarize(bytearray &out,floatarray &in) = 0;
         /// \brief Binarize an image stored in a bytearray.
         /// Override this if you want to provide a more efficient
         /// implementation.
-        virtual void binarize(bytearray &out,bytearray &in) {
-            floatarray temp;
-            copy(temp,in);
-            binarize(out,temp);
-        }
+        virtual void binarize(bytearray &out,bytearray &in) = 0;
     };
 
     /// Compute page segmentation into columns, lines, etc.
@@ -95,7 +91,7 @@ namespace ocropus {
     /// The output is in the standard RGB format
     /// for page segmentation (see ocropus.org)
 
-    struct ISegmentPage : IComponent {
+    struct ISegmentPage : virtual IComponent {
         const char *interface() { return "ISegmentPage"; }
         /// Segment the page.
         virtual void segment(intarray &out,bytearray &in) = 0;
@@ -108,7 +104,7 @@ namespace ocropus {
     /// The output is in the standard RGB format
     /// for page segmentation (see ocropus.org)
 
-    struct ISegmentLine : IComponent {
+    struct ISegmentLine : virtual IComponent {
         const char *interface() { return "ISegmentLine"; }
         /// Segment a line.
         virtual void charseg(intarray &out,bytearray &in) = 0;
@@ -210,7 +206,7 @@ namespace ocropus {
     /// Note that this is not the preferred interface for character recognition,
     /// since feature extraction is quite inefficient if it's done a character at a time.
 
-    struct ICharacterClassifier : IComponent {
+    struct ICharacterClassifier : virtual IComponent {
         const char *interface() { return "ICharacterClassifier"; }
         /// \brief Classify a character without any information about position on the line.
         ///
@@ -292,7 +288,7 @@ namespace ocropus {
 
     /// A generic interface for text line recognition.
 
-    struct IRecognizeLine : IComponent {
+    struct IRecognizeLine : virtual IComponent {
         const char *interface() { return "IRecognizeLine"; }
         /// \brief Recognize a text line and return a lattice representing
         /// the recognition alternatives.

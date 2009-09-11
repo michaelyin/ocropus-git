@@ -68,7 +68,7 @@ namespace ocropus {
     void read_gt(IGenericFst &fst, const char *base) {
         strbuf gt_path;
         gt_path = base;
-        gt_path += ".gt.txt";
+        gt_path += "gt.txt";
 
         read_transcript(fst, gt_path);
         for(int i = 0; i < fst.nStates(); i++)
@@ -87,7 +87,7 @@ namespace ocropus {
 //#pragma omp parallel for
             for(int j=0;j<nlines;j++) {
                 int line = bookstore->getLineId(page,j);
-                debugf("progress","page %04d %06x\n",page,line);
+                debugf("progress","align %04d %06x\n",page,line);
                 autodel<OcroFST> gt_fst(make_OcroFST());
                 if(!strcmp(gt_type,"transcript")) {
                     read_gt(*gt_fst, bookstore->path(page,line,0,""));
@@ -100,14 +100,18 @@ namespace ocropus {
                 }
 
                 autodel<OcroFST> fst(make_OcroFST());
+                strg path = bookstore->path(page,line,0,"fst");
                 try {
-                    if(!file_exists(bookstore->path(page,line,0,"fst"))) continue;
-                    fst->load(bookstore->path(page,line,0,"fst"));
+                    if(!file_exists(path)) {
+                        debugf("warn","%s: not found\n",path.c_str());
+                        continue;
+                    }
+                    fst->load(path);
                 } catch(const char *error) {
-                    fprintf(stderr,"ERROR loading fst: %s\n",error);
+                    fprintf(stderr,"%s: %s\n",path.c_str(),error);
                     if(abort_on_error) abort();
                 } catch(...) {
-                    fprintf(stderr,"ERROR loading fst: %s\n",bookstore->path(page,line,0,"fst"));
+                    fprintf(stderr,"%s: cannot load\n",path.c_str());
                     if(abort_on_error) abort();
                 }
                 ustrg str;
@@ -242,7 +246,7 @@ namespace ocropus {
                             strg s(bookstore->path(page,line,0,"txt"));
                             fprintf(stdio(s,"w"),"%s\n",utf8Output.c_str());
                         } else {
-                            debugf("info","%04d %06x failed to match language model\n",page,line);
+                            debugf("warn","%04d %06x failed to match language model\n",page,line);
                         }
                     } catch(const char *error) {
                         fprintf(stderr,"ERROR in bestpath: %s\n",error);

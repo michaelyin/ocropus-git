@@ -109,6 +109,8 @@ namespace glinerec {
         autodel<IGrouper> grouper;
         autodel<IModel> classifier;
         autodel<IFeatureMap> featuremap;
+        intarray counts;
+        bool counts_warned;
         int ntrained;
 
         LinerecExtracted() {
@@ -117,6 +119,7 @@ namespace glinerec {
             pdef("verbose",0,"verbose output from glinerec");
             pdef("mode","centered-scaled","line recognition mode");
             pdef("use_props",1,"use character properties (aspect ratio, etc.)");
+            pdef("use_priors",0,"correct the classifier output by priors");
             pdef("use_reject",1,"use a reject class (use posteriors only and train on junk chars)");
             pdef("njitter",1,"#repeat presentations (use with jitter in the feature map)");
             pdef("csize",40,"target character size after rescaling");
@@ -138,17 +141,25 @@ namespace glinerec {
             pdef("maxaspect",1.0,"maximum height/width ratio of input line");
             pdef("maxcost",20.0,"maximum cost of a character to be added to the output");
             pdef("minclass",32,"minimum output class to be added (default=unicode space)");
+            pdef("minprob",1e-6,"minimum probability for a character to appear in the output at all");
+            pdef("minsize_factor",1.3,"minimum size of bounding box in terms of xheight");
             segmenter = make_DpSegmenter();
             grouper = make_SimpleGrouper();
             featuremap = dynamic_cast<IFeatureMap*>(component_construct(pget("fmap")));
-            classifier = make_model("float8buffer");
-            classifier->setModel(make_model(pget("classifier")),0);
+            classifier = make_model(pget("classifier"));
             if(!classifier) throw "construct_model didn't yield an IModel";
             ntrained = 0;
+            counts_warned = 0;
         }
 
         const char *name() {
             return "linerec";
+        }
+
+        void inc_class(int c) {
+            while(counts.length()<=c)
+                counts.push(0);
+            counts(c)++;
         }
 
         void info(int depth,FILE *stream) {
@@ -164,39 +175,39 @@ namespace glinerec {
             return "Linerec";
         }
         const char *command(const char *argv[]) {
-            const char *key = argv[0];
-            const char *value = argv[1];
-            if(key && value && !strcmp(key,"save_ds8")) {
-                classifier->saveData(stdio(value,"w"));
-                return "ok";
-            } else if(key && value && !strcmp(key,"load_ds8")) {
-                classifier->loadData(stdio(value,"r"));
-                current_recognizer_ = this;
-                return "ok";
-            } else {
-                return classifier->command(argv);
-            }
-        }
-        void set(const char *key,double value) {
-            throw "unknown parameter";
-        }
-        void set(const char *key,const char *value) {
-            const char *argv[] = { key, value, 0 };
-            command(argv);
+            return classifier->command(argv);
         }
         void save(FILE *stream) {
-            magic_write(stream,"linerec");
+            // NB: to be backwards compatible, all magic strings have
+            // the same size
+            magic_write(stream,"linerc2");
             psave(stream);
             // FIXME save grouper and segmenter here
             save_component(stream,featuremap.ptr());
             save_component(stream,classifier.ptr());
+            narray_write(stream,counts);
         }
         void load(FILE *stream) {
-            magic_read(stream,"linerec");
+            strg magic;
+            // NB: to be backwards compatible, all magic strings must
+            // have the same size
+            magic_get(stream,magic,strlen("linerec"));
+            CHECK(magic=="linerec" || magic=="linerc2");
             pload(stream);
-            // FIXME load grouper and segmenter here
             featuremap = dynamic_cast<IFeatureMap*>(load_component(stream));
             classifier = dynamic_cast<IModel*>(load_component(stream));
+
+            counts.clear();
+            if(magic=="linerec") {
+                pset("minsize_factor",0.0);
+            } else if(magic=="linerc2") {
+                narray_read(stream,counts);
+            }
+
+            // FIXME load grouper and segmenter here
+
+            // now reload the environment variables
+            reimport();
         }
 
         void startTraining(const char *) {
@@ -282,6 +293,7 @@ namespace glinerec {
                 correct_extended_line_info(intercept,slope,xheight,
                                            descender_sink,ascender_rise,segmentation);
             debugf("detail","LineInfo %g %g %g %g %g\n",intercept,slope,xheight,descender_sink,ascender_rise);
+
             if(xheight<4) throw BadTextLine();
             show_baseline(slope,intercept,xheight,image,"YYY");
             bytearray baseline_image;
@@ -330,6 +342,21 @@ namespace glinerec {
                 b.x1 += r;
                 b.y1 += r;
             }
+#if 1
+            float minsize_factor = pgetf("minsize_factor");
+            int minsize = int(minsize_factor*xheight);
+
+            int p = max(minsize-b.width(),minsize-b.height());
+            debugf("minsize","w=%d h=%d xh=%d f=%g p=%d\n",
+                   b.width(),b.height(),int(xheight),minsize_factor,p);
+            if(p>0) {
+                pad_by(mask,p,p);
+                b.x0 -= p;
+                b.y0 -= p;
+                b.x1 += p;
+                b.y1 += p;
+            }
+#endif
             if(dactive()) {
                 floatarray temp,mtemp;
                 temp.resize(b.width(),b.height()) = 0;
@@ -347,7 +374,10 @@ namespace glinerec {
                 dshown(temp,"c");
                 dwait();
             }
-            CHECK_ARG(b.height()<pgetf("maxheight"));
+            if(b.height()>=pgetf("maxheight")) {
+                throwf("feature extraction: bbox height %d > maxheight %g",
+                       b.height(),pgetf("maxheight"));
+            }
             featuremap->extractFeatures(v,b,mask);
         }
 
@@ -361,14 +391,17 @@ namespace glinerec {
             CHECK_ARG(b.height()<pgetf("maxheight"));
             dshown(mask,"b");
             centroid(x,y,mask);
+
             CHECK(x>=0 && y>=0);
             x += b.x0;
             y += b.y0;
             int xi = int(x);
             int yi = int(y);
             int r;
+
             float abs_xhmul = pgetf("abs_xhmul");
             bool abs_truncate = pgetf("abs_truncate");
+
             r = int(abs_xhmul*xheight/2);
             if(!abs_truncate) r = max(max(r,b.width()),b.height());
             CHECK(r>0 && r<1000);
@@ -376,6 +409,23 @@ namespace glinerec {
             b.y0 = yi-r;
             b.x1 = xi+r;
             b.y1 = yi+r;
+
+#if 1
+            float minsize_factor = pgetf("minsize_factor");
+            int minsize = int(minsize_factor*xheight);
+
+            int p = max(minsize-b.width(),minsize-b.height());
+            debugf("minsize","w=%d h=%d xh=%d f=%g p=%d\n",
+                   b.width(),b.height(),int(xheight),minsize_factor,p);
+            if(p>0) {
+                pad_by(mask,p,p);
+                b.x0 -= p;
+                b.y0 -= p;
+                b.x1 += p;
+                b.y1 += p;
+            }
+#endif
+
             CHECK(b.x0>-1000 && b.x1<10000 && b.y0>-1000 && b.y1<10000);
             grouper->getMaskAt(mask,i,b);
             dshown(mask,"d");
@@ -471,6 +521,15 @@ namespace glinerec {
                 floatarray v;
                 for(int k=0;k<njitter;k++) {
                     extractFeatures(v,i);
+                    {
+                        dsection("lfeats");
+                        int csize = pgetf("csize");
+                        floatarray image;
+                        image = v;
+                        image.resize(image.length()/csize,csize);
+                        dshown(image);
+                    }
+
                     v.reshape(v.length());
                     if(use_props) pushProps(v,i);
 #pragma omp atomic
@@ -483,6 +542,7 @@ namespace glinerec {
                             if(c!=reject_class)
                                 classifier->add(v,c);
                         }
+                        if(c!=reject_class) inc_class(c);
                     }
                 }
 #pragma omp atomic
@@ -540,13 +600,31 @@ namespace glinerec {
             setLine(image);
             segmentation_ = segmentation;
             bytearray available;
-            floatarray v,p,cp,ccosts,props;
+            floatarray v,cp,ccosts,props;
+            OutputVector p;
             int ncomponents = grouper->length();
             rectangle b;
             int minclass = pgetf("minclass");
+            float minprob = pgetf("minprob");
             float space_yes = pgetf("space_yes");
             float space_no = pgetf("space_no");
             float maxcost = pgetf("maxcost");
+
+            // compute priors if possible; fall back on
+            // using no priors if no counts are available
+            floatarray priors;
+            bool use_priors = pgetf("use_priors");
+            if(use_priors) {
+                if(counts.length()>0) {
+                    priors = counts;
+                    priors /= sum(priors);
+                } else {
+                    if(!counts_warned)
+                        debugf("warn","use_priors specified but priors unavailable (old model)\n");
+                    use_priors = 0;
+                    counts_warned = 1;
+                }
+            }
 
             estimateSpaceSize();
 
@@ -562,22 +640,32 @@ namespace glinerec {
                     extractFeatures(v,i);
 #endif
                 } catch(const char *msg) {
-                    debugf("info","WARNING: feature extraction failed [%d]: %s\n",i,msg);
+                    debugf("warn","feature extraction failed [%d]: %s\n",i,msg);
                     continue;
                 }
                 v.reshape(v.length());
                 pushProps(v,i);
-                float ccost = classifier->outputs(p,v);
+                float ccost = 0.0;
+                {
+                    InputVector temp(v);
+                    ccost = classifier->outputs(p,temp);
+                }
 #pragma omp critical
                 {
                     if(use_reject) {
                         ccost = 0;
-                        p /= sum(p);
+                        float total = sum(p.values);
+                        if(total>1e-11)
+                            p.values /= total;
+                        else
+                            p.values = 0.0;
                     }
                     int count = 0;
+#if 0
                     for(int j=minclass;j<p.length();j++) {
                         if(j==reject_class) continue;
-                        float pcost = p(j)>1e-6?-log(p(j)):-log(1e-6);
+                        if(p(j)<minprob) continue;
+                        float pcost = -log(p(j));
                         debugf("dcost","%3d %10g %c\n",j,pcost+ccost,(j>32?j:'_'));
                         double total_cost = pcost+ccost;
                         if(total_cost<maxcost) {
@@ -585,6 +673,28 @@ namespace glinerec {
                             count++;
                         }
                     }
+#else
+                    debugf("dcost","output %d\n",p.keys.length());
+                    for(int index=0;index<p.keys.length();index++) {
+                        int j = p.keys[index];
+                        if(j<minclass) continue;
+                        if(j==reject_class) continue;
+                        float value = p.values[index];
+                        if(value<=0.0) continue;
+                        if(value<minprob) continue;
+                        float pcost = -log(value);
+                        debugf("dcost","%3d %10g %c\n",j,pcost+ccost,(j>32?j:'_'));
+                        double total_cost = pcost+ccost;
+                        if(total_cost<maxcost) {
+                            if(use_priors) {
+                                total_cost -= -log(priors(j));
+                            }
+                            grouper->setClass(i,j,total_cost);
+                            count++;
+                        }
+                    }
+                    debugf("dcost","\n");
+#endif
                     if(count==0) {
                         if(b.height()<xheight/2 && b.width()<xheight/2) {
                             grouper->setClass(i,'~',high_cost/2);

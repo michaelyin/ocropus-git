@@ -175,7 +175,7 @@ namespace ocropus {
          const char *name() {
              return "degradation";
          }
-         void cleanup(bytearray& dstImg, bytearray& srcImg) {
+         void cleanup_gray(bytearray& dstImg, bytearray& srcImg) {
              dstImg.copy(srcImg);
              degrade(dstImg,
                      pgetf("jitter_mean"), pgetf("jitter_sigma"),

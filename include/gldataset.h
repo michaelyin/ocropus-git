@@ -60,6 +60,9 @@ namespace glinerec {
         const char *name() {
             return "dataset";
         }
+        const char *interface() {
+            return "IDataset";
+        }
         void save(FILE *stream) {
             magic_write(stream,"dataset");
             int t = sizeof (T);
@@ -115,8 +118,14 @@ namespace glinerec {
         }
     };
 
+    struct IExtDataset : IDataset {
+        virtual void add(floatarray &v,int c) = 0;
+        virtual void add(floatarray &ds,intarray &cs) = 0;
+        virtual void clear() = 0;
+    };
+
     template <class T>
-    struct RowDataset : IDataset {
+    struct RowDataset : IExtDataset {
         objlist< narray<T> > data;
         intarray classes;
         int nc;
@@ -187,7 +196,7 @@ namespace glinerec {
             CHECK(nc>0);
             CHECK(nf>0);
         }
-        void add(narray<T> &ds,intarray &cs) {
+        void add(floatarray &ds,intarray &cs) {
             for(int i=0;i<ds.dim(0);i++) {
                 rowget(data.push(),ds,i);
                 classes.push() = cs(i);

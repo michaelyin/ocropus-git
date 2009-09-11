@@ -16,9 +16,9 @@
 // limitations under the License.
 //
 // Project: iulib -- image understanding library
-// File: 
-// Purpose: 
-// Responsible: 
+// File:
+// Purpose:
+// Responsible:
 // Reviewer:
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de
@@ -53,25 +53,34 @@ namespace narray_io {
         CHECK(fputc('\n',stream)!=EOF);
     }
 
+    // string object type identifiers
+    inline void magic_write(FILE *stream,const char *str) {
+        int n = strlen(str);
+        CHECK(fwrite(str,1,n,stream)==unsigned(n));
+    }
     inline void magic_read(FILE *stream,const char *str) {
         int n = strlen(str);
         char buf[100];
         CHECK(n<99);
         CHECK(fread(buf,1,n,stream)==unsigned(n));
-        CHECK(!strncmp(buf,str,n));
+        buf[n] = 0;
+        if(strncmp(buf,str,n))
+            throwf("magic_read: wanted '%s', got '%s'",str,buf);
+    }
+    inline void magic_get(FILE *stream,strg &result,int n) {
+        CHECK(n<100);
+        char buf[100];
+        CHECK(fread(buf,1,n,stream)==unsigned(n));
+        buf[n] = 0;
+        result = buf;
     }
 
-    inline void magic_write(FILE *stream,const char *str) {
-        int n = strlen(str);
-        CHECK(fwrite(str,1,n,stream)==unsigned(n));
-    }
-
+    // integer magic numbers
     inline void magic_read(FILE *stream,unsigned value) {
         unsigned temp;
         CHECK(fread(&temp,sizeof temp,1,stream)==1);
         CHECK(temp==value);
     }
-
     inline void magic_write(FILE *stream,unsigned value) {
         CHECK(fwrite(&value,sizeof value,1,stream)==1);
     }

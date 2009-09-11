@@ -15,9 +15,9 @@
 // limitations under the License.
 //
 // Project: iulib -- image understanding library
-// File: 
-// Purpose: 
-// Responsible: 
+// File:
+// Purpose:
+// Responsible:
 // Reviewer:
 // Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de
@@ -61,7 +61,7 @@ namespace ocropus {
                                    "(set fatal_unknown_params=0 to disable this check)\n",
                                    entry.c_str(),name());
                         else
-                            debugf("info","%s: unknown environment variable for %s\n",
+                            debugf("warn","%s: unknown environment variable for %s\n",
                                    entry.c_str(),name());
                     }
                 }
@@ -122,6 +122,7 @@ namespace ocropus {
         if(strcmp(buf,"OBJ:NULL")) {
             level++;
             CHECK(!strncmp(buf,"OBJ:",4));
+            debugf("iodetail","%*s[constructing %s]\n",level,"",buf+4);
             result = component_construct(buf+4);
             result->load(stream);
             fgets(buf,sizeof buf,stream);

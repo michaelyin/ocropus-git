@@ -46,11 +46,18 @@ namespace ocropus {
             fprintf(stderr,"%s: could not open\n",argv[1]);
             return 1;
         }
-        comp = load_component(model);
-        if(!comp) {
-            fprintf(stderr,"%s: load failed\n",argv[1]);
-        } else {
+        try {
+            comp = load_component(model);
             comp->info();
+        } catch(...) {
+            fprintf(stderr,"%s: load failed as IComponent\n",argv[1]);
+            try {
+                autodel<IRecognizeLine> linerec;
+                linerec_load(linerec,argv[1]);
+                linerec->info();
+            } catch(...) {
+                fprintf(stderr,"%s: load failed as IRecognizeLine\n",argv[1]);
+            }
         }
         return 0;
     }

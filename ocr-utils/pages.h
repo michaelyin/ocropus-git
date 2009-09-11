@@ -51,62 +51,11 @@ namespace ocropus {
         Pages() {
             rewind();
             autoinv = 1;
-            pdef("binarizer","BinarizeBySauvola","binarizer used for pages");
-            pdef("grayclean1",0,"grayscale page cleanup 1");
-            pdef("grayclean2",0,"grayscale page cleanup 2");
-            pdef("grayclean3",0,"grayscale page cleanup 3");
-            pdef("binclean1",0,"grayscale page cleanup 1");
-            pdef("binclean2",0,"grayscale page cleanup 2");
-            pdef("binclean3",0,"grayscale page cleanup 3");
+            pdef("binarizer","StandardPreprocessing","binarizer used for pages");
             make_component(binarizer,pget("binarizer"));
         }
 
         const char *interface() { return "Pages"; }
-
-        void gray_clean(bytearray &image) {
-            bytearray temp;
-            if(pget("cgrayclean1")) {
-                autodel<ICleanupGray> cleaner;
-                load_component(cleaner,stdio(pget("cgrayclean1"),"r"));
-                cleaner->cleanup(temp,image);
-                temp.move(image);
-            }
-            if(pget("cgrayclean2")) {
-                autodel<ICleanupGray> cleaner;
-                load_component(cleaner,stdio(pget("cgrayclean2"),"r"));
-                cleaner->cleanup(temp,image);
-                temp.move(image);
-            }
-            if(pget("cgrayclean3")) {
-                autodel<ICleanupGray> cleaner;
-                load_component(cleaner,stdio(pget("cgrayclean3"),"r"));
-                cleaner->cleanup(temp,image);
-                temp.move(image);
-            }
-        }
-
-        void bin_clean(bytearray &image) {
-            bytearray temp;
-            if(pget("cbinclean1")) {
-                autodel<ICleanupBinary> cleaner;
-                load_component(cleaner,stdio(pget("cbinclean1"),"r"));
-                cleaner->cleanup(temp,image);
-                temp.move(image);
-            }
-            if(pget("cbinclean2")) {
-                autodel<ICleanupBinary> cleaner;
-                load_component(cleaner,stdio(pget("cbinclean2"),"r"));
-                cleaner->cleanup(temp,image);
-                temp.move(image);
-            }
-            if(pget("cbinclean3")) {
-                autodel<ICleanupBinary> cleaner;
-                load_component(cleaner,stdio(pget("cbinclean3"),"r"));
-                cleaner->cleanup(temp,image);
-                temp.move(image);
-            }
-        }
-
 
         void info(int depth,FILE *stream) {
             iprintf(stream,depth,"Pages data structure");
@@ -211,9 +160,7 @@ namespace ocropus {
                 for(int i=0;i<gray.length1d();i++)
                     binary.at1d(i) = (gray.at1d(i) > threshold) ? 255:0;
             } else {
-                floatarray temp;
-                copy(temp,gray);
-                binarizer->binarize(binary,temp);
+                binarizer->binarize(binary,gray);
             }
         }
         const char *getFileName() {

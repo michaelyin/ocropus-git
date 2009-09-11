@@ -114,9 +114,13 @@ namespace ocropus {
             interval y = r + m * b.xcenter();
             interval q;
             if(b.y1<y.lo) {
+                // if the top is below the baseline, it doesn't count
                 q = 0;
             } else {
+                // q based on the distance of the bottom from the baseline
                 interval q1 = line.influence(line.lsq,abs(b.y0-y),line.epsilon);
+                // q based on the distance of the bottom from the
+                // descender line
                 interval q2 = 0.75*line.influence(line.lsq,abs(b.y0-(y-d)),line.epsilon);
                 q = max(q1,q2);
                 if(q2.hi>0.0)

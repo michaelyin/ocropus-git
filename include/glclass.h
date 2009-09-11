@@ -56,6 +56,7 @@ namespace {
         ctranslate_vec(temp,v,translation);
         v.move(temp);
     }
+
     // translate classes using a translation map
 
     void ctranslate(intarray &values,intarray &translation) {
@@ -92,12 +93,231 @@ namespace {
 }
 
 namespace glinerec {
-    // Classifier and density estimation.
+
+    // Input vectors to classifiers are collections of narrays.
+    // Many classifiers view them as just flat vectors, but
+    // some classifiers may require additional structure.
+
+    struct InputVector {
+        narray<strg> names;
+        narray<floatarray> inputs;
+        floatarray flat;
+
+        InputVector() {
+        }
+        InputVector(floatarray &v) {
+            inputs.push() = v;
+        }
+
+        int length() {
+            int total = 0;
+            for(int i=0;i<inputs.length();i++)
+                total += inputs[i].length();
+            return total;
+        }
+        int dim(int i) {
+            CHECK_ARG(i==0);
+            return length();
+        }
+        void clear() {
+            inputs.clear();
+            names.clear();
+            flat.clear();
+        }
+        void operator=(floatarray &v) {
+            clear();
+            inputs.push() = v;
+            names.push("v");
+        }
+        void append(floatarray &v,const char *name) {
+            flat.clear();
+            inputs.push() = v;
+            names.push() = name;
+        }
+
+        // access the chunks directly
+
+        int nchunks() {
+            return inputs.length();
+        }
+        floatarray &chunk(int i) {
+            return inputs[i];
+        }
+        const char *name(int i) {
+            return names[i].c_str();
+        }
+        floatarray &chunk(const char *name) {
+            for(int i=0;i<names.length();i++) {
+                if(names[i]==name)
+                    return inputs[i];
+            }
+            throwf("%s: no such input chunk",name);
+        }
+
+        // vector-like access
+
+        floatarray &operator*() {
+            if(flat.length()<0) {
+                flat.clear();
+                for(int i=0;i<inputs.length();i++)
+                    flat.append(inputs[i]);
+            }
+            return flat;
+        }
+        void as_array(floatarray &v) {
+            v.clear();
+            for(int i=0;i<inputs.length();i++)
+                v.append(inputs[i]);
+        }
+        operator floatarray &() {
+            return *(*this);
+        }
+        float &operator()(int index) {
+            return flat[index];
+        }
+        float &operator[](int index) {
+            return flat[index];
+        }
+
+    };
+
+
+    // OutputVector is a sparse vector class, used for representing
+    // classifier outputs.
+
+    struct OutputVector {
+        int len;
+        intarray keys;
+        floatarray values;
+        floatarray *result;
+        OutputVector() {
+            result = 0;
+        }
+        OutputVector(int n) {
+            init(n);
+            len = 0;
+            result = 0;
+        }
+
+        // If it's initialized with an array, the result vector
+        // is copied into that array when the vector gets destroyed.
+        // This allows calls like classifier->outputs(v,x); with
+        // floatarray v.
+
+        OutputVector(floatarray &v) {
+            result = &v;
+            v.clear();
+        }
+        ~OutputVector() {
+            if(result) as_array(*result);
+        }
+
+        // Sparse vector access.
+
+        void clear() {
+            keys.clear();
+            values.clear();
+        }
+        int nkeys() {
+            return keys.length();
+        }
+        int key(int i) {
+            return keys[i];
+        }
+        float value(int i) {
+            return values[i];
+        }
+
+        // Dense vector conversions and access.
+
+        void init(int n=0) {
+            keys.resize(n);
+            for(int i=0;i<n;i++) keys[i] = i;
+            values.resize(n);
+            values = 0;
+        }
+        void copy(floatarray &v,float eps=1e-11) {
+            clear();
+            int n = v.length();
+            for(int i=0;i<n;i++) {
+                float value = v[i];
+                if(fabs(value)>=eps) {
+                    keys.push(i);
+                    values.push(value);
+                }
+            }
+            len = v.length();
+            keys.resize(len);
+            for(int i=0;i<len;i++) keys[i] = i;
+            values = v;
+        }
+        void operator=(floatarray &v) {
+            copy(v);
+        }
+        int length() {
+            return len;
+        }
+        int dim(int i) {
+            CHECK_ARG(i==0);
+            return len;
+        }
+        float &operator()(int index) {
+            for(int j=0;j<keys.length();j++)
+                if(keys[j]==index) return values[j];
+            keys.push(index);
+            values.push(0);
+            if(index>=len) len = index+1;
+            return values.last();
+        }
+        float &operator[](int i) {
+            return operator()(i);
+        }
+        floatarray as_array() {
+            floatarray result;
+            result.resize(length());
+            result = 0;
+            for(int i=0;i<keys.length();i++)
+                result[keys[i]] = values[i];
+            return result;
+        }
+        void as_array(floatarray &result) {
+            result.resize(length());
+            result = 0;
+            for(int i=0;i<keys.length();i++)
+                result[keys[i]] = values[i];
+        }
+
+        // Some common operators.
+
+        void operator/=(float value) {
+            values /= value;
+        }
+        int argmax() {
+            int index = iulib::argmax(values);
+            return keys[index];
+        }
+        float max() {
+            return iulib::max(values);
+        }
+    };
+
+    inline float sum(OutputVector &v) {
+        return iulib::sum(v.values);
+    }
+
+    inline void ctranslate_vec(OutputVector &v,intarray &translation) {
+        for(int i=0;i<v.keys.length();i++)
+            v.keys[i] = translation[v.keys[i]];
+        v.len = max(v.keys)+1;
+    }
 
     struct IModel : IComponent {
-        IModel() {}
+        IModel() {
+            pdef("cds","rowdataset8","default dataset buffer class");
+        }
 
-        const char *interface() { return "IModel"; }
+        virtual const char *name() { return "IModel"; }
+        virtual const char *interface() { return "IModel"; }
 
         // inquiry functions
         virtual int nfeatures() {throw Unimplemented();}
@@ -112,19 +332,55 @@ namespace glinerec {
         // update this model in place
         virtual void copy(IModel &) { throw Unimplemented(); }
 
-        // output of the classifier: should be posterior probabilities,
-        // but some classifiers may just output discriminant values
-        virtual float outputs(floatarray &result,floatarray &v) { throw Unimplemented(); }
+        float outputs(OutputVector &result,InputVector &v) {
+            return outputs_impl(result,v);
+        }
+        float outputs(floatarray &result,floatarray &v) {
+            OutputVector result_(result);
+            InputVector v_(v);
+            return outputs_impl(result_,v_);
+        }
+
+        virtual float outputs_impl(OutputVector &result,InputVector &v) {
+            floatarray result_;
+            floatarray v_;
+            v.as_array(v_);
+            float value = outputs_impl(result_,v_);
+            result.copy(result_);
+            return value;
+        }
+        virtual float outputs_impl(floatarray &result,floatarray &v) {
+            throw Unimplemented();
+        }
+    public:
+#if 0
+        float outputs(OutputVector &result,floatarray &v) {
+            InputVector v_;
+            return outputs(result,v_);
+        }
+        float outputs(floatarray &result,InputVector &v) {
+            OutputVector result_(result);
+            return outputs(result_,v);
+        }
+        float outputs(floatarray &result,floatarray &v) {
+            OutputVector result_(result);
+            InputVector v_(v);
+            return outputs(result_,v_);
+        }
+#endif
+
         virtual float cost(floatarray &v) {
-            floatarray temp;
-            return outputs(temp,v);
+            OutputVector temp;
+            InputVector v_(v);
+            return outputs(temp,v_);
         }
 
         // convenience function
         virtual int classify(floatarray &v) {
-            floatarray p;
-            outputs(p,v);
-            return argmax(p);
+            OutputVector p;
+            InputVector v_(v);
+            outputs(p,v_);
+            return p.argmax();
         }
 
         // estimate the cross validated error from the training data seen
@@ -134,24 +390,23 @@ namespace glinerec {
         virtual void train(IDataset &dataset) = 0;
 
         // incremental training & default implementation in terms of batch
-        floatarray batch_data;
-        intarray batch_classes;
+        autodel<IExtDataset> ds;
         virtual void add(floatarray &v,int c) {
-            rowpush(batch_data,v);
-            batch_classes.push(c);
-        }
-        virtual void saveData(FILE *stream) {
-            throw Unimplemented();
-        }
-        virtual void loadData(FILE *stream) {
-            throw Unimplemented();
+            if(!ds) {
+                debugf("info","allocating %s buffer for classifier\n",pget("cds"));
+                make_component(pget("cds"),ds);
+            }
+            ds->add(v,c);
         }
         virtual void updateModel() {
-            debugf("info","[batch training with n=%d]\n",batch_data.dim(0));
-            Dataset<float> ds(batch_data,batch_classes);
-            train(ds);
-            batch_data.clear();
-            batch_classes.clear();
+            if(!ds) return;
+            debugf("info","updateModel %d samples, %d features, %d classes\n",
+                   ds->nsamples(),ds->nfeatures(),ds->nclasses());
+            debugf("info","updateModel memory status %d Mbytes, %d Mvalues\n",
+                   int((long long)sbrk(0)/1000000),
+                   (ds->nsamples() * ds->nfeatures())/1000000);
+            train(*ds);
+            ds = 0;
         }
     };
 
@@ -221,7 +476,7 @@ namespace glinerec {
         int classify(floatarray &x) {
             return i2c(cf->classify(x));
         }
-        float outputs(floatarray &z,floatarray &x) {
+        float outputs_impl(OutputVector &z,InputVector &x) {
             float result = cf->outputs(z,x);
             ctranslate_vec(z,i2c);
             return result;

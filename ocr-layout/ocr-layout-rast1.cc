@@ -35,7 +35,7 @@ namespace ocropus {
     struct SegmentPageByRAST1 : ISegmentPage {
         SegmentPageByRAST1() {
             max_results.bind(this,"max_results",1000,"maximum number of results");
-            debug_segm.bind(this,"debug_segm",0,"output segmentation file");
+            debug_segm.bind(this,"debug_segm","","output segmentation file");
             debug_layout.bind(this,"debug_layout",0,"print the intermediate results to stdout");
         }
 

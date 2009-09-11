@@ -297,6 +297,7 @@ namespace glinerec {
         void load(FILE *stream) {
             magic_read(stream,"sfmap");
             pload(stream);
+            reimport();
         }
 
         virtual void setLine(bytearray &image_) {
@@ -495,8 +496,8 @@ namespace glinerec {
                 floatarray temp;
                 temp = v;
                 temp.reshape(temp.length()/csize,csize);
-                dshown(temp,"c");
-                dshown(mask,"d");
+                dshown(temp,"y");
+                dshown(mask,"Y");
                 dwait();
             }
         }
@@ -519,7 +520,10 @@ namespace glinerec {
             int csize = pgetf("csize");
             CHECK(mask.dim(0)==b.width() && mask.dim(1)==b.height());
             CHECK_ARG(v.dim(1)<pgetf("maxheight"));
-            CHECK_ARG(b.height()<pgetf("maxheight"));
+            if(b.height()>=pgetf("maxheight")) {
+                throwf("bbox height %d >= maxheight %g",
+                       b.height(),pgetf("maxheight"));
+            }
 
             floatarray sub(b.width(),b.height());
             get_rectangle(sub,source,b);
