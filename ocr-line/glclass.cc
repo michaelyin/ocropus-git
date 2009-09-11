@@ -1258,7 +1258,7 @@ namespace glinerec {
             const char *datafile = pget("datafile");
             if(datafile && datafile[0]) {
                 debugf("info","%s: Float8Buffer saving: %d samples, %d features, %d classes\n",
-                       pget("data"),ds8.nsamples(),ds8.nfeatures(),ds8.nclasses());
+                       pget("datafile"),ds8.nsamples(),ds8.nfeatures(),ds8.nclasses());
                 save_component(stdio(datafile,"w"),&ds8);
             } else {
                 throwf("float8buffer can only save, not train; use new dataset variable in IModel");
