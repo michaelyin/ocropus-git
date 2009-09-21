@@ -7,6 +7,7 @@ apt-get install \
     libavfilter-dev \
     tesseract-ocr-dev libleptonica-dev \
     libgsl0-dev libblas-dev \
+    libsqlite3-dev\
     python-dev swig1.3 zlib1g-dev
 
     # liblapack-dev libatlas-base-dev

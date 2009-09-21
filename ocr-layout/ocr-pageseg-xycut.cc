@@ -245,7 +245,8 @@ namespace ocropus {
             int_img_ver.dim(1) <= 0 || 
             int_img_hor.length1d() != int_img_ver.length1d()) {
             fprintf(stderr, "ocr-pageseg-xycut: xycut: Error in image dim!\n");
-            exit(0) ;
+			return;
+            //exit(0) ;
         }
         double factor_tnx = (double)tnx / (double)int_img_hor.dim(1) ;
         double factor_tny = (double)tny / (double)int_img_ver.dim(0) ;
@@ -371,7 +372,8 @@ namespace ocropus {
     void SegmentPageByXYCUTS::segment(intarray &image,bytearray &in) {
         if(!contains_only(in,byte(0),byte(255))){
             fprintf(stderr,"X-Y Cut algorithm needs binary input image.\n");
-            exit(1);
+			return;
+            //exit(1);
         }
         
         // Mao, Fig.3: Step 1.
