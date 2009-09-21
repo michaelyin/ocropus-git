@@ -106,7 +106,7 @@ namespace glinerec {
         InputVector() {
         }
         InputVector(floatarray &v) {
-            inputs.push() = v;
+            append(v,"_");
         }
 
         int length() {
@@ -127,7 +127,7 @@ namespace glinerec {
         void operator=(floatarray &v) {
             clear();
             inputs.push() = v;
-            names.push("v");
+            names.push("_");
         }
         void append(floatarray &v,const char *name) {
             flat.clear();
