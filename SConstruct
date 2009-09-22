@@ -111,7 +111,6 @@ assert conf.CheckLib('gif')
 assert conf.CheckLib('tiff')
 assert conf.CheckLib('jpeg')
 assert conf.CheckLib('png')
-assert conf.CheckLib('sqlite3')
 
 # sources = [s for s in sources if not "/fst" in s]
 
@@ -120,6 +119,12 @@ assert conf.CheckLib('sqlite3')
 if conf.CheckLibWithHeader('SDL', 'SDL/SDL.h', 'C'):
     if conf.CheckLibWithHeader('SDL_gfx', 'SDL/SDL_gfxPrimitives.h', 'C'):
         env.Append(LIBS=["SDL","SDL_gfx"])
+
+### SQLite
+
+if conf.CheckLib('sqlite3'):
+    env.Append(CPPDEFINES=['HAVE_SQLITE'])
+    env.Append(LIBS=["sqlite3"])
 
 ### Leptonica
 

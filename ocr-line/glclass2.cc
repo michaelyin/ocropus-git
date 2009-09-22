@@ -8,6 +8,7 @@
 #include "gsl.h"
 #endif
 
+#ifdef HAVE_SQLITE
 extern "C" {
 #include <sqlite3.h>
 }
@@ -160,3 +161,4 @@ namespace glinerec {
         component_register<SqliteBuffer>("sqlitebuffer");
     }
 }
+#endif
