@@ -75,14 +75,14 @@ namespace ocropus {
 
         // Extract images corresponding to group i from the source.
 
-        virtual void extract(bytearray &out,bytearray &mask,
-                             bytearray &source,int i,int grow=0) = 0;
         virtual void extract(bytearray &out,bytearray &source,
                              byte dflt,int i,int grow=0) = 0;
-        virtual void extract(floatarray &out,bytearray &mask,
-                             floatarray &source,int i,int grow=0) = 0;
         virtual void extract(floatarray &out,floatarray &source,
                              float dflt,int i,int grow=0) = 0;
+        virtual void extractWithMask(bytearray &out,bytearray &mask,
+                             bytearray &source,int i,int grow=0) = 0;
+        virtual void extractWithMask(floatarray &out,bytearray &mask,
+                             floatarray &source,int i,int grow=0) = 0;
 
         // slice extraction
 

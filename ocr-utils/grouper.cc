@@ -300,17 +300,17 @@ namespace ocropus {
 
         // Overloaded convenience functions.
 
-        void extract(bytearray &out,bytearray &mask,bytearray &source,int index,int grow=0) {
-            extractMasked(out,mask,source,index,grow);
-        }
         void extract(bytearray &out,bytearray &source,byte dflt,int index,int grow=0) {
             extractWithBackground(out,source,dflt,index,grow);
         }
-        void extract(floatarray &out,bytearray &mask,floatarray &source,int index,int grow=0) {
-            extractMasked(out,mask,source,index,grow);
-        }
         void extract(floatarray &out,floatarray &source,float dflt,int index,int grow=0) {
             extractWithBackground(out,source,dflt,index,grow);
+        }
+        void extractWithMask(floatarray &out,bytearray &mask,floatarray &source,int index,int grow=0) {
+            extractMasked(out,mask,source,index,grow);
+        }
+        void extractWithMask(bytearray &out,bytearray &mask,bytearray &source,int index,int grow=0) {
+            extractMasked(out,mask,source,index,grow);
         }
 
         // Extract the masked character from the source image/source
