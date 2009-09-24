@@ -222,6 +222,7 @@ namespace ocropus {
                 try {
 #pragma omp critical
                     try {
+                        debugf("info","cmodel=%s\n",(const char *)cmodel);
                         if(!linerec) linerec_load(linerec,cmodel);
                     } catch(...) {
                         debugf("info","loading %s failed\n",(const char *)cmodel);

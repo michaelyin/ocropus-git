@@ -176,7 +176,7 @@ namespace ocropus {
 
 
     int main_fsts2text(int argc,char **argv) {
-        param_float langmod_scale("langmod_scale",1.0,"scale factor for language model");
+        param_float langmod_scale("langmod_scale",0.3,"scale factor for language model");
         param_string lmodel("lmodel",DEFAULT_DATA_DIR "default.fst","language model used for recognition");
         param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         if(argc!=2) throw "usage: lmodel=... ocropus fsts2text dir";
@@ -195,12 +195,13 @@ namespace ocropus {
         make_component(bookstore,cbookstore);
         bookstore->setPrefix(argv[1]);
         debugf("info","langmod_scale = %g\n",float(langmod_scale));
+#pragma omp parallel for private(langmod)
         for(int page=0;page<bookstore->numberOfPages();page++) {
             int nlines = bookstore->linesOnPage(page);
-#pragma omp parallel for private(langmod)
                 for(int j=0;j<nlines;j++) {
                     if(!langmod) {
                         langmod = make_OcroFST();
+                        debugf("info","lmodel=%s\n",(const char *)lmodel);
                         langmod->load(lmodel);
                         scale_fst(*langmod,langmod_scale);
                         CHECK(!!langmod);
