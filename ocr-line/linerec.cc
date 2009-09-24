@@ -103,6 +103,129 @@ namespace glinerec {
         }
     }
 
+    struct CenterFeatureMap : IFeatureMap {
+        bytearray image;
+        autodel<IFeatureMap> fmap;
+        CenterFeatureMap() {
+            fmap = make_SimpleFeatureMap();
+            pdef("csize",40,"target character size after rescaling");
+            pdef("maxheight",300,"maximum height of input line");
+            pdef("maxaspect",1.0,"maximum height/width ratio of input line");
+            pdef("context",1.5,"how much context to include (1.0=no context)");
+            pdef("mdilate",2,"dilate the extraction mask by this much");
+            pdef("minsize_factor",1.3,"minimum size of bounding box in terms of xheight");
+            pdef("use_props",1,"use character properties (aspect ratio, etc.)");
+       }
+        const char *interface() {
+            return "IFeatureMap";
+        }
+
+        float intercept,slope,xheight,descender_sink,ascender_rise;
+
+        void setLine(bytearray &image) {
+            this->image = image;
+            fmap->setLine(image);
+            // FIXME get rid of this call
+            get_extended_line_info_using_ccs(intercept,slope,xheight,
+                                             descender_sink,ascender_rise,image);
+            if(xheight<4) throw BadTextLine();
+            show_baseline(slope,intercept,xheight,image,"YYY");
+            bytearray baseline_image;
+            debug_baseline(baseline_image,slope,intercept,xheight,image);
+            logger.log("baseline\n",baseline_image);
+            debugf("detail","LineInfo %g %g %g %g %g\n",intercept,slope,xheight,descender_sink,ascender_rise);
+        }
+
+        void pushProps(floatarray &v,rectangle b) {
+            float baseline = intercept + slope * b.x0;
+            float bottom = (b.y0-baseline)/xheight;
+            float top = (b.y1-baseline)/xheight;
+            float width = b.width() / float(xheight);
+            float height = b.height() / float(xheight);
+            float aspect = log(b.height() / float(b.width()));
+            int csize = pgetf("csize");
+            push_unary(v,top,-1,4,csize);
+            push_unary(v,bottom,-1,4,csize);
+            push_unary(v,width,-1,4,csize);
+            push_unary(v,height,-1,4,csize);
+            push_unary(v,aspect,-1,4,csize);
+        }
+
+        void extractFeatures(floatarray &v,rectangle b_,bytearray &mask) {
+            rectangle b;
+            b = b_;
+            dsection("featcenter");
+            CHECK_ARG(v.dim(1)<pgetf("maxheight"));
+            float context = pgetf("context");
+            int mdilate = pgetf("mdilate");
+            CHECK_ARG(b.height()<pgetf("maxheight"));
+            if(mdilate>0) {
+                pad_by(mask,mdilate,mdilate);
+                b.pad_by(mdilate,mdilate);
+                binary_dilate_circle(mask,mdilate);
+            }
+            if(b.width()>b.height()) {
+                int dy = (b.width()-b.height())/2;
+                b.y0 -= dy;
+                b.y1 += dy;
+                pad_by(mask,0,dy);
+            } else {
+                int dx = (b.height()-b.width())/2;
+                b.x0 -= dx;
+                b.x1 += dx;
+                pad_by(mask,dx,0);
+            }
+            int r = int((context-1.0)*b.width());
+            if(r>0) {
+                pad_by(mask,r,r);
+                b.x0 -= r;
+                b.y0 -= r;
+                b.x1 += r;
+                b.y1 += r;
+            }
+
+            float minsize_factor = pgetf("minsize_factor");
+            if(minsize_factor>=0.0) {
+                int minsize = int(minsize_factor*xheight);
+
+                int p = max(minsize-b.width(),minsize-b.height());
+                debugf("minsize","w=%d h=%d xh=%d f=%g p=%d\n",
+                       b.width(),b.height(),int(xheight),minsize_factor,p);
+                if(p>0) {
+                    pad_by(mask,p,p);
+                    b.x0 -= p;
+                    b.y0 -= p;
+                    b.x1 += p;
+                    b.y1 += p;
+                }
+            }
+
+            if(dactive()) {
+                floatarray temp,mtemp;
+                temp.resize(b.width(),b.height()) = 0;
+                mtemp.resize(b.width(),b.height()) = 0;
+                for(int i=0;i<temp.dim(0);i++)
+                    for(int j=0;j<temp.dim(1);j++)
+                        temp(i,j) = bat(image,i+b.x0,j+b.y0,0);
+                temp /= max(temp);
+                dshown(temp,"a");
+                dshown(mask,"b");
+                mtemp = mask;
+                mtemp /= max(mtemp);
+                mtemp *= 0.5;
+                temp -= mtemp;
+                dshown(temp,"c");
+                dwait();
+            }
+            if(b.height()>=pgetf("maxheight")) {
+                throwf("feature extraction: bbox height %d > maxheight %g",
+                       b.height(),pgetf("maxheight"));
+            }
+            fmap->extractFeatures(v,b,mask);
+            if(pgetf("use_props")) pushProps(v,b_);
+        }
+    };
+
     struct LinerecExtracted : IRecognizeLine {
         enum { reject_class = '~' };
         autodel<ISegmentLine> segmenter;
@@ -114,35 +237,29 @@ namespace glinerec {
         int ntrained;
 
         LinerecExtracted() {
+            // component choices
             pdef("classifier","latin","character classifier");
+            pdef("fmap","sfmap","feature map to be used for recognition");
+            // retraining
             pdef("cpreload","none","classifier to be loaded prior to training");
+            // debugging
             pdef("verbose",0,"verbose output from glinerec");
-            pdef("mode","centered-scaled","line recognition mode");
-            pdef("use_props",1,"use character properties (aspect ratio, etc.)");
+            // outputs
             pdef("use_priors",0,"correct the classifier output by priors");
             pdef("use_reject",1,"use a reject class (use posteriors only and train on junk chars)");
-            pdef("njitter",1,"#repeat presentations (use with jitter in the feature map)");
-            pdef("csize",40,"target character size after rescaling");
+            pdef("maxcost",20.0,"maximum cost of a character to be added to the output");
+            pdef("minclass",32,"minimum output class to be added (default=unicode space)");
+            pdef("minprob",1e-6,"minimum probability for a character to appear in the output at all");
+            // segmentation
             pdef("maxrange",5,"maximum number of components that are grouped together");
-            pdef("context",1.5,"how much context to include (1.0=no context)");
-            pdef("mdilate",2,"dilate the extraction mask by this much");
-            pdef("correct_lineinfo",1,"try to correct the result from get_extended_line_info");
-            pdef("fmap","sfmap","feature map to be used for recognition");
-            pdef("cnorm","center","character normalization (center, abs, baseline)");
-            pdef("abs_xhmul",1.5,"ascender multiplier for absolute rescaling");
-            pdef("abs_truncate",0,"truncate character that are too big");
+            // space estimation (FIXME factor this out eventually)
             pdef("space_fractile",0.5,"fractile for space estimation");
             pdef("space_multiplier",2,"multipler for space estimation");
             pdef("space_min",0.2,"minimum space threshold (in xheight)");
             pdef("space_max",1.1,"maximum space threshold (in xheight)");
             pdef("space_yes",1.0,"cost of inserting a space");
             pdef("space_no",5.0,"cost of not inserting a space");
-            pdef("maxheight",300,"maximum height of input line");
-            pdef("maxaspect",1.0,"maximum height/width ratio of input line");
-            pdef("maxcost",20.0,"maximum cost of a character to be added to the output");
-            pdef("minclass",32,"minimum output class to be added (default=unicode space)");
-            pdef("minprob",1e-6,"minimum probability for a character to appear in the output at all");
-            pdef("minsize_factor",1.3,"minimum size of bounding box in terms of xheight");
+
             segmenter = make_DpSegmenter();
             grouper = make_SimpleGrouper();
             featuremap = dynamic_cast<IFeatureMap*>(component_construct(pget("fmap")));
@@ -228,39 +345,6 @@ namespace glinerec {
         bytearray line;
         intarray segmentation;
 
-        float intercept,slope,xheight,descender_sink,ascender_rise;
-
-        void correct_extended_line_info(float &intercept,float &slope,float &xheight,
-                                        float &descender_sink,float &ascender_rise,
-                                        intarray &segmentation) {
-            int lc = 0;
-            int uc = 0;
-            narray<rectangle> boxes;
-            bounding_boxes(boxes,segmentation);
-            for(int i=1;i<boxes.length();i++) {
-                int x = boxes(i).xcenter();
-                int y_base = intercept+x*slope;
-                int y_xheight = y_base+xheight;
-                int y_ascender = y_base+ascender_rise;
-                CHECK(y_ascender>=y_xheight);
-                int y_thresh = (y_xheight+y_ascender)/2;
-                if(boxes(i).y1<y_thresh) lc++;
-                else uc++;
-            }
-            debugf("linemod","xheight=%g descender_sink=%g ascender_rise=%g\n",
-                   xheight,descender_sink,ascender_rise);
-            debugf("linemod","line_info %d total %d uc %d lc\n",
-                   boxes.length(),uc,lc);
-            if(uc<1) {
-                ascender_rise = xheight;
-                xheight = 0.7 * ascender_rise;
-            } else if(lc<1) {
-                xheight = 0.7 * ascender_rise;
-            } else if(fabs(xheight-ascender_rise)<2.0) {
-                xheight = 0.7 * ascender_rise;
-            }
-        }
-
         bytearray binarized;
         void setLine(bytearray &image) {
             CHECK_ARG(image.dim(1)<pgetf("maxheight"));
@@ -285,172 +369,10 @@ namespace glinerec {
             }
             logger.recolor("segmentation",segmentation);
             dshowr(segmentation,"YYY");
-
-            // compute line info
-            get_extended_line_info(intercept,slope,xheight,
-                                   descender_sink,ascender_rise,segmentation);
-            if(pgetf("correct_lineinfo"))
-                correct_extended_line_info(intercept,slope,xheight,
-                                           descender_sink,ascender_rise,segmentation);
-            debugf("detail","LineInfo %g %g %g %g %g\n",intercept,slope,xheight,descender_sink,ascender_rise);
-
-            if(xheight<4) throw BadTextLine();
-            show_baseline(slope,intercept,xheight,image,"YYY");
-            bytearray baseline_image;
-            debug_baseline(baseline_image,slope,intercept,xheight,image);
-            logger.log("baseline\n",baseline_image);
-        }
-
-        void extractFeatures(floatarray &v,int i) {
-            const char *cnorm = pget("cnorm");
-            CHECK_ARG(v.dim(1)<pgetf("maxheight"));
-            if(!strcmp(cnorm,"center")) extractFeaturesCenter(v,i);
-            else if(!strcmp(cnorm,"abs")) extractFeaturesAbs(v,i);
-            else throwf("%s: unknown cnorm",cnorm);
-        }
-
-        void extractFeaturesCenter(floatarray &v,int i) {
-            dsection("featcenter");
-            CHECK_ARG(v.dim(1)<pgetf("maxheight"));
-            rectangle b;
-            bytearray mask;
-            float context = pgetf("context");
-            int mdilate = pgetf("mdilate");
-            grouper->getMask(b,mask,i,0);
-            CHECK_ARG(b.height()<pgetf("maxheight"));
-            if(mdilate>0) {
-                pad_by(mask,mdilate,mdilate);
-                b.pad_by(mdilate,mdilate);
-                binary_dilate_circle(mask,mdilate);
-            }
-            if(b.width()>b.height()) {
-                int dy = (b.width()-b.height())/2;
-                b.y0 -= dy;
-                b.y1 += dy;
-                pad_by(mask,0,dy);
-            } else {
-                int dx = (b.height()-b.width())/2;
-                b.x0 -= dx;
-                b.x1 += dx;
-                pad_by(mask,dx,0);
-            }
-            int r = int((context-1.0)*b.width());
-            if(r>0) {
-                pad_by(mask,r,r);
-                b.x0 -= r;
-                b.y0 -= r;
-                b.x1 += r;
-                b.y1 += r;
-            }
-#if 1
-            float minsize_factor = pgetf("minsize_factor");
-            int minsize = int(minsize_factor*xheight);
-
-            int p = max(minsize-b.width(),minsize-b.height());
-            debugf("minsize","w=%d h=%d xh=%d f=%g p=%d\n",
-                   b.width(),b.height(),int(xheight),minsize_factor,p);
-            if(p>0) {
-                pad_by(mask,p,p);
-                b.x0 -= p;
-                b.y0 -= p;
-                b.x1 += p;
-                b.y1 += p;
-            }
-#endif
-            if(dactive()) {
-                floatarray temp,mtemp;
-                temp.resize(b.width(),b.height()) = 0;
-                mtemp.resize(b.width(),b.height()) = 0;
-                for(int i=0;i<temp.dim(0);i++)
-                    for(int j=0;j<temp.dim(1);j++)
-                        temp(i,j) = bat(binarized,i+b.x0,j+b.y0,0);
-                temp /= max(temp);
-                dshown(temp,"a");
-                dshown(mask,"b");
-                mtemp = mask;
-                mtemp /= max(mtemp);
-                mtemp *= 0.5;
-                temp -= mtemp;
-                dshown(temp,"c");
-                dwait();
-            }
-            if(b.height()>=pgetf("maxheight")) {
-                throwf("feature extraction: bbox height %d > maxheight %g",
-                       b.height(),pgetf("maxheight"));
-            }
-            featuremap->extractFeatures(v,b,mask);
-        }
-
-        void extractFeaturesAbs(floatarray &v,int i) {
-            CHECK_ARG(v.dim(1)<pgetf("maxheight"));
-            rectangle b;
-            bytearray mask;
-            float x=0,y=0;
-            dsection("featabs");
-            grouper->getMask(b,mask,i,0);
-            CHECK_ARG(b.height()<pgetf("maxheight"));
-            dshown(mask,"b");
-            centroid(x,y,mask);
-
-            CHECK(x>=0 && y>=0);
-            x += b.x0;
-            y += b.y0;
-            int xi = int(x);
-            int yi = int(y);
-            int r;
-
-            float abs_xhmul = pgetf("abs_xhmul");
-            bool abs_truncate = pgetf("abs_truncate");
-
-            r = int(abs_xhmul*xheight/2);
-            if(!abs_truncate) r = max(max(r,b.width()),b.height());
-            CHECK(r>0 && r<1000);
-            b.x0 = xi-r;
-            b.y0 = yi-r;
-            b.x1 = xi+r;
-            b.y1 = yi+r;
-
-#if 1
-            float minsize_factor = pgetf("minsize_factor");
-            int minsize = int(minsize_factor*xheight);
-
-            int p = max(minsize-b.width(),minsize-b.height());
-            debugf("minsize","w=%d h=%d xh=%d f=%g p=%d\n",
-                   b.width(),b.height(),int(xheight),minsize_factor,p);
-            if(p>0) {
-                pad_by(mask,p,p);
-                b.x0 -= p;
-                b.y0 -= p;
-                b.x1 += p;
-                b.y1 += p;
-            }
-#endif
-
-            CHECK(b.x0>-1000 && b.x1<10000 && b.y0>-1000 && b.y1<10000);
-            grouper->getMaskAt(mask,i,b);
-            dshown(mask,"d");
-            binary_dilate_circle(mask,3);
-            featuremap->extractFeatures(v,b,mask);
         }
 
         int riuniform(int hi) {
             return lrand48()%hi;
-        }
-
-        void pushProps(floatarray &v,int i) {
-            rectangle b = grouper->boundingBox(i);
-            float baseline = intercept + slope * b.x0;
-            float bottom = (b.y0-baseline)/xheight;
-            float top = (b.y1-baseline)/xheight;
-            float width = b.width() / float(xheight);
-            float height = b.height() / float(xheight);
-            float aspect = log(b.height() / float(b.width()));
-            int csize = pgetf("csize");
-            push_unary(v,top,-1,4,csize);
-            push_unary(v,bottom,-1,4,csize);
-            push_unary(v,width,-1,4,csize);
-            push_unary(v,height,-1,4,csize);
-            push_unary(v,aspect,-1,4,csize);
         }
 
         void addTrainingLine(intarray &cseg,ustrg &tr) {
@@ -516,34 +438,23 @@ namespace glinerec {
                 if(c==reject_class) junk++;
 
                 // extract the character and add it to the classifier
-                int njitter = pgetf("njitter");
-                bool use_props = pgetf("use_props");
+                rectangle b;
+                bytearray mask;
+                grouper->getMask(b,mask,i,0);
                 floatarray v;
-                for(int k=0;k<njitter;k++) {
-                    extractFeatures(v,i);
-                    {
-                        dsection("lfeats");
-                        int csize = pgetf("csize");
-                        floatarray image;
-                        image = v;
-                        image.resize(image.length()/csize,csize);
-                        dshown(image);
-                    }
-
-                    v.reshape(v.length());
-                    if(use_props) pushProps(v,i);
+                featuremap->extractFeatures(v,b,mask);
+                v.reshape(v.length());
 #pragma omp atomic
-                    total++;
+                total++;
 #pragma omp critical
-                    {
-                        if(use_reject) {
+                {
+                    if(use_reject) {
+                        classifier->add(v,c);
+                    } else {
+                        if(c!=reject_class)
                             classifier->add(v,c);
-                        } else {
-                            if(c!=reject_class)
-                                classifier->add(v,c);
-                        }
-                        if(c!=reject_class) inc_class(c);
                     }
+                    if(c!=reject_class) inc_class(c);
                 }
 #pragma omp atomic
                 ntrained++;
@@ -583,6 +494,7 @@ namespace glinerec {
             float interchar = fractile(distances,pgetf("space_fractile"));
             space_threshold = interchar*pgetf("space_multiplier");;
             // impose some reasonable upper and lower bounds
+            float xheight = 10.0; // FIXME
             space_threshold = max(space_threshold,pgetf("space_min")*xheight);
             space_threshold = min(space_threshold,pgetf("space_max")*xheight);
         }
@@ -630,21 +542,15 @@ namespace glinerec {
 
 #pragma omp parallel for schedule(dynamic,10) private(p,v,b,props)
             for(int i=0;i<ncomponents;i++) {
+                rectangle b;
+                bytearray mask;
+                grouper->getMask(b,mask,i,0);
                 try {
-#if 0
-                    bytearray raw;
-                    grouper->extract(raw,binarized,0,i);
-                    floatarray v;
-                    features->extract(v,raw);
-#else
-                    extractFeatures(v,i);
-#endif
+                    featuremap->extractFeatures(v,b,mask);
                 } catch(const char *msg) {
                     debugf("warn","feature extraction failed [%d]: %s\n",i,msg);
                     continue;
                 }
-                v.reshape(v.length());
-                pushProps(v,i);
                 float ccost = 0.0;
                 {
                     InputVector temp(v);
@@ -696,6 +602,7 @@ namespace glinerec {
                     debugf("dcost","\n");
 #endif
                     if(count==0) {
+                        float xheight = 10.0;
                         if(b.height()<xheight/2 && b.width()<xheight/2) {
                             grouper->setClass(i,'~',high_cost/2);
                         } else {
