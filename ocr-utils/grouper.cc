@@ -24,6 +24,8 @@
 // Web Sites: www.iupr.org, www.dfki.de, www.ocropus.org
 
 #include <stdio.h>
+#include <cctype>
+#include <unistd.h>
 #include "ocropus.h"
 
 namespace {
@@ -450,6 +452,115 @@ namespace ocropus {
                     // printf("%d,%d : %d -> %d\n",i,j,start,end);
                 }
             }
+        }
+
+        // This is all the code for dealing with ground truth segmentations
+        // and correspondences.
+
+        void remove_spaces(char *p) {
+            char *q = p;
+            while(*p) {
+                if(!std::isspace(*p)) { *q++ = *p; }
+                p++;
+            }
+            *q = 0;
+        }
+
+        void chomp(char *p) {
+            while(*p) {
+                if(*p=='\n') { *p = 0; return; }
+                p++;
+            }
+        }
+
+        void fixup_transcript(ustrg &nutranscript,bool old_csegs) {
+            char transcript[10000];
+            for(int i=0;i<nutranscript.length();i++)
+                transcript[i] = nutranscript[i].ord();
+            transcript[nutranscript.length()] = 0;
+            chomp(transcript);
+            if(old_csegs) remove_spaces(transcript);
+            nutranscript.assign(transcript);
+        }
+
+        void segmentation_correspondences(objlist<intarray> &segments,intarray &seg,intarray &cseg) {
+            CHECK_ARG(max(seg)<10000);
+            CHECK_ARG(max(cseg)<10000);
+            int nseg = max(seg)+1;
+            int ncseg = max(cseg)+1;
+            intarray overlaps(nseg,ncseg);
+            overlaps = 0;
+            CHECK_ARG(seg.length()==cseg.length());
+            for(int i=0;i<seg.length();i++)
+                overlaps(seg[i],cseg[i])++;
+            segments.clear();
+            segments.resize(ncseg);
+            for(int i=0;i<nseg;i++) {
+                int j = rowargmax(overlaps,i);
+                ASSERT(j>=0 && j<ncseg);
+                segments(j).push(i);
+            }
+        }
+
+        bool equals(intarray &a,intarray &b) {
+            if(a.length()!=b.length()) return 0;
+            for(int i=0;i<a.length();i++)
+                if(a[i]!=b[i]) return 0;
+            return 1;
+        }
+
+        ustrg gttranscript;
+        objlist<intarray> gtsegments;
+
+        void setSegmentationAndGt(intarray &segmentation,intarray &cseg,ustrg &text) {
+            // first, set the segmentation as usual
+            setSegmentation(segmentation);
+
+            // Maybe fix up the transcript (remove spaces).
+            gttranscript = text;
+            ustrg s; s = text;
+            fixup_transcript(s,false);
+            bool old_csegs = (s.length()!=max(cseg));
+            fixup_transcript(gttranscript,old_csegs);
+
+            // Complain if it doesn't match.
+            if(gttranscript.length()!=max(cseg)) {
+                debugf("debug","transcript = '%s'\n",gttranscript.c_str());
+                throwf("transcript doesn't agree with cseg (transcript %d, cseg %d)",
+                       gttranscript.length(),max(cseg));
+            }
+
+            // Now compute the correspondences between the character segmentation
+            // and the raw segmentation.
+            segmentation_correspondences(gtsegments,segmentation,cseg);
+        }
+
+        int getGtIndex(int index) {
+            intarray segs;
+            getSegments(segs,index);
+
+            // see whether this is a ground truth segment
+            int match = -1;
+            for(int j=0;j<gtsegments.length();j++) {
+                if(equals(gtsegments(j),segs)) {
+                    match = j;
+                    break;
+                }
+            }
+            return match;       // this returns the color in the cseg
+        }
+
+        int getGtClass(int index) {
+            int match = getGtIndex(index);
+
+            // if it's not a ground truth segment, return -1
+            if(match<0) return -1;
+
+            // otherwise, look up the character
+            match -= 1;
+            if(match<0 && match>=gttranscript.length())
+                throwf("transcript / cseg mismatch");
+            return gttranscript[match].ord();
         }
     };
 

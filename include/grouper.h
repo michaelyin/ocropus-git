@@ -31,7 +31,7 @@
 namespace ocropus {
     using namespace colib;
 
-    void sort_by_xcenter(colib::intarray &);
+    void sort_by_xcenter(intarray &);
 
     struct IGrouper : IComponent {
         const char *interface() { return "IGrouper"; }
@@ -39,12 +39,12 @@ namespace ocropus {
         // Set the grouper for iterating over the elements of the
         // segmentation.
 
-        virtual void setSegmentation(colib::intarray &segmentation) = 0;
+        virtual void setSegmentation(intarray &segmentation) = 0;
 
         // Set the grouper for iterating over a pre-segmented image (i.e.,
         // one group per input segment).
 
-        virtual void setCSegmentation(colib::intarray &segmentation) = 0;
+        virtual void setCSegmentation(intarray &segmentation) = 0;
 
         // Number of groups generated.
 
@@ -53,7 +53,7 @@ namespace ocropus {
         // Get the bounding rectangle and mask for group i.
         // Optionally, expand the mask by the given margin.
 
-        virtual void getMask(colib::rectangle &r,colib::bytearray &mask,int i,int margin) = 0;
+        virtual void getMask(rectangle &r,bytearray &mask,int i,int margin) = 0;
 
         // Get the mask around a given rectangle.
 
@@ -113,6 +113,13 @@ namespace ocropus {
         // stored in the Grouper.
 
         virtual void getLattice(IGenericFst &fst) = 0;
+
+        // Set the grouper for iterating over the elements of the segmentation;
+        // This also computes the ground truth alignment.
+
+        virtual void setSegmentationAndGt(intarray &segmentation,intarray &cseg,ustrg &text) = 0;
+        virtual int getGtClass(int index) = 0;
+        virtual int getGtIndex(int index) = 0;
 
         virtual ~IGrouper() {}
     };
