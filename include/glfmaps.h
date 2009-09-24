@@ -2,6 +2,7 @@
 #define glfmaps_h__
 
 #include "ocropus.h"
+#include "glclass.h"
 
 namespace glinerec {
     using namespace colib;
@@ -10,7 +11,7 @@ namespace glinerec {
     struct IFeatureMap : IComponent {
         const char *interface() { return "IFeatureMap"; }
         virtual void setLine(bytearray &image) = 0;
-        virtual void extractFeatures(floatarray &v,
+        virtual void extractFeatures(InputVector &v,
                                      rectangle b,
                                      bytearray &mask) = 0;
     };

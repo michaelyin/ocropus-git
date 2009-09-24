@@ -203,7 +203,8 @@ namespace ocropus {
     bool get_extended_line_info(float &intercept, float &slope,
                                 float &xheight, float &descender_sink,
                                 float &ascender_rise, intarray &charimage) {
-
+        // FIXME why does this take a charimage as an argument???
+        // if it needs a segmentation, it needs to compute that internally
         intarray c;
         copy(c, charimage);
         return internal_get_extended_line_info(intercept, slope, xheight,

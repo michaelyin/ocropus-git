@@ -156,29 +156,25 @@ namespace glinerec {
 
         // vector-like access
 
-        floatarray &operator*() {
-            if(flat.length()<0) {
-                flat.clear();
-                for(int i=0;i<inputs.length();i++)
-                    flat.append(inputs[i]);
-            }
+        floatarray &ravel() {
+            flat.clear();
+            for(int i=0;i<inputs.length();i++)
+                flat.append(inputs[i]);
             return flat;
         }
-        void as_array(floatarray &v) {
+        void ravel(floatarray &v) {
             v.clear();
             for(int i=0;i<inputs.length();i++)
                 v.append(inputs[i]);
         }
-        operator floatarray &() {
-            return *(*this);
-        }
+#if 0
         float &operator()(int index) {
             return flat[index];
         }
         float &operator[](int index) {
             return flat[index];
         }
-
+#endif
     };
 
 
@@ -344,7 +340,7 @@ namespace glinerec {
         virtual float outputs_impl(OutputVector &result,InputVector &v) {
             floatarray result_;
             floatarray v_;
-            v.as_array(v_);
+            v.ravel(v_);
             float value = outputs_impl(result_,v_);
             result.copy(result_);
             return value;

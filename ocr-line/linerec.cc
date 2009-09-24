@@ -84,6 +84,7 @@ namespace glinerec {
         return 1;
     }
 
+
     void segmentation_correspondences(objlist<intarray> &segments,intarray &seg,intarray &cseg) {
         CHECK_ARG(max(seg)<10000);
         CHECK_ARG(max(cseg)<10000);
@@ -103,14 +104,14 @@ namespace glinerec {
         }
     }
 
+
     struct CenterFeatureMap : IFeatureMap {
         bytearray image;
         autodel<IFeatureMap> fmap;
         CenterFeatureMap() {
-            fmap = make_SimpleFeatureMap();
+            make_component(fmap,"sfmap");
             pdef("csize",40,"target character size after rescaling");
             pdef("maxheight",300,"maximum height of input line");
-            pdef("maxaspect",1.0,"maximum height/width ratio of input line");
             pdef("context",1.5,"how much context to include (1.0=no context)");
             pdef("mdilate",2,"dilate the extraction mask by this much");
             pdef("minsize_factor",1.3,"minimum size of bounding box in terms of xheight");
@@ -136,7 +137,7 @@ namespace glinerec {
             debugf("detail","LineInfo %g %g %g %g %g\n",intercept,slope,xheight,descender_sink,ascender_rise);
         }
 
-        void pushProps(floatarray &v,rectangle b) {
+        void pushProps(InputVector &iv,rectangle b) {
             float baseline = intercept + slope * b.x0;
             float bottom = (b.y0-baseline)/xheight;
             float top = (b.y1-baseline)/xheight;
@@ -144,18 +145,20 @@ namespace glinerec {
             float height = b.height() / float(xheight);
             float aspect = log(b.height() / float(b.width()));
             int csize = pgetf("csize");
+            floatarray v;
             push_unary(v,top,-1,4,csize);
             push_unary(v,bottom,-1,4,csize);
             push_unary(v,width,-1,4,csize);
             push_unary(v,height,-1,4,csize);
             push_unary(v,aspect,-1,4,csize);
+            v.resize(v.length()/csize,csize);
+            iv.append(v,"props");
         }
 
-        void extractFeatures(floatarray &v,rectangle b_,bytearray &mask) {
+        void extractFeatures(InputVector &v,rectangle b_,bytearray &mask) {
             rectangle b;
             b = b_;
             dsection("featcenter");
-            CHECK_ARG(v.dim(1)<pgetf("maxheight"));
             float context = pgetf("context");
             int mdilate = pgetf("mdilate");
             CHECK_ARG(b.height()<pgetf("maxheight"));
@@ -239,7 +242,7 @@ namespace glinerec {
         LinerecExtracted() {
             // component choices
             pdef("classifier","latin","character classifier");
-            pdef("fmap","sfmap","feature map to be used for recognition");
+            pdef("fmap","cfmap","feature map to be used for recognition");
             // retraining
             pdef("cpreload","none","classifier to be loaded prior to training");
             // debugging
@@ -252,6 +255,9 @@ namespace glinerec {
             pdef("minprob",1e-6,"minimum probability for a character to appear in the output at all");
             // segmentation
             pdef("maxrange",5,"maximum number of components that are grouped together");
+            // sanity limits on input
+            pdef("maxheight",300,"maximum height of input line");
+            pdef("maxaspect",1.0,"maximum height/width ratio of input line");
             // space estimation (FIXME factor this out eventually)
             pdef("space_fractile",0.5,"fractile for space estimation");
             pdef("space_multiplier",2,"multipler for space estimation");
@@ -441,18 +447,17 @@ namespace glinerec {
                 rectangle b;
                 bytearray mask;
                 grouper->getMask(b,mask,i,0);
-                floatarray v;
+                InputVector v;
                 featuremap->extractFeatures(v,b,mask);
-                v.reshape(v.length());
 #pragma omp atomic
                 total++;
 #pragma omp critical
                 {
                     if(use_reject) {
-                        classifier->add(v,c);
+                        classifier->add(v.ravel(),c);
                     } else {
                         if(c!=reject_class)
-                            classifier->add(v,c);
+                            classifier->add(v.ravel(),c);
                     }
                     if(c!=reject_class) inc_class(c);
                 }
@@ -512,7 +517,7 @@ namespace glinerec {
             setLine(image);
             segmentation_ = segmentation;
             bytearray available;
-            floatarray v,cp,ccosts,props;
+            floatarray cp,ccosts,props;
             OutputVector p;
             int ncomponents = grouper->length();
             rectangle b;
@@ -545,6 +550,7 @@ namespace glinerec {
                 rectangle b;
                 bytearray mask;
                 grouper->getMask(b,mask,i,0);
+                InputVector v;
                 try {
                     featuremap->extractFeatures(v,b,mask);
                 } catch(const char *msg) {
@@ -649,5 +655,6 @@ namespace glinerec {
         if(init) return;
         init = true;
         component_register<LinerecExtracted>("linerec");
+        component_register<CenterFeatureMap>("cfmap");
     }
 }

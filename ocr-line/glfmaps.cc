@@ -431,7 +431,7 @@ namespace glinerec {
             dwait();
         }
 
-        void extractFeatures(floatarray &v,rectangle b,bytearray &mask) {
+        void extractFeatures(InputVector &v,rectangle b,bytearray &mask) {
             dsection("features");
             b.shift_by(pad,pad);
 
@@ -441,61 +441,66 @@ namespace glinerec {
             v.clear();
             if(strchr(ftypes,'b')) {
                 extractFeatures(u,b,mask,binarized);
-                push_array(v,u);
-                CHECK(min(v)>=-1.1 && max(v)<=1.1);
+                CHECK(min(u)>=-1.1 && max(u)<=1.1);
+                v.append(u,"b");
             }
             if(strchr(ftypes,'h')) {
                 extractFeatures(u,b,mask,holes,false);
-                push_array(v,u);
-                CHECK(min(v)>=-1.1 && max(v)<=1.1);
+                CHECK(min(u)>=-1.1 && max(u)<=1.1);
+                v.append(u,"h");
             }
             if(strchr(ftypes,'j')) {
                 extractFeatures(u,b,mask,junctions);
-                push_array(v,u);
-                CHECK(min(v)>=-1.1 && max(v)<=1.1);
+                CHECK(min(u)>=-1.1 && max(u)<=1.1);
+                v.append(u,"j");
             }
             if(strchr(ftypes,'e')) {
                 extractFeatures(u,b,mask,endpoints);
-                push_array(v,u);
-                CHECK(min(v)>=-1.1 && max(v)<=1.1);
+                CHECK(min(u)>=-1.1 && max(u)<=1.1);
+                v.append(u,"e");
             }
             if(strchr(ftypes,'r')) {
+                floatarray temp;
                 for(int i=0;i<maps.length();i++) {
                     extractFeatures(u,b,mask,maps(i));
-                    push_array(v,u);
+                    push_array(temp,u);
                 }
-                CHECK(min(v)>=-1.1 && max(v)<=1.1);
+                CHECK(min(temp)>=-1.1 && max(temp)<=1.1);
+                v.append(temp,"r");
             }
             if(strchr(ftypes,'t')) {
                 extractFeatures(u,b,mask,troughs);
-                push_array(v,u);
-                CHECK(min(v)>=-1.1 && max(v)<=1.1);
+                CHECK(min(u)>=-1.1 && max(u)<=1.1);
+                v.append(u,"t");
             }
             if(strchr(ftypes,'D')) {
                 extractFeatures(u,b,mask,dt);
-                push_array(v,u);
-                CHECK(min(v)>=-1.1 && max(v)<=1.1);
+                CHECK(min(u)>=-1.1 && max(u)<=1.1);
+                v.append(u,"D");
             }
             if(strchr(ftypes,'G')) {
                 extractFeatures(u,b,mask,dt_x);
-                push_array(v,u);
+                CHECK(min(u)>=-1.1 && max(u)<=1.1);
+                v.append(u,"Gx");
                 extractFeatures(u,b,mask,dt_y);
-                push_array(v,u);
-                CHECK(min(v)>=-1.1 && max(v)<=1.1);
+                CHECK(min(u)>=-1.1 && max(u)<=1.1);
+                v.append(u,"Gy");
             }
             if(strchr(ftypes,'M')) {
+                floatarray temp;
                 for(int i=0;i<dt_maps.length();i++) {
                     extractFeatures(u,b,mask,dt_maps(i));
-                    push_array(v,u);
+                    push_array(temp,u);
                 }
-                CHECK(min(v)>=-1.1 && max(v)<=1.1);
+                CHECK(min(temp)>=-1.1 && max(temp)<=1.1);
+                v.append(temp,"M");
             }
 
             if(dactive()) {
-                int csize = pgetf("csize");
                 floatarray temp;
-                temp = v;
-                temp.reshape(temp.length()/csize,csize);
+                temp = v.chunk("b");
+                for(int i=1;i<5;i++) for(int j=1;j<5;j++)
+                    temp(temp.dim(0)-i,temp.dim(1)-j) = max(temp);
                 dshown(temp,"y");
                 dshown(mask,"Y");
                 dwait();
