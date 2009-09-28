@@ -462,13 +462,16 @@ namespace ocropus {
         autodel<IRecognizeLine> linerec;
         linerec_load(linerec,cmodel);
         // load the language model
-        autodel<OcroFST> langmod(make_OcroFST());
-        try {
-            langmod->load(lmodel);
-        } catch(const char *s) {
-            throwf("%s: failed to load (%s)",(const char*)lmodel,s);
-        } catch(...) {
-            throwf("%s: failed to load language model",(const char*)lmodel);
+        autodel<OcroFST> langmod;
+        if(lmodel && strcmp(lmodel,"")) {
+            langmod = make_OcroFST();
+            try {
+                langmod->load(lmodel);
+            } catch(const char *s) {
+                throwf("%s: failed to load (%s)",(const char*)lmodel,s);
+            } catch(...) {
+                throwf("%s: failed to load language model",(const char*)lmodel);
+            }
         }
         // now iterate through the pages
         for(int arg=1;arg<argc;arg++) {
@@ -489,7 +492,7 @@ namespace ocropus {
                         autodel<OcroFST> result(make_OcroFST());
                         linerec->recognizeLine(*result,line_image);
                         ustrg str;
-                        if(0) {
+                        if(!langmod) {
                             result->bestpath(str);
                         } else {
                             double cost = beam_search(str,*result,*langmod,beam_width);
