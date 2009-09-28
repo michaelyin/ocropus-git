@@ -29,6 +29,7 @@
 #include <typeinfo>
 #include "colib/colib.h"
 #include "iulib/iulib.h"
+#include "narray-binio.h"
 
 using namespace colib;
 using namespace iulib;
@@ -45,6 +46,36 @@ using namespace iulib;
 namespace ocropus {
 
     extern const char *global_verbose_params;
+
+    struct IOWrapper {
+        virtual void save(FILE *stream) = 0;
+        virtual void load(FILE *stream) = 0;
+    };
+
+    template <class T>
+    struct NarrayIOWrapper : IOWrapper {
+        narray<T> &data;
+        NarrayIOWrapper(narray<T> &data) : data(data) {}
+        void save(FILE *stream) {
+            narray_write(stream,data);
+        }
+        void load(FILE *stream) {
+            narray_read(stream,data);
+        }
+    };
+
+    template <class T>
+    struct ComponentIOWrapper : IOWrapper {
+        T &data;
+        ComponentIOWrapper(T &data) : data(data) {
+        }
+        void save(FILE *stream) {
+            data->save(stream);
+        }
+        void load(FILE *stream) {
+            data->load(stream);
+        }
+    };
 
     /// Base class for OCR components.
 
@@ -102,10 +133,70 @@ namespace ocropus {
         }
 
         /// saving and loading (if implemented)
-        virtual void save(FILE *stream) {throw Unimplemented();}
-        virtual void load(FILE *stream) {throw Unimplemented();}
-        virtual void save(const char *path) {save(stdio(path,"wb"));}
-        virtual void load(const char *path) {load(stdio(path,"rb"));}
+
+        narray<strg> wnames;
+        narray< autodel<IOWrapper> > wrappers;
+
+        template <class T>
+        void persist(narray<T> &data,const char *name) {
+            wnames.push() = name;
+            wrappers.push() = new NarrayIOWrapper<T>(data);
+        }
+        template <class T>
+        void persist(autodel<T> &data,const char *name) {
+            wnames.push() = name;
+            wrappers.push() = new ComponentIOWrapper< autodel<T> >(data);
+        }
+
+        virtual void save(FILE *stream) {
+            using namespace narray_io;
+            magic_write(stream,name());
+            psave(stream);
+            string_write(stream,"<component>");
+            for(int i=0;i<wnames.length();i++) {
+                string_write(stream,"<item>");
+                debugf("iodetail","writing %s %s\n",name(),wnames[i].c_str());
+                string_write(stream,wnames[i].c_str());
+                wrappers[i]->save(stream);
+                string_write(stream,"</item>");
+            }
+            string_write(stream,"</component>");
+        }
+        virtual void load(FILE *stream) {
+            using namespace narray_io;
+            magic_read(stream,name());
+            pload(stream);
+            strg s;
+            string_read(stream,s);
+            CHECK(s=="<component>");
+            for(;;) {
+                string_read(stream,s);
+                if(s=="</component>") break;
+                CHECK(s=="<item>");
+                string_read(stream,s);
+                debugf("iodetail","reading %s %s\n",name(),s.c_str());
+                int which = -1;
+                for(int i=0;i<wnames.length();i++) {
+                    if(wnames[i]==s) {
+                        which = i;
+                        break;
+                    }
+                }
+                if(which<0) {
+                    throwf("array element '%s' present in file but not class",s.c_str());
+                }
+                wrappers[which]->load(stream);
+                string_read(stream,s);
+                CHECK(s=="</item>");
+            }
+        }
+
+        virtual void save(const char *path) {
+            save(stdio(path,"wb"));
+        }
+        virtual void load(const char *path) {
+            load(stdio(path,"rb"));
+        }
 
         /// parameter setting and loading
     private:

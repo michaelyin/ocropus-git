@@ -266,6 +266,10 @@ namespace glinerec {
             pdef("space_yes",1.0,"cost of inserting a space");
             pdef("space_no",5.0,"cost of not inserting a space");
 
+            persist(featuremap,"featuremap");
+            persist(classifier,"classifier");
+            persist(counts,"counts");
+
             segmenter = make_DpSegmenter();
             grouper = make_SimpleGrouper();
             featuremap = dynamic_cast<IFeatureMap*>(component_construct(pget("fmap")));
@@ -300,6 +304,8 @@ namespace glinerec {
         const char *command(const char *argv[]) {
             return classifier->command(argv);
         }
+
+#if 0
         void save(FILE *stream) {
             // NB: to be backwards compatible, all magic strings have
             // the same size
@@ -332,6 +338,7 @@ namespace glinerec {
             // now reload the environment variables
             reimport();
         }
+#endif
 
         void startTraining(const char *) {
             const char *preload = pget("cpreload");

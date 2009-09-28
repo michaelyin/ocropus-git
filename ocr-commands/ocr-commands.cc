@@ -214,6 +214,7 @@ namespace ocropus {
         for(int page=0;page<bookstore->numberOfPages();page++)
             nfiles += bookstore->linesOnPage(page);
         int eval_total=0,eval_tchars=0,eval_pchars=0,eval_lines=0,eval_no_ground_truth=0;
+        debugf("info","cmodel=%s\n",(const char *)cmodel);
         for(int page=0;page<bookstore->numberOfPages();page++) {
             int nlines = bookstore->linesOnPage(page);
 #pragma omp parallel for private(linerec) shared(finished) schedule(dynamic,4)
@@ -222,7 +223,6 @@ namespace ocropus {
                 try {
 #pragma omp critical
                     try {
-                        debugf("info","cmodel=%s\n",(const char *)cmodel);
                         if(!linerec) linerec_load(linerec,cmodel);
                     } catch(...) {
                         debugf("info","loading %s failed\n",(const char *)cmodel);

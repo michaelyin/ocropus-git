@@ -255,6 +255,11 @@ namespace ocropus {
         /// take a long time to complete.
         virtual void finishTraining() { throw "unimplemented"; }
 
+#if 0
+        // inherited from IComponent
+
+        // FIXME get rid of this
+
         /// Save a trained model to the stream.
         virtual void save(FILE *stream) { throw "unimplemented"; }
         void save(const char *path) { save(stdio(path, "wb")); }
@@ -262,6 +267,7 @@ namespace ocropus {
         /// Load a trained model from the stream.
         virtual void load(FILE *stream) { throw "unimplemented"; }
         void load(const char *path) { load(stdio(path, "rb")); }
+#endif
 
         /// \brief Convenience function for getting the best output
         //
@@ -342,6 +348,10 @@ namespace ocropus {
         /// this method may take a long time to complete.
         virtual void finishTraining() { throw "unimplemented"; }
 
+#if 0
+        // inherited from IComponent
+        // FIXME get rid of this
+
         /// Save a trained model to the stream.
         virtual void save(FILE *stream) { throw "unimplemented"; }
         void save(const char *path) { save(stdio(path, "wb")); }
@@ -349,6 +359,7 @@ namespace ocropus {
         /// Load a trained model from the stream.
         virtual void load(FILE *stream) { throw "unimplemented"; }
         void load(const char *path) { load(stdio(path, "rb")); }
+#endif
 
         /// Destructor
         virtual ~IRecognizeLine() {}
