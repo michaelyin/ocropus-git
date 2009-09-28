@@ -48,17 +48,17 @@ namespace narray_io {
         s.truncate(strlen(&s[0]));
     }
 
-    inline void string_write(FILE *stream,const char *str) {
-        CHECK(fputs(str,stream)>=0);
-        CHECK(fputc('\n',stream)!=EOF);
-    }
-
     inline void string_read(FILE *stream,strg &s_) {
         char s[100000];         // FIXME
         CHECK(fgets(&s[0],100000,stream)!=0);
         int n = strlen(&s[0]);
         if(n>0 && s[n-1]=='\n') s[n-1] = 0;
         s_ = s;
+    }
+
+    inline void string_write(FILE *stream,const char *str) {
+        CHECK(fputs(str,stream)>=0);
+        CHECK(fputc('\n',stream)!=EOF);
     }
 
     // string object type identifiers

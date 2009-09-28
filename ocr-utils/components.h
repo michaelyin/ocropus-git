@@ -48,6 +48,7 @@ namespace ocropus {
     extern const char *global_verbose_params;
 
     struct IOWrapper {
+        virtual void clear() = 0;
         virtual void save(FILE *stream) = 0;
         virtual void load(FILE *stream) = 0;
     };
@@ -56,6 +57,9 @@ namespace ocropus {
     struct NarrayIOWrapper : IOWrapper {
         narray<T> &data;
         NarrayIOWrapper(narray<T> &data) : data(data) {}
+        void clear() {
+            data.clear();
+        }
         void save(FILE *stream) {
             narray_write(stream,data);
         }
@@ -69,11 +73,14 @@ namespace ocropus {
         T &data;
         ComponentIOWrapper(T &data) : data(data) {
         }
+        void clear() {
+            data = 0;
+        }
         void save(FILE *stream) {
-            data->save(stream);
+            save_component(stream,data);
         }
         void load(FILE *stream) {
-            data->load(stream);
+            load_component(stream,data);
         }
     };
 
@@ -163,6 +170,10 @@ namespace ocropus {
             string_write(stream,"</component>");
         }
         virtual void load(FILE *stream) {
+            // before doing anything else, clear all the
+            // persistent variables to their default state
+            for(int i=0;i<wrappers.length();i++)
+                wrappers[i]->clear();
             using namespace narray_io;
             magic_read(stream,name());
             pload(stream);

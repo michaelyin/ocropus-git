@@ -97,37 +97,37 @@ namespace ocropus {
     static int level = 0;
 
     void save_component(FILE *stream,IComponent *classifier) {
+        using namespace narray_io;
         if(!classifier) {
             debugf("iodetail","%*s[writing OBJ:NULL]\n",level,"");
             debugf("iodetail","OBJ:NULL",stream);
+            string_write(stream,"<null/>");
         } else {
             debugf("iodetail","%*s[writing OBJ:%s]\n",level,"",classifier->name());
             level++;
-            fputs("OBJ:",stream);
-            fputs(classifier->name(),stream);
-            fputs("\n",stream);
+            string_write(stream,"<object>");
+            string_write(stream,classifier->name());
             classifier->save(stream);
-            fputs("OBJ:END\n",stream);
+            string_write(stream,"</object>");
             level--;
             debugf("iodetail","%*s[done]\n",level,"");
         }
     }
 
     IComponent *load_component(FILE *stream) {
-        char buf[1000];
-        fgets(buf,sizeof buf,stream);
-        if(strlen(buf)>0) buf[strlen(buf)-1] = 0;
-        debugf("iodetail","%*s[got %s]\n",level,"",buf);
+        using namespace narray_io;
+        strg s;
+        string_read(stream,s);
+        debugf("iodetail","%*s[got %s]\n",level,"",s.c_str());
         IComponent *result = 0;
-        if(strcmp(buf,"OBJ:NULL")) {
+        if(s=="<object>") {
             level++;
-            CHECK(!strncmp(buf,"OBJ:",4));
-            debugf("iodetail","%*s[constructing %s]\n",level,"",buf+4);
-            result = component_construct(buf+4);
+            string_read(stream,s);
+            debugf("iodetail","%*s[constructing %s]\n",level,"",s.c_str());
+            result = component_construct(s.c_str());
             result->load(stream);
-            fgets(buf,sizeof buf,stream);
-            if(strlen(buf)>0) buf[strlen(buf)-1] = 0;
-            ASSERT(!strcmp(buf,"OBJ:END"));
+            string_read(stream,s);
+            CHECK(s=="</object>");
             level--;
         }
         debugf("iodetail","%*s[done]\n",level,"");
