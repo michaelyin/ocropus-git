@@ -116,7 +116,10 @@ namespace glinerec {
             pdef("mdilate",2,"dilate the extraction mask by this much");
             pdef("minsize_factor",1.3,"minimum size of bounding box in terms of xheight");
             pdef("use_props",1,"use character properties (aspect ratio, etc.)");
-       }
+        }
+        const char *name() {
+            return "cfmap";
+        }
         const char *interface() {
             return "IFeatureMap";
         }

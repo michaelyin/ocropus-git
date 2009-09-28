@@ -103,6 +103,35 @@ namespace narray_io {
         CHECK(fwrite(&value,sizeof value,1,stream)==1);
     }
 
+    // ragged array reading
+
+    template <class T>
+    inline void narray_read(FILE *stream,narray< narray<T> > &data) {
+        unsigned magic;
+        CHECK(sizeof(magic)==4);
+        CHECK(fread(&magic,sizeof magic,1,stream)==1);
+        CHECK(magic==293843);
+        int dims[4];
+        CHECK(fread(dims,sizeof dims[0],4,stream)==4);
+        data.resize(dims[0],dims[1],dims[2],dims[3]);
+        for(int i=0;i<data.length();i++)
+            narray_read(stream,data[i]);
+    }
+
+    // ragged array writing
+
+    template <class T>
+    inline void narray_write(FILE *stream,narray< narray<T> > &data) {
+        unsigned magic = 293843;
+        CHECK(sizeof(magic)==4);
+        CHECK(fwrite(&magic,sizeof magic,1,stream)==1);
+        CHECK(fwrite(data.dims,sizeof data.dims[0],4,stream)==4);
+        for(int i=0;i<data.length();i++)
+            narray_write(stream,data[i]);
+    }
+
+    // array of scalar reading
+
     template <class T>
     inline void narray_read(FILE *stream,narray<T> &data) {
         unsigned magic;
@@ -117,6 +146,8 @@ namespace narray_io {
                              data.length1d(),stream)==data.length1d());
         }
     }
+
+    // array of scalar writing
 
     template <class T>
     inline void narray_write(FILE *stream,narray<T> &data) {

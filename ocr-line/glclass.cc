@@ -324,6 +324,8 @@ namespace glinerec {
             ncls = 0;
             min_dist = -1;
             pdef("k",1,"number of nearest neighbors");
+            persist(vectors,"vectors");
+            persist(classes,"classes");
         }
         const char *name() {
             return "knn";
@@ -359,16 +361,6 @@ namespace glinerec {
         void getproto(floatarray &v,int &c,int i) {
             rowget(v,vectors,i);
             c = classes(i);
-        }
-        void save(FILE *stream) {
-            psave(stream);
-            narray_write(stream,vectors);
-            narray_write(stream,classes);
-        }
-        void load(FILE *stream) {
-            pload(stream);
-            narray_read(stream,vectors);
-            narray_read(stream,classes);
         }
         void train(IDataset &ds) {
             floatarray v;
@@ -830,6 +822,10 @@ namespace glinerec {
             eta = pgetf("eta");
             cv_error = 1e30;
             nn_error = 1e30;
+            persist(w1,"w1");
+            persist(b1,"b1");
+            persist(w2,"w2");
+            persist(b2,"b2");
         }
 
         void normalize(floatarray &v) {
@@ -891,24 +887,6 @@ namespace glinerec {
             b1.copy(other.b1);
             w2.copy(other.w2);
             b2.copy(other.b2);
-        }
-
-        void save(FILE *stream) {
-            magic_write(stream,"mlp");
-            psave(stream);
-            narray_write(stream,w1);
-            narray_write(stream,b1);
-            narray_write(stream,w2);
-            narray_write(stream,b2);
-        }
-
-        void load(FILE *stream) {
-            magic_read(stream,"mlp");
-            pload(stream);
-            narray_read(stream,w1);
-            narray_read(stream,b1);
-            narray_read(stream,w2);
-            narray_read(stream,b2);
         }
 
         float outputs_impl(floatarray &result,floatarray &x_raw) {
@@ -1666,6 +1644,10 @@ namespace glinerec {
             pdef("ul",0,"do upper/lower reclassification");
             pdef("ulclass","mlp","upper/lower classifier");
             junkchar = -1;
+            persist(junkclass,"junkclass");
+            persist(charclass,"charclass");
+            persist(ulclass,"ulclass");
+
         }
         int jc() {
             if(junkchar<0) junkchar = int(pgetf("junkchar"));
@@ -1695,22 +1677,6 @@ namespace glinerec {
             if(which==0) return *charclass;
             else if(which==1) return *ulclass;
             throw "oops";
-        }
-
-        void save(FILE *stream) {
-            magic_write(stream,"latinclass");
-            psave(stream);
-            save_component(stream,junkclass);
-            save_component(stream,charclass);
-            save_component(stream,ulclass);
-        }
-
-        void load(FILE *stream) {
-            magic_read(stream,"latinclass");
-            pload(stream);
-            load_component(stream,junkclass);
-            load_component(stream,charclass);
-            load_component(stream,ulclass);
         }
 
         void train(IDataset &ds) {
