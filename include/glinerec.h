@@ -33,6 +33,11 @@
 #include "colib/rowarrays.h"
 #include "ocropus.h"
 #include "narray-binio.h"
+#include "glutils.h"
+#include "gldataset.h"
+#include "glclass.h"
+#include "glcuts.h"
+#include "glfmaps.h"
 
 namespace glinerec {
     struct BadTextLine {};
@@ -53,12 +58,6 @@ namespace {
         }
     };
 }
-
-#include "glutils.h"
-#include "gldataset.h"
-#include "glclass.h"
-#include "glcuts.h"
-#include "glfmaps.h"
 
 namespace glinerec {
     void init_linerec();

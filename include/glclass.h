@@ -5,7 +5,6 @@
 
 #include <typeinfo>
 #include <stdio.h>
-#include "glinerec.h"
 #include "gldataset.h"
 
 namespace {
@@ -286,6 +285,7 @@ namespace glinerec {
         // Some common operators.
 
         void operator/=(float value) {
+            using namespace narray_ops;
             values /= value;
         }
         int argmax() {
