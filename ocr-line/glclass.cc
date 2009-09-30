@@ -1769,6 +1769,7 @@ namespace glinerec {
             classifiers.resize(1000);
             nclassifiers = 0;
             count = 0;
+            persist(classifiers,"classifiers");
         }
         int nfeatures() {
             return classifiers[0]->nfeatures();
@@ -1784,8 +1785,10 @@ namespace glinerec {
             return "avgclass";
         }
         void info(int depth,FILE *stream) {
-            for(int i=0;i<nclassifiers;i++)
-                classifiers[i]->info();
+            for(int i=0;i<nclassifiers;i++) {
+                iprintf(stream,depth,"classifier %d:\n",i);
+                classifiers[i]->info(depth+1,stream);
+            }
         }
         int nmodels() {
             return nclassifiers;
@@ -1797,6 +1800,7 @@ namespace glinerec {
             return *classifiers[which];
         }
 
+#if 0
         void save(FILE *stream) {
             debugf("iodetail","save avgclass\n");
             magic_write(stream,"[avgclass1]");
@@ -1826,6 +1830,7 @@ namespace glinerec {
             }
             debugf("iodetail","done");
         }
+#endif
 
         void train(IDataset &ds) {
             floatarray v;

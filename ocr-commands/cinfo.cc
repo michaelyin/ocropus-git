@@ -39,6 +39,7 @@
 namespace ocropus {
     extern void linerec_load(autodel<IRecognizeLine> &,const char *);
 
+#ifdef OBSOLETE_FILE_FORMATS
     int main_cinfo(int argc,char **argv) {
         autodel<IComponent> comp;
         stdio model(argv[1],"r");
@@ -61,7 +62,19 @@ namespace ocropus {
         }
         return 0;
     }
-
+#else
+    int main_cinfo(int argc,char **argv) {
+        autodel<IComponent> comp;
+        stdio model(argv[1],"r");
+        if(!model) {
+            fprintf(stderr,"%s: could not open\n",argv[1]);
+            return 1;
+        }
+        comp = load_component(model);
+        comp->info();
+        return 0;
+    }
+#endif
     int main_linfo(int argc,char **argv) {
         autodel<IRecognizeLine> linerec;
         stdio model(argv[1],"r");
