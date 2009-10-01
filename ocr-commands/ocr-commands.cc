@@ -132,6 +132,7 @@ namespace ocropus {
     }
 
     void linerec_load(autodel<IRecognizeLine> &linerec,const char *cmodel) {
+#if LOAD_OBSOLETE_FORMATS_OPTIONALLY
         linerec = glinerec::make_Linerec();
         try {
             load_component(stdio(cmodel,"r"),linerec);
@@ -145,6 +146,9 @@ namespace ocropus {
                 throwf("%s: failed to load character model",(const char*)cmodel);
             }
         }
+#else
+        load_component(stdio(cmodel,"r"),linerec);
+#endif
     }
 
     int main_threshold(int argc,char **argv) {

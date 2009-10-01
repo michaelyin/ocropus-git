@@ -531,7 +531,6 @@ namespace glinerec {
             floatarray cp,ccosts,props;
             OutputVector p;
             int ncomponents = grouper->length();
-            rectangle b;
             int minclass = pgetf("minclass");
             float minprob = pgetf("minprob");
             float space_yes = pgetf("space_yes");
@@ -556,7 +555,7 @@ namespace glinerec {
 
             estimateSpaceSize();
 
-#pragma omp parallel for schedule(dynamic,10) private(p,v,b,props)
+#pragma omp parallel for schedule(dynamic,10) private(p,props)
             for(int i=0;i<ncomponents;i++) {
                 rectangle b;
                 bytearray mask;

@@ -69,6 +69,49 @@ namespace ocropus {
     };
 
     template <class T>
+    struct ComponentListIOWrapper : IOWrapper {
+        narray< autodel<T> > &data;
+        ComponentListIOWrapper(narray< autodel<T> > &data) : data(data) {
+        }
+        void clear() {
+            data.dealloc();
+        }
+        void save(FILE *stream) {
+            using namespace narray_io;
+            debugf("iodetail","<componentlist>\n");
+            string_write(stream,"<componentlist>");
+            strg s;
+            sprintf(s,"%d",data.length());
+            string_write(stream,s.c_str());
+            for(int i=0;i<data.length();i++) {
+                if(data[i])
+                    debugf("iodetail","   %s\n",data[i]->name());
+                save_component(stream,data[i]);
+            }
+            string_write(stream,"</componentlist>");
+            debugf("iodetail","</componentlist>\n");
+        }
+        void load(FILE *stream) {
+            using namespace narray_io;
+            debugf("iodetail","<componentlist>\n");
+            strg s;
+            string_read(stream,s);
+            CHECK(s=="<componentlist>");
+            string_read(stream,s);
+            int n = atoi(s.c_str());
+            data.resize(n);
+            for(int i=0;i<n;i++) {
+                load_component(stream,data[i]);
+                if(data[i])
+                    debugf("iodetail","   %s\n",data[i]->name());
+            }
+            string_read(stream,s);
+            CHECK(s=="</componentlist>");
+            debugf("iodetail","</componentlist>\n");
+        }
+    };
+
+    template <class T>
     struct ComponentIOWrapper : IOWrapper {
         T &data;
         ComponentIOWrapper(T &data) : data(data) {
@@ -144,11 +187,24 @@ namespace ocropus {
         narray<strg> wnames;
         narray< autodel<IOWrapper> > wrappers;
 
+        // this picks up narray<autodel<IComponent>>
+
+        template <class T>
+        void persist(narray< autodel<T> > &data,const char *name) {
+            wnames.push(name);
+            wrappers.push() = new ComponentListIOWrapper<T>(data);
+        }
+
+        // this picks up narray<float>, narray<narray<float>>, etc.
+
         template <class T>
         void persist(narray<T> &data,const char *name) {
             wnames.push() = name;
             wrappers.push() = new NarrayIOWrapper<T>(data);
         }
+
+        // this picks up autodel<IComponent>
+
         template <class T>
         void persist(autodel<T> &data,const char *name) {
             wnames.push() = name;
@@ -521,8 +577,15 @@ namespace ocropus {
     }
     template <class T>
     void load_component(FILE *stream,autodel<T> &dest) {
-        T *result = dynamic_cast<T*>(load_component(stream));
-        if(!result) throwf("load failed: load component yielded wrong type");
+        dest = 0;
+        IComponent *temp;
+        temp = load_component(stream);
+        if(!temp) return;
+        T *result = dynamic_cast<T*>(temp);
+        if(!result) {
+            delete temp;
+            throwf("load failed: load component yielded wrong type");
+        }
         dest = result;
     }
     template <class T>

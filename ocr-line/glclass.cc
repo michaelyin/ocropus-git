@@ -1654,10 +1654,16 @@ namespace glinerec {
             return junkchar;
         }
         int nfeatures() {
-            return charclass->nfeatures();
+            if(charclass)
+                return charclass->nfeatures();
+            else
+                return 0;
         }
         int nclasses() {
-            return max(jc()+1,charclass->nclasses());
+            if(charclass)
+                return max(jc()+1,charclass->nclasses());
+            else
+                return 0;
         }
         const char *name() {
             return "latin";
@@ -1761,6 +1767,7 @@ namespace glinerec {
     struct AveragingClassifier : IModel {
         int nclassifiers;
         narray< autodel<IModel> > classifiers;
+        bool last_is_trained;
         int count;
         AveragingClassifier() {
             pdef("tempsave","_tempsave_%03d.model","pattern for temporary save files");
@@ -1769,6 +1776,8 @@ namespace glinerec {
             classifiers.resize(1000);
             nclassifiers = 0;
             count = 0;
+            last_is_trained = 1;
+            persist(classifiers,"classifiers");
         }
         int nfeatures() {
             return classifiers[0]->nfeatures();
@@ -1784,8 +1793,15 @@ namespace glinerec {
             return "avgclass";
         }
         void info(int depth,FILE *stream) {
-            for(int i=0;i<nclassifiers;i++)
-                classifiers[i]->info();
+            iprintf(stream,depth,"avgclass has %d classifiers\n",
+                    classifiers.length());
+            for(int i=0;i<nclassifiers;i++) {
+                iprintf(stream,depth,"classifier %d:\n",i);
+                if(classifiers[i])
+                    classifiers[i]->info(depth+1,stream);
+                else if(i<3)
+                    iprintf(stream,depth+1,"null\n");
+            }
         }
         int nmodels() {
             return nclassifiers;
@@ -1798,33 +1814,24 @@ namespace glinerec {
         }
 
         void save(FILE *stream) {
-            debugf("iodetail","save avgclass\n");
-            magic_write(stream,"[avgclass1]");
-            psave(stream);
-            magic_write(stream,"[avgclass2]");
-            scalar_write(stream,nclassifiers);
-            magic_write(stream,"[avgclass3]");
-            debugf("iodetail","wrote %d classifiers\n",nclassifiers);
-            for(int i=0;i<nclassifiers;i++) {
-                magic_write(stream,"[avgclass4]");
-                save_component(stream,classifiers[i]);
+            // delete any untrained last classifier before saving
+            if(nclassifiers>0 && !last_is_trained) {
+                nclassifiers--;
+                classifiers[nclassifiers] = 0;
             }
-            debugf("iodetail","done");
+            this->IModel::save(stream);
         }
 
         void load(FILE *stream) {
-            debugf("iodetail","load avgclass\n");
-            magic_read(stream,"[avgclass1]");
-            pload(stream);
-            magic_read(stream,"[avgclass2]");
-            scalar_read(stream,nclassifiers);
-            magic_read(stream,"[avgclass3]");
-            debugf("iodetail","got %d classifiers\n",nclassifiers);
-            for(int i=0;i<nclassifiers;i++) {
-                magic_read(stream,"[avgclass4]");
-                load_component(stream,classifiers[i]);
-            }
-            debugf("iodetail","done");
+            this->IModel::load(stream);
+            nclassifiers = 0;
+            while(classifiers[nclassifiers])
+                nclassifiers++;
+            // create a new untrained classifier for continued training
+            make_component(classifiers[nclassifiers],pget("classifier"));
+            count = 0;
+            nclassifiers++;
+            last_is_trained = 0;
         }
 
         void train(IDataset &ds) {
@@ -1838,10 +1845,12 @@ namespace glinerec {
 
         void updateModel() {
             if(nclassifiers>0) {
-                if(count>100)
+                if(count>100) {
                     classifiers[nclassifiers-1]->updateModel();
-                else
+                    last_is_trained = 1;
+                } else {
                     debugf("warn","not updating last classifier since there are only %d samples\n",count);
+                }
             }
         }
 
@@ -1852,6 +1861,7 @@ namespace glinerec {
                 nclassifiers++;
                 make_component(classifiers[nclassifiers-1],pget("classifier"));
                 count = 0;
+                last_is_trained = 0;
             } if(count>=pgetf("chunk")) {
                 classifiers[nclassifiers-1]->updateModel();
                 if(pget("tempsave") && current_recognizer_) {
@@ -1870,6 +1880,7 @@ namespace glinerec {
                 nclassifiers++;
                 make_component(classifiers[nclassifiers-1],pget("classifier"));
                 count = 0;
+                last_is_trained = 0;
             }
             classifiers[nclassifiers-1]->add(v,c);
             count++;
@@ -1880,7 +1891,8 @@ namespace glinerec {
             result.resize(nc);
             result = 0;
             floatarray w;
-            for(int i=0;i<nclassifiers-1;i++) {
+            int n = last_is_trained?nclassifiers:nclassifiers-1;
+            for(int i=0;i<n;i++) {
                 classifiers[i]->outputs(w,v);
                 while(w.length()<nc) w.push(0.0);
                 result += w;
