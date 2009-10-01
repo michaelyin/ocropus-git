@@ -1765,26 +1765,25 @@ namespace glinerec {
     ////////////////////////////////////////////////////////////////
 
     struct AveragingClassifier : IModel {
-        int nclassifiers;
         narray< autodel<IModel> > classifiers;
-        bool last_is_trained;
+        int last_is_trained;
         int count;
         AveragingClassifier() {
             pdef("tempsave","_tempsave_%03d.model","pattern for temporary save files");
             pdef("classifier","latin","base classifier");
+            pdef("mintrain",1000,"minimum number of samples to use for final training");
             pdef("chunk",100000,"size of each training chunk");
-            classifiers.resize(1000);
-            nclassifiers = 0;
-            count = 0;
-            last_is_trained = 1;
             persist(classifiers,"classifiers");
+            // the last classifier is always untrained
+            make_component(classifiers.push(),pget("classifier"));
+            count = 0;
         }
         int nfeatures() {
             return classifiers[0]->nfeatures();
         }
         int nclasses() {
             int nc = 0;
-            for(int i=0;i<nclassifiers;i++) {
+            for(int i=0;i<classifiers.length()-1;i++) {
                 nc = max(nc,classifiers[i]->nclasses());
             }
             return nc;
@@ -1793,45 +1792,20 @@ namespace glinerec {
             return "avgclass";
         }
         void info(int depth,FILE *stream) {
-            iprintf(stream,depth,"avgclass has %d classifiers\n",
-                    classifiers.length());
-            for(int i=0;i<nclassifiers;i++) {
+            iprintf(stream,depth,"avgclass has %d classifiers\n",classifiers.length());
+            for(int i=0;i<classifiers.length();i++) {
                 iprintf(stream,depth,"classifier %d:\n",i);
-                if(classifiers[i])
-                    classifiers[i]->info(depth+1,stream);
-                else if(i<3)
-                    iprintf(stream,depth+1,"null\n");
+                classifiers[i]->info(depth+1,stream);
             }
         }
         int nmodels() {
-            return nclassifiers;
+            return classifiers.length();
         }
         void setModel(IModel *cf,int which) {
             classifiers[which] = cf;
         }
         IModel &getModel(int which) {
             return *classifiers[which];
-        }
-
-        void save(FILE *stream) {
-            // delete any untrained last classifier before saving
-            if(nclassifiers>0 && !last_is_trained) {
-                nclassifiers--;
-                classifiers[nclassifiers] = 0;
-            }
-            this->IModel::save(stream);
-        }
-
-        void load(FILE *stream) {
-            this->IModel::load(stream);
-            nclassifiers = 0;
-            while(classifiers[nclassifiers])
-                nclassifiers++;
-            // create a new untrained classifier for continued training
-            make_component(classifiers[nclassifiers],pget("classifier"));
-            count = 0;
-            nclassifiers++;
-            last_is_trained = 0;
         }
 
         void train(IDataset &ds) {
@@ -1844,29 +1818,22 @@ namespace glinerec {
         }
 
         void updateModel() {
-            if(nclassifiers>0) {
-                if(count>100) {
-                    classifiers[nclassifiers-1]->updateModel();
-                    last_is_trained = 1;
-                } else {
-                    debugf("warn","not updating last classifier since there are only %d samples\n",count);
-                }
+            if(count>pgetf("mintrain")) {
+                classifiers.last()->updateModel();
+                // the last classifier is always untrained, so add a new one
+                make_component(classifiers.push(),pget("classifier"));
+                count = 0;
+            } else {
+                debugf("warn","not updating last classifier since there are only %d samples\n",count);
             }
         }
 
-
         void add(floatarray &v,int c) {
-            if(nclassifiers==0) {
-                debugf("info","avgclass starting chunk %d\n",nclassifiers);
-                nclassifiers++;
-                make_component(classifiers[nclassifiers-1],pget("classifier"));
-                count = 0;
-                last_is_trained = 0;
-            } if(count>=pgetf("chunk")) {
-                classifiers[nclassifiers-1]->updateModel();
+            if(count>=pgetf("chunk")) {
+                classifiers.last()->updateModel();
                 if(pget("tempsave") && current_recognizer_) {
                     strg file;
-                    sprintf(file,pget("tempsave"),nclassifiers);
+                    sprintf(file,pget("tempsave"),classifiers.length()-1);
                     debugf("info","saving %s\n",file.c_str());
                     save_component(stdio(file.c_str(),"w"),current_recognizer_);
 #if 1
@@ -1876,13 +1843,11 @@ namespace glinerec {
                     debugf("info","%s loaded OK\n",file.c_str());
 #endif
                 }
-                debugf("info","avgclass starting chunk %d\n",nclassifiers);
-                nclassifiers++;
-                make_component(classifiers[nclassifiers-1],pget("classifier"));
+                debugf("info","avgclass starting chunk %d\n",classifiers.length());
+                make_component(classifiers.push(),pget("classifier"));
                 count = 0;
-                last_is_trained = 0;
             }
-            classifiers[nclassifiers-1]->add(v,c);
+            classifiers.last()->add(v,c);
             count++;
         }
 
@@ -1891,13 +1856,12 @@ namespace glinerec {
             result.resize(nc);
             result = 0;
             floatarray w;
-            int n = last_is_trained?nclassifiers:nclassifiers-1;
-            for(int i=0;i<n;i++) {
+            for(int i=0;i<classifiers.length()-1;i++) {
                 classifiers[i]->outputs(w,v);
                 while(w.length()<nc) w.push(0.0);
                 result += w;
             }
-            result /= nclassifiers;
+            result /= (classifiers.length()-1);
             return 0.0;
         }
     };
