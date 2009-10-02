@@ -297,6 +297,7 @@ namespace glinerec {
             pprint(stream,depth);
             iprintf(stream,depth,"segmenter: %s\n",!segmenter?"null":segmenter->description());
             iprintf(stream,depth,"grouper: %s\n",!grouper?"null":grouper->description());
+            iprintf(stream,depth,"counts: %d %d\n",counts.length(),(int)sum(counts));
             featuremap->info(depth,stream);
             classifier->info(depth,stream);
         }
