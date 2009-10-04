@@ -1881,6 +1881,7 @@ namespace glinerec {
         component_register<AdaBoost>("adaboost");
         component_register2<MappedClassifier,AdaBoost>("boosted");
         component_register<CascadedMLP>("cmlp");
+        // component_register2<MappedClassifier,CascadedMLP>("mappedcascaded");
         component_register2<MappedClassifier,CascadedMLP>("cascadedmlp");
         component_register<LatinClassifier>("latin");
         typedef RowDataset<float8> RowDataset8;

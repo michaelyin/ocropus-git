@@ -157,6 +157,10 @@ namespace ocropus {
     void rotate_180(narray<T> &out, narray<T> &in);
     template<class T>
     void rotate_270(narray<T> &out, narray<T> &in);
+
+    float estimate_linesize(bytearray &image,float f=0.5,float minsize=5.0);
+    float estimate_strokewidth(bytearray &image,float f=0.6);
+    float estimate_size_by_box(bytearray &image,float f=0.5);
 }
 
 #endif

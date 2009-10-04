@@ -202,6 +202,7 @@ namespace ocropus {
 
     int main_lines2fsts(int argc,char **argv) {
         param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
+        param_string clinerec("clinerec",0,"linerec class");
         param_string cmodel("cmodel",DEFAULT_DATA_DIR "default.model","character model used for recognition");
         param_bool save_fsts("save_fsts",1,"save the fsts (set to 0 for eval-only in lines2fsts)");
         param_bool continue_partial("continue_partial",0,"don't compute outputs that already exist");
@@ -227,7 +228,12 @@ namespace ocropus {
                 try {
 #pragma omp critical
                     try {
-                        if(!linerec) linerec_load(linerec,cmodel);
+                        if(!linerec) {
+                            if(clinerec)
+                                make_component(linerec,clinerec);
+                            else
+                                linerec_load(linerec,cmodel);
+                        }
                     } catch(...) {
                         debugf("info","loading %s failed\n",(const char *)cmodel);
                         abort(); // can't do much else in OpenMP
@@ -738,13 +744,18 @@ namespace ocropus {
         param_bool retrain_threshold("retrain_threshold",100,"only retrain on characters with a cost lower than this");
         param_int ntrain("ntrain",10000000,"max number of training examples");
         param_bool old_csegs("old_csegs",0,"(obsolete, old vs new csegs is now determined automatically)");
+        param_string cmodel("cmodel",0,"classifier to be trained (load an existing one)");
+        param_string clinerec("clinerec","linerec","classifier to be trained (instantiate)");
         int nold_csegs = 0;
 
         if(argc!=3) throw "usage: ... model books...";
 
         dinit(512,512);
         autodel<IRecognizeLine> linerec;
-        linerec = make_Linerec();
+        if(cmodel)
+            load_component(linerec,stdio(cmodel,"r"));
+        else
+            make_component(linerec,clinerec);
         autodel<IDataset> dataset;
         if(linerec) linerec->startTraining("");
 
@@ -828,6 +839,8 @@ namespace ocropus {
                     linerec->addTrainingLine(cseg,image,nutranscript);
                     total_chars += nutranscript.length();
                     total_lines++;
+                } catch(DoneTraining &_) {
+                    break;
                 } CATCH_COMMON(continue);
             } catch(const char *msg) {
                 debugf("error","%04d %06x: %s\n",lines.pageno,lines.lineno,msg);
@@ -933,6 +946,23 @@ namespace ocropus {
             simple_recolor(segmentation);
         }
         write_image_packed(argv[2],segmentation);
+        return 0;
+    }
+
+    int main_linesize(int argc,char **argv) {
+        bytearray image;
+        for(int i=1;i<argc;i++) {
+            try {
+                read_image_gray(image,argv[i]);
+                float strokewidth = estimate_strokewidth(image);
+                float size = estimate_linesize(image,0.5,1.5*strokewidth);
+                printf("%10g %10g %s\n",size,strokewidth,argv[i]);
+            } catch(const char *err) {
+                fprintf(stderr,"%s: %s\n",err,argv[i]);
+            } catch(...) {
+                fprintf(stderr,"OOPS: %s\n",argv[i]);
+            }
+        }
         return 0;
     }
 
@@ -1070,6 +1100,7 @@ namespace ocropus {
             if(!strcmp(argv[1],"cleanupbin")) return main_cleanupbin(argc-1,argv+1);
             if(!strcmp(argv[1],"recolor")) return main_recolor(argc-1,argv+1);
             if(!strcmp(argv[1],"pageseg")) return main_pageseg(argc-1,argv+1);
+            if(!strcmp(argv[1],"linesize")) return main_linesize(argc-1,argv+1);
             usage(argv[0]);
         } catch(const char *s) {
             fprintf(stderr,"FATAL: %s\n",s);

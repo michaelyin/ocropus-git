@@ -233,6 +233,148 @@ namespace glinerec {
         }
     };
 
+    struct NullLinerec : IRecognizeLine {
+        const char *interface() { return "IRecognizeLine"; }
+        const char *name() { return "nulllinerec"; }
+        virtual void recognizeLine(IGenericFst &result,bytearray &image) {
+        }
+        virtual void startTraining(const char *type="adaptation") {
+        }
+        virtual void addTrainingLine(bytearray &image,ustrg &transcription) {
+        }
+        virtual void addTrainingLine(intarray &segmentation, bytearray &image_grayscale,
+                                     ustrg &transcription) {
+        }
+        virtual void align(ustrg &chars,intarray &seg,floatarray &costs,
+                           bytearray &image,IGenericFst &transcription) {
+        }
+        virtual void finishTraining() {
+        }
+        virtual void recognizeLine(intarray &segmentation,IGenericFst &result,bytearray &image) {
+        }
+        virtual ~NullLinerec() {}
+    };
+
+    float mean(floatarray &a) {
+        return sum(a)/a.length();
+    }
+
+    struct MetaLinerec : IRecognizeLine {
+        autodel<IRecognizeLine> default_recognizer;
+        narray< autodel<IRecognizeLine> > recognizers;
+        intarray counts;
+        int sbucket,wbucket;
+        MetaLinerec() {
+            pdef("preload",0,"recognizer to be preloaded");
+            pdef("linerec","linerec","recognizer to be instantiated");
+            pdef("sbucket",-1,"size bucket");
+            pdef("wbucket",-1,"stroke width bucket");
+            pdef("maxbucket",200000,"max # training samples per bucket");
+            persist(default_recognizer,"default_recognizer");
+            persist(recognizers,"recognizers");
+            recognizers.resize(10,10);
+            counts.resize(10,10);
+            counts = 0;
+            sbucket = -1;
+            wbucket = -1;
+            debugf("metalinerec","metalinerec initialized\n");
+        }
+        void load(FILE *stream) {
+            this->IComponent::load(stream);
+            // environment overrides loaded values
+            import("sbucket");
+            import("wbucket");
+            // persist doesn't handle 2D arrays quite right yet
+            recognizers.reshape(10,10);
+        }
+        void maybe_init() {
+            if(default_recognizer) return;
+            if(pget("preload"))
+                load_component(default_recognizer,stdio(pget("preload"),"r"));
+            else
+                make_component(default_recognizer,pget("linerec"));
+        }
+        const char *interface() {
+            return "IRecognizeLine";
+        }
+        const char *name() {
+            return "metalinerec";
+        }
+        void info(int depth,FILE *stream) {
+            iprintf(stream,depth,"MetaLinerec\n");
+            pprint(stream,depth);
+            for(int i=0;i<recognizers.dim(0);i++) {
+                for(int j=0;j<recognizers.dim(1);j++) {
+                    if(!recognizers(i,j)) continue;
+                    iprintf(stream,depth,"%2d %2d %s\n",i,j,recognizers(i,j)->name());
+                }
+            }
+        }
+        void bucket(int &s,int &w,bytearray &image) {
+            float size = estimate_linesize(image);
+            float strokewidth = estimate_strokewidth(image);
+            debugf("sizeinfo","size %g strokewidth %g\n",size,strokewidth);
+            s = int(log(max(1.0,0.5+size)));
+            w = int(log(max(1.0,0.5+strokewidth)));
+        }
+        virtual void recognizeLine(intarray &segmentation,IGenericFst &result,bytearray &image) {
+            maybe_init();
+            int s,w;
+            bucket(s,w,image);
+            if(recognizers(s,w)) {
+                recognizers(s,w)->recognizeLine(segmentation,result,image);
+            } else {
+                default_recognizer->recognizeLine(segmentation,result,image);
+            }
+        }
+        virtual void recognizeLine(IGenericFst &result,bytearray &image) {
+            intarray segmentation;
+            this->recognizeLine(segmentation,result,image);
+        }
+        virtual void startTraining(const char *type="adaptation") {
+            maybe_init();
+            sbucket = pgetf("sbucket");
+            wbucket = pgetf("wbucket");
+            if(sbucket<0) throw "must set sbucket prior to training";
+            if(wbucket<0) throw "must set wbucket prior to training";
+            make_component(recognizers(sbucket,wbucket),pget("linerec"));
+            recognizers(sbucket,wbucket)->startTraining(type);
+        }
+        virtual void addTrainingLine(intarray &segmentation, bytearray &image_grayscale,
+                                     ustrg &transcription) {
+            maybe_init();
+            int s,w;
+            bucket(s,w,image_grayscale);
+            // printf(">>> %d %d\n",s,w);
+            if(s!=sbucket || w!=wbucket) return;
+            if(counts(s,w)>=pgetf("maxbucket")) throw DoneTraining();
+            counts(s,w) += transcription.length();
+            debugf("metalinerec","%d %d : %d\n",s,w,counts(s,w));
+            recognizers(s,w)->addTrainingLine(segmentation,image_grayscale,transcription);
+        }
+        virtual void addTrainingLine(bytearray &image,ustrg &transcription) {
+            intarray segmentation;
+            addTrainingLine(segmentation,image,transcription);
+        }
+        virtual void align(ustrg &chars,intarray &seg,floatarray &costs,
+                           bytearray &image,IGenericFst &transcription) {
+            maybe_init();
+            int s,w;
+            bucket(s,w,image);
+            if(recognizers(s,w)) {
+                recognizers(s,w)->align(chars,seg,costs,image,transcription);
+            } else {
+                default_recognizer->align(chars,seg,costs,image,transcription);
+            }
+        }
+        virtual void finishTraining() {
+            maybe_init();
+            recognizers(sbucket,wbucket)->finishTraining();
+        }
+        virtual ~MetaLinerec() {
+        }
+    };
+
     struct LinerecExtracted : IRecognizeLine {
         enum { reject_class = '~' };
         autodel<ISegmentLine> segmenter;
@@ -665,7 +807,9 @@ namespace glinerec {
         static bool init = false;
         if(init) return;
         init = true;
-        component_register<LinerecExtracted>("linerec");
         component_register<CenterFeatureMap>("cfmap");
+        component_register<LinerecExtracted>("linerec");
+        component_register<NullLinerec>("nulllinerec");
+        component_register<MetaLinerec>("metalinerec");
     }
 }

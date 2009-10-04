@@ -720,4 +720,70 @@ namespace ocropus {
         }
     }
     template void rotate_180<byte>(narray<byte> &,narray<byte> &);
+
+    float estimate_linesize(bytearray &image,float f,float minsize) {
+        floatarray sizes;
+        for(int i=0;i<image.dim(0);i++) {
+            int lo=-1,hi=-1;
+            for(int j=0;j<image.dim(1);j++) {
+                if(image(i,j)>=128) continue;
+                if(lo<0) lo = j;
+                hi = j;
+            }
+            if(hi==lo) continue;
+            if(hi-lo<minsize) continue;
+            sizes.push(hi-lo);
+        }
+        if(sizes.length()<1) return 0;
+        float v = fractile(sizes,f);
+        return v;
+    }
+
+    float estimate_strokewidth(bytearray &image,float f) {
+        int w = image.dim(0);
+        int h = image.dim(1);
+        floatarray widths;
+        for(int i=0;i<w;i++) {
+            int j = 0;
+            while(j<h) {
+                while(j<h && image(i,j)>=128) j++;
+                int start = j;
+                if(j>=h) break;
+                while(j<h && image(i,j)<128) j++;
+                int d = j-start;
+                widths.push(d);
+            }
+        }
+        for(int j=0;j<h;j++) {
+            int i = 0;
+            while(i<w) {
+                while(i<w && image(i,j)>=128) i++;
+                int start = i;
+                if(i>=w) break;
+                while(i<w && image(i,j)<128) i++;
+                int d = i-start;
+                widths.push(d);
+            }
+        }
+        if(widths.length()<1) return 0;
+        float v = fractile(widths,f);
+        return v;
+    }
+
+    float estimate_size_by_box(bytearray &image,float f) {
+        intarray labels;
+        labels = image;
+        label_components(labels);
+        narray<rectangle> rects;
+        bounding_boxes(rects,labels);
+        floatarray sizes;
+        for(int i=1;i<rects.length();i++) {
+            int d = rects[i].y1-rects[i].y0;
+            debugf("ds","%d\n",d);
+            sizes.push(d);
+        }
+        float v = sum(sizes)*1.0/sizes.length();
+        return v;
+    }
+
 }
