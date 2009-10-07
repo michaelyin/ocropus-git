@@ -231,4 +231,48 @@ namespace ocropus {
                                           bytearray &image) {
         return get_extended_line_info_using_ccs(t.c, t.m, t.x, t.d, t.a, image);
     }
+
+    bool get_rast_info(float &intercept,
+                       float &slope,
+                       bytearray &charimage) {
+
+        using namespace narray_ops;
+
+        intercept = 0;
+        slope = 0;
+        if(charimage.dim(1)<5) return false;
+
+        intarray seg;
+        seg = charimage;
+        sub(max(seg),seg);
+        label_components(seg,false);
+
+        rectarray bboxes;
+        bounding_boxes(bboxes,seg);
+        if(bboxes.length()<2) return false;
+
+        autodel<CTextlineRAST> ctextline;
+        ctextline = make_CTextlineRAST();
+        ctextline->min_q       = 2.0;
+        ctextline->min_count   = 2;
+        ctextline->min_length  = 30;
+        ctextline->max_results = 1;
+        ctextline->min_gap     = 500;
+        ctextline->epsilon     = 4;
+
+        autodel<CharStats> charstats;
+        charstats = make_CharStats();
+        charstats->getCharBoxes(bboxes);
+        if(charstats->char_boxes.length()<2) return false;
+        charstats->calcCharStats();
+
+        narray<TextLine> textlines;
+        ctextline->extract(textlines,charstats);
+
+        if(!textlines.length()) return false;
+        TextLine &t = textlines[0];
+        intercept = t.c;
+        slope = t.m;
+        return true;
+    }
 }

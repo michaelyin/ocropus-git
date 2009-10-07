@@ -112,9 +112,9 @@ namespace glinerec {
             make_component(fmap,"sfmap");
             pdef("csize",40,"target character size after rescaling");
             pdef("maxheight",300,"maximum height of input line");
-            pdef("context",1.5,"how much context to include (1.0=no context)");
+            pdef("context",1.0,"how much to scale up the extraction window");
             pdef("mdilate",2,"dilate the extraction mask by this much");
-            pdef("minsize_factor",1.3,"minimum size of bounding box in terms of xheight");
+            pdef("minsize_factor",1.0,"minimum size of bounding box in terms of xheight");
             pdef("use_props",1,"use character properties (aspect ratio, etc.)");
             persist(fmap,"fmap");
         }
@@ -125,20 +125,36 @@ namespace glinerec {
             return "IFeatureMap";
         }
 
-        float intercept,slope,xheight,descender_sink,ascender_rise;
+        void get_line_info(float &intercept,float &slope,float &xheight,bytearray &image) {
+            bytearray image_;
+            image_ = image;
+#if 0
+            for(int i=0;i<image.dim(0);i+=image.dim(1)) {
+                for(int j=0;j<image.dim(1);j++)
+                    image_(i,j) = 255;
+            }
+#endif
+            get_rast_info(intercept,slope,image_);
+            float strokewidth = estimate_strokewidth(image,0.5);
+            float size = estimate_linesize(image,0.5,1.5*strokewidth);
+            xheight = size;
+        }
+
+        float intercept,slope,xheight;
 
         void setLine(bytearray &image) {
             this->image = image;
             fmap->setLine(image);
-            // FIXME get rid of this call
-            get_extended_line_info_using_ccs(intercept,slope,xheight,
-                                             descender_sink,ascender_rise,image);
+
+
+            get_line_info(intercept,slope,xheight,image);
             if(xheight<4) throw BadTextLine();
+
             show_baseline(slope,intercept,xheight,image,"YYY");
             bytearray baseline_image;
             debug_baseline(baseline_image,slope,intercept,xheight,image);
             logger.log("baseline\n",baseline_image);
-            debugf("detail","LineInfo %g %g %g %g %g\n",intercept,slope,xheight,descender_sink,ascender_rise);
+            debugf("info","LineInfo %g %g %g\n",intercept,slope,xheight);
         }
 
         void pushProps(InputVector &iv,rectangle b) {
@@ -311,8 +327,8 @@ namespace glinerec {
             }
         }
         void bucket(int &s,int &w,bytearray &image) {
-            float size = estimate_linesize(image);
-            float strokewidth = estimate_strokewidth(image);
+            float strokewidth = estimate_strokewidth(image,0.5);
+            float size = estimate_linesize(image,0.5,1.5*strokewidth);
             debugf("sizeinfo","size %g strokewidth %g\n",size,strokewidth);
             s = int(log(max(1.0,0.5+size)));
             w = int(log(max(1.0,0.5+strokewidth)));
