@@ -272,6 +272,8 @@ namespace glinerec {
                 h(a(i))++;
         }
 
+        // Note: this is different from the toplevel MappedDataset
+
         struct MappedDataset : IDataset {
             IDataset &ds;
             intarray &c2i;
