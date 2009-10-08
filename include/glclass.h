@@ -151,6 +151,7 @@ namespace glinerec {
                     return inputs[i];
             }
             throwf("%s: no such input chunk",name);
+            return inputs[0];
         }
 
         // vector-like access
