@@ -23,7 +23,7 @@
 namespace ocropus {
     int main_align(int argc,char **argv) {
         param_bool abort_on_error("abort_on_error",0,"abort recognition if there is an unexpected error");
-        param_string suffix("suffix",0,"suffix for writing the ground truth (e.g., 'gt')")
+        param_string suffix("suffix",0,"suffix for writing the ground truth (e.g., 'gt')");
         param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         param_string gt_type("gt_type","transcript","kind of ground truth: transcript, fst, pagefst");
         param_int beam_width("beam_width", 100, "number of nodes in a beam generation");
