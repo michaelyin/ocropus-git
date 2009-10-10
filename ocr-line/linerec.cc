@@ -154,7 +154,7 @@ namespace glinerec {
             bytearray baseline_image;
             debug_baseline(baseline_image,slope,intercept,xheight,image);
             logger.log("baseline\n",baseline_image);
-            debugf("info","LineInfo %g %g %g\n",intercept,slope,xheight);
+            debugf("lineinfo","LineInfo %g %g %g\n",intercept,slope,xheight);
         }
 
         void pushProps(InputVector &iv,rectangle b) {
