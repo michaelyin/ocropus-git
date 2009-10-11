@@ -74,7 +74,7 @@ namespace ocropus {
 
         void binarize(bytearray &out,bytearray &in_) {
             floatarray in;
-            in_ = in;
+            in.copy(in_);
             binarize_by_range(out,in,fraction);
         }
 
