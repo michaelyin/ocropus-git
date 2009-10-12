@@ -32,6 +32,13 @@
 namespace ocropus {
     using namespace colib;
 
+    enum {
+        L_SIGMA = -4,
+        L_RHO = -3,
+        L_PHI = -2,
+        L_EPSILON = 0,
+    };
+
     struct OcroFST : IGenericFst {
         virtual intarray &targets(int vertex) = 0;
         virtual intarray &inputs(int vertex) = 0;
@@ -40,7 +47,7 @@ namespace ocropus {
         virtual float acceptCost(int vertex) = 0;
         virtual void setAcceptCost(int vertex, float new_value) = 0;
         virtual floatarray &heuristics() = 0;
-        
+
         enum {
             SORTED_BY_INPUT = 1,
             SORTED_BY_OUTPUT = 2,
@@ -93,7 +100,7 @@ namespace ocropus {
 
     /// Remove epsilons (zeros) and converts integers to nuchars.
     void remove_epsilons(ustrg &s, intarray &a);
-    
+
     /// Make an in-place Kleene closure of the FST.
     void fst_star(IGenericFst &fst);
 
@@ -168,7 +175,7 @@ namespace ocropus {
                                OcroFST &fst2,
                                OcroFST &fst3);
     */
-    
+
     void beam_search(intarray &vertices1,
                      intarray &vertices2,
                      intarray &inputs,
