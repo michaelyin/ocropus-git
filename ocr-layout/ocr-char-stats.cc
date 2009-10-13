@@ -1,26 +1,26 @@
 // -*- C++ -*-
 
-// Copyright 2006-2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz 
+// Copyright 2006-2008 Deutsches Forschungszentrum fuer Kuenstliche Intelligenz
 // or its licensors, as applicable.
-// 
+//
 // You may not use this file except under the terms of the accompanying license.
-// 
+//
 // Licensed under the Apache License, Version 2.0 (the "License"); you
 // may not use this file except in compliance with the License. You may
 // obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
-// 
+//
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// 
+//
 // Project: OCRopus
 // File: ocr-char-stats.cc
 // Purpose: calculate character statistics from bounding boxes
 // Responsible: Faisal Shafait (faisal.shafait@dfki.de)
-// Reviewer: 
-// Primary Repository: 
+// Reviewer:
+// Primary Repository:
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include "ocropus.h"
@@ -44,7 +44,7 @@ namespace ocropus {
         quicksort(index,values);
         permute(boxes,index);
     }
-    
+
     void sort_boxes_by_y0(rectarray &boxes) {
         int len = boxes.length();
         if(!len)
@@ -56,7 +56,7 @@ namespace ocropus {
         quicksort(index,values);
         permute(boxes,index);
     }
-    
+
     static void calc_hist(floatarray &hist, floatarray &distances,
                           int minval, int maxval){
         hist.clear();
@@ -75,7 +75,7 @@ namespace ocropus {
         int   len = distances.length();
         for(int i=0; i<len; i++)
             maxval = max(maxval, distances[i]);
-        
+
         hist.clear();
         hist.resize((int)maxval+1); //Not interested in -ive values
         for(int i=0; i<=maxval; i++)
@@ -84,7 +84,7 @@ namespace ocropus {
             hist[(int)distances[i]] ++;
         }
     }
-    
+
     // estimate the height of a line of text using bounding boxes of connected components
     int calc_xheight(rectarray &bboxes) {
         int i;
@@ -101,7 +101,7 @@ namespace ocropus {
         }
         calc_hist(histogram,heights);
         gauss1d(histogram,smooth);
-        
+
         best_i = -1;
         best_v = -1.0;
         for(i=min_height;i<histogram.length();i++) {
@@ -109,18 +109,18 @@ namespace ocropus {
             best_i = i;
             best_v = histogram[i];
         }
-        
+
         return best_i;
     }
 
     static inline bool x_overlap(rectangle a, rectangle b){
         return ( (a.x1 >= b.x0) && (b.x1 >= a.x0) );
     }
-    
+
     static inline bool y_overlap(rectangle a, rectangle b){
         return ( (a.y1 >= b.y0) && (b.y1 >= a.y0) );
     }
-    
+
     static void calc_distances(floatarray &hdist,
                                floatarray &vdist,
                                rectarray &cboxes){
@@ -186,11 +186,13 @@ namespace ocropus {
         large_boxes.dealloc();
     }
 
+    // FIXME this shouldn't be a "get" method,
+    // it should be a "set" method
     void CharStats::getCharBoxes(rectarray &comps){
 
         if(!comps.length()){
             fprintf(stderr,"Empty connected components array. Aborting ...\n");
-			return;
+                        return;
             //exit(1);
         }
         img_width  = comps[0].x1;
@@ -199,7 +201,7 @@ namespace ocropus {
         for(int i=1;i<comps.length();i++)
             if(comps[i].area())
                 concomps.push(comps[i]);
-        
+
         int histsize  = 200;
         int mindim    = 5;
         floatarray xhist,yhist,widtharray,heightarray;
@@ -250,25 +252,25 @@ namespace ocropus {
         }
 
     }
-    
+
     void CharStats::calcCharStats(){
         calcCharStats(char_boxes);
     }
-    
+
     void CharStats::calcCharStats(rectarray &cboxes){
         if(!cboxes.length()){
             fprintf(stderr,"No character boxes found! ...\n");
             return ;
         }
-        
+
         xheight = calc_xheight(cboxes);
         sort_boxes_by_y0(cboxes);
-        
+
         floatarray   vdist,hdist;
         floatarray   vhist,hhist;
         float        maxdist = 200;
-        float        smooth = 2.0; 
-        
+        float        smooth = 2.0;
+
         calc_distances(hdist, vdist, cboxes);
         calc_hist(hhist, hdist);
         calc_hist(vhist, vdist);
@@ -294,7 +296,7 @@ namespace ocropus {
             }
         }
     }
-    
+
     void CharStats::calcCharStatsForOneLine(){
         calcCharStatsForOneLine(char_boxes);
     }
@@ -304,14 +306,14 @@ namespace ocropus {
             fprintf(stderr,"No character boxes found! ...\n");
             return ;
         }
-        
+
         xheight = calc_xheight(cboxes);
         sort_boxes_by_x0(cboxes);
-        
+
         floatarray   hdist,vdist;
         floatarray   hhist;
         float        maxdist = 200;
-        
+
         calc_distances(hdist, vdist, cboxes);
         calc_hist(hhist, hdist);
         intarray modes;

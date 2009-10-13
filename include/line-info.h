@@ -39,27 +39,22 @@ namespace ocropus {
     /// @param xheight Height of letters.
     /// @param descender_sink Distance between descender line and baseline (positive)
     /// @param ascender_rise Distance between ascender line and baseline plus x-height
+    ///
+    /// WARNING: this doesn't work reliably
+
     bool get_extended_line_info(float &intercept, float &slope,
                                 float &xheight, float &descender_sink,
-                                float &ascender_rise, intarray &seg);
+                                float &ascender_rise, intarray &seg) DEPRECATED;
 
     /// Get line information of a black-and-white line.
+    ///
+    /// WARNING: this doesn't work reliably
+
     bool get_extended_line_info_using_ccs(float &intercept, float &slope,
                                           float &xheight, float &descender_sink,
-                                          float &ascender_rise, bytearray &img);
+                                          float &ascender_rise, bytearray &img) DEPRECATED;
 
-#if 0
-    /// Another, more Lua-friendly interface for get_extended_line_info().
-    /// Packs all the line parameters into the struct but doesn't change
-    /// the bbox.
-    bool get_extended_line_info(TextLineExtended &result, intarray &seg);
-
-    /// Lua-friendly interface for get_extended_line_info_using_css().
-    /// Analogous to get_extended_line_info().
-    bool get_extended_line_info_using_ccs(TextLineExtended &result,
-                                          bytearray &image);
-    void paint_line(intarray &image, TextLineExtended l);
-#endif
+    bool get_rast_info(float &intercept, float &slope,bytearray &img);
 
 };
 

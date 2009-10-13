@@ -381,6 +381,8 @@ namespace ocropus {
                                       bytearray &image, bool useit)
             WARN_DEPRECATED { throw "unimplemented"; }
     };
+
+    struct DoneTraining { };
 }
 
 #endif

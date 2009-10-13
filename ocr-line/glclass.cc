@@ -1554,6 +1554,7 @@ namespace glinerec {
             iprintf(stream,depth,"CascadedMLP %d models\n",models.length());
             pprint(stream,depth);
             for(int i=0;i<models.length();i++) {
+                iprintf(stream,depth+1,"CASCADED MODEL %d\n",i);
                 models[i]->info(depth+1,stream);
             }
         }
@@ -1669,7 +1670,11 @@ namespace glinerec {
             return "latin";
         }
         void info(int depth,FILE *stream) {
+            iprintf(stream,depth+1,"CHARCLASS MODEL\n");
             charclass->info(depth+1,stream);
+            iprintf(stream,depth+1,"JUNKCLASS MODEL\n");
+            junkclass->info(depth+1,stream);
+            iprintf(stream,depth+1,"ULCLASS MODEL\n");
             ulclass->info(depth+1,stream);
         }
         int nmodels() {
@@ -1881,6 +1886,7 @@ namespace glinerec {
         component_register<AdaBoost>("adaboost");
         component_register2<MappedClassifier,AdaBoost>("boosted");
         component_register<CascadedMLP>("cmlp");
+        // component_register2<MappedClassifier,CascadedMLP>("mappedcascaded");
         component_register2<MappedClassifier,CascadedMLP>("cascadedmlp");
         component_register<LatinClassifier>("latin");
         typedef RowDataset<float8> RowDataset8;
