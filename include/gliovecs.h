@@ -97,6 +97,7 @@ namespace glinerec {
                     return inputs[i];
             }
             throwf("%s: no such input chunk",name);
+            return *(floatarray*)0;
         }
 
         // vector-like access

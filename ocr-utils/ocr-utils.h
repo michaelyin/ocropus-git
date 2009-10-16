@@ -37,8 +37,6 @@
 #include "grouper.h"
 #include "linesegs.h"
 #include "logger.h"
-#include "ocr-utils.h"
-#include "pages.h"
 #include "pagesegs.h"
 #include "queue.h"
 #include "resource-path.h"
@@ -47,4 +45,16 @@
 #include "sysutil.h"
 #include "xml-entities.h"
 
+namespace ocropus {
+    void skeletal_features(bytearray &endpoints,
+                           bytearray &junctions,
+                           bytearray &image,
+                           float presmooth=0.0,
+                           float skelsmooth=0.0);
+    void skeletal_feature_counts(int &nendpoints,
+                                 int &njunctions,
+                                 bytearray &image,
+                                 float presmooth=0.0,
+                                 float skelsmooth=0.0);
+}
 #endif
