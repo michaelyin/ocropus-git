@@ -116,7 +116,7 @@ namespace ocropus {
         dest.clear();
         const char *begin = src;
         char *p;
-        while((p = strchr(begin, '&'))) {
+        while((p = strchr((char*)begin, '&'))) {
             append_to_ustrg(dest, begin, p - begin);
             begin = append_XML_entity(dest, p);
             CHECK_CONDITION(begin);

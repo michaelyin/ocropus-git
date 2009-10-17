@@ -731,6 +731,28 @@ namespace ocropus {
         return 0;
     }
 
+    int main_show(int argc,char **argv) {
+        bytearray image;
+        read_image_gray(image,argv[1]);
+        dinit(min(image.dim(0),1500),
+              min(image.dim(1),1100),true);
+        dshown(image);
+        dwait();
+        return 0;
+    }
+
+    int main_showseg(int argc,char **argv) {
+        intarray segmentation;
+        read_image_packed(segmentation,argv[1]);
+        dinit(min(segmentation.dim(0),1500),
+              min(segmentation.dim(1),1100),true);
+        for(int i=0;i<segmentation.length();i++)
+            if(segmentation[i]==0xffffff) segmentation[i] = 0;
+        dshowr(segmentation);
+        dwait();
+        return 0;
+    }
+
     int main_pageseg(int argc,char **argv) {
         param_bool recolor("recolor",0,"recolor segmentation");
         param_string csegmenter("psegmenter","SegmentPageByRAST","segmenter to use at the page level");
@@ -882,6 +904,8 @@ namespace ocropus {
             if(!strcmp(argv[1],"cleanupgray")) return main_cleanupgray(argc-1,argv+1);
             if(!strcmp(argv[1],"cleanupbin")) return main_cleanupbin(argc-1,argv+1);
             if(!strcmp(argv[1],"recolor")) return main_recolor(argc-1,argv+1);
+            if(!strcmp(argv[1],"show")) return main_show(argc-1,argv+1);
+            if(!strcmp(argv[1],"showseg")) return main_showseg(argc-1,argv+1);
             if(!strcmp(argv[1],"pageseg")) return main_pageseg(argc-1,argv+1);
             usage(argv[0]);
         } catch(const char *s) {
