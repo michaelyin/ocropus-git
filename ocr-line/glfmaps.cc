@@ -8,6 +8,7 @@
 #include "ocropus.h"
 #include "glinerec.h"
 #include "glfmaps.h"
+#include "ocr-utils.h"
 
 using namespace iulib;
 using namespace colib;
@@ -25,49 +26,6 @@ namespace {
     }
     double loguniform(double lo,double hi) {
         return exp(drand48()*(log(hi)-log(lo))+log(lo));
-    }
-
-    int count_neighbors(bytearray &bi,int x,int y) {
-        int nn=0;
-        if (bi(x+1,y)) nn++;
-        if (bi(x+1,y+1)) nn++;
-        if (bi(x,y+1)) nn++;
-        if (bi(x-1,y+1)) nn++;
-        if (bi(x-1,y)) nn++;
-        if (bi(x-1,y-1)) nn++;
-        if (bi(x,y-1)) nn++;
-        if (bi(x+1,y-1)) nn++;
-        return nn;
-    }
-
-    void skeletal_features(bytearray &endpoints,
-                           bytearray &junctions,
-                           bytearray &image,
-                           float presmooth=0.0,
-                           float skelsmooth=0.0) {
-        bytearray temp;
-        temp.copy(image);
-        greater(temp,128,0,255);
-        if(presmooth>0) {
-            gauss2d(temp,presmooth,presmooth);
-            greater(temp,128,0,255);
-        }
-        thin(temp);
-        dshow(temp,"yYy");
-        makelike(junctions,temp);
-        junctions = 0;
-        makelike(endpoints,temp);
-        endpoints = 0;
-        for(int i=1;i<temp.dim(0)-1;i++) {
-            for(int j=1;j<temp.dim(1)-1;j++) {
-                if(!temp(i,j)) continue;
-                int n = count_neighbors(temp,i,j);
-                if(n==1) endpoints(i,j) = 255;
-                if(n>2) junctions(i,j) = 255;
-            }
-        }
-        binary_dilate_circle(junctions,int(skelsmooth+0.5));
-        binary_dilate_circle(endpoints,int(skelsmooth+0.5));
     }
 
     float normorient(float x) {
@@ -319,7 +277,7 @@ namespace glinerec {
             if(strchr(ftypes,'j') || strchr(ftypes,'e')) {
                 float presmooth = pgetf("skel_pre_smooth");
                 int skelsmooth = pgetf("skel_post_dilate");
-                skeletal_features(endpoints,junctions,binarized,presmooth,skelsmooth);
+                ocropus::skeletal_features(endpoints,junctions,binarized,presmooth,skelsmooth);
                 dshow(junctions,"yYY");
                 dshow(endpoints,"Yyy");
             }

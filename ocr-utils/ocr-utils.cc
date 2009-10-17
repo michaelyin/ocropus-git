@@ -25,6 +25,7 @@
 
 #include <stdarg.h>
 #include "ocropus.h"
+#include "colib/narray-ops.h"
 
 using namespace iulib;
 using namespace colib;
@@ -786,4 +787,66 @@ namespace ocropus {
         return v;
     }
 
+    int count_neighbors(bytearray &bi,int x,int y) {
+        int nn=0;
+        if (bi(x+1,y)) nn++;
+        if (bi(x+1,y+1)) nn++;
+        if (bi(x,y+1)) nn++;
+        if (bi(x-1,y+1)) nn++;
+        if (bi(x-1,y)) nn++;
+        if (bi(x-1,y-1)) nn++;
+        if (bi(x,y-1)) nn++;
+        if (bi(x+1,y-1)) nn++;
+        return nn;
+    }
+
+    void skeletal_features(bytearray &endpoints,
+                           bytearray &junctions,
+                           bytearray &image,
+                           float presmooth,
+                           float skelsmooth) {
+        using namespace narray_ops;
+        bytearray temp;
+        temp.copy(image);
+        greater(temp,128,0,255);
+        if(presmooth>0) {
+            gauss2d(temp,presmooth,presmooth);
+            greater(temp,128,0,255);
+        }
+        thin(temp);
+        dshow(temp,"yYy");
+        makelike(junctions,temp);
+        junctions = 0;
+        makelike(endpoints,temp);
+        endpoints = 0;
+        for(int i=1;i<temp.dim(0)-1;i++) {
+            for(int j=1;j<temp.dim(1)-1;j++) {
+                if(!temp(i,j)) continue;
+                int n = count_neighbors(temp,i,j);
+                if(n==1) endpoints(i,j) = 255;
+                if(n>2) junctions(i,j) = 255;
+            }
+        }
+        binary_dilate_circle(junctions,int(skelsmooth+0.5));
+        binary_dilate_circle(endpoints,int(skelsmooth+0.5));
+    }
+
+    void skeletal_feature_counts(int &nendpoints,
+                                 int &njunctions,
+                                 bytearray &image,
+                                 float presmooth,
+                                 float skelsmooth) {
+        bytearray endpoints;
+        bytearray junctions;
+        ocropus::skeletal_features(endpoints,junctions,image,presmooth,skelsmooth);
+        intarray temp;
+        binary_dilate_circle(endpoints,1);
+        binary_dilate_circle(junctions,1);
+        temp = endpoints;
+        label_components(temp);
+        nendpoints = max(temp);
+        temp = junctions;
+        label_components(temp);
+        njunctions = max(temp);
+    }
 }

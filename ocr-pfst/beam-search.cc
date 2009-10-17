@@ -47,7 +47,7 @@ namespace {
             v2.clear();
             costs.clear();
         }
-        
+
         void get(intarray &r_vertices1,
                  intarray &r_vertices2,
                  intarray &r_inputs,
@@ -68,7 +68,7 @@ namespace {
                 t_c.push(costs[current]);
                 current = parents[current];
             }
-            
+
             reverse(r_vertices1, t_v1);
             reverse(r_vertices2, t_v2);
             reverse(r_inputs, t_i);
@@ -90,7 +90,7 @@ namespace {
             return n;
         }
     };
-    
+
     struct BeamSearch {
         OcroFST &fst1;
         OcroFST &fst2;
@@ -113,7 +113,7 @@ namespace {
         int best_so_far;  // ID into stree (-1 for start)
         float best_cost_so_far;
 
-        BeamSearch(OcroFST &fst1, OcroFST &fst2, int beam_width): 
+        BeamSearch(OcroFST &fst1, OcroFST &fst2, int beam_width):
                 fst1(fst1),
                 fst2(fst2),
                 nbest(beam_width),
@@ -132,17 +132,26 @@ namespace {
             parent_trails.clear();
         }
 
-        void relax(int f1, int f2, int t1, int t2, double cost,
-                   int arc_id1, int arc_id2,
-                   int input, int intermediate, int output,
-                   double base_cost, int trail_index) {
+        // This looks at the transition from state pair
+        // (f1,f2) -> (t1,t2), withthe given cost.
+
+        void relax(int f1, int f2,   // input state pair
+                   int t1, int t2,   // output state pair
+                   double cost,      // transition cost
+                   int arc_id1,      // (unused)
+                   int arc_id2,      // (unused)
+                   int input,        // input label
+                   int intermediate, // (unused)
+                   int output,       // output label
+                   double base_cost, // cost of the path so far
+                   int trail_index) {
             //logger.format("relaxing %d %d -> %d %d (bcost %f, cost %f)", f1, f2, t1, t2, base_cost, cost);
-            
+
             if(!nbest.add_replacing_id(t1 * fst2.nStates() + t2,
                                        all_costs.length(),
                                        - base_cost - cost))
                 return;
-            
+
             //logger.format("nbest changed");
             //nbest.log(logger);
 
@@ -160,7 +169,7 @@ namespace {
                 // -----------------
                 // if a node is important (changes nbest) AND its input is 0,
                 // then it's added to the CURRENT beam.
-                
+
                 //logger.format("pushing control point from trail %d to %d, %d",
                               //trail_index, t1, t2);
                 int new_node = stree.add(beam[trail_index], t1, t2, input, output, cost);
@@ -203,17 +212,62 @@ namespace {
 
             // Relax outbound arcs in the composition
             int k1, k2;
-            // relaxing fst1 epsilon moves
-            for(k1 = 0; k1 < o1.length() && !O1[k1]; k1++) {
-                relax(n1, n2, T1[k1], n2, C1[k1], k1, -1, 
-                      I1[k1], 0, 0, cost, trail_index);
+
+
+            // relaxing fst1 RHO moves
+            // these can be rho->rho or x->rho moves
+            for(k1 = 0; k1 < o1.length() && O1[k1]==L_RHO; k1++) {
+                for(int j=0;j<o2.length();j++) {
+                    if(I2[j]<=L_EPSILON) continue;
+                    // if it's rho->rho, then pick up the label,
+                    // if it's x->rho leave it alone
+                    int in = I1[k1]==L_RHO?I2[j]:I1[k1];
+                    relax(n1, n2,         // from pair
+                          T1[k1], T2[j],  // to pair
+                          C1[k1] + C2[j], // cost
+                          k1, j,         // arc ids
+                          in, I2[j], O2[j],   // input, intermediate, output
+                          cost, trail_index);
+                }
             }
-            // relaxing fst2 epsilon moves
-            for(k2 = 0; k2 < o2.length() && !I2[k2]; k2++) {
-                relax(n1, n2, n1, T2[k2], C2[k2], -1, k2, 0,
-                      0, O2[k2], cost, trail_index);
+
+            // relaxing fst2 RHO moves
+            // these can be rho->rho or rho->x moves
+            for(k2 = 0; k2 < o2.length() && I2[k2]==L_RHO; k2++) {
+                for(int j=0;j<o1.length();j++) {
+                    if(O1[j]<=L_EPSILON) continue;
+                    // if it's rho->rho, then pick up the label,
+                    // if it's rho->x leave it alone
+                    int out = O2[k2]==L_RHO?O1[j]:O2[k2];
+                    relax(n1, n2,       // from pair
+                          T1[j], T2[k2],   // to pair
+                          C1[j] + C2[k2],       // cost
+                          j, k2,       // arc ids
+                          I1[j], O1[j], out, // input, intermediate, output
+                          cost, trail_index);
+                }
             }
-            
+
+            // relaxing fst1 EPSILON moves
+            for(k1 = 0; k1 < o1.length() && O1[k1]==L_EPSILON; k1++) {
+                relax(n1, n2,       // from pair
+                      T1[k1], n2,   // to pair
+                      C1[k1],       // cost
+                      k1, -1,       // arc ids
+                      I1[k1], 0, 0, // input, intermediate, output
+                      cost, trail_index);
+            }
+
+            // relaxing fst2 EPSILON moves
+            for(k2 = 0; k2 < o2.length() && I2[k2]==L_EPSILON; k2++) {
+                relax(n1, n2,       // from pair
+                      n1, T2[k2],   // to pair
+                      C2[k2],       // cost
+                      -1, k2,       // arc ids
+                      0, 0, O2[k2], // input, intermediate, output
+                      cost, trail_index);
+            }
+
             // relaxing non-epsilon moves
             while(k1 < o1.length() && k2 < i2.length()) {
                 while(k1 < o1.length() && O1[k1] < I2[k2]) k1++;
@@ -221,8 +275,12 @@ namespace {
                 while(k2 < i2.length() && O1[k1] > I2[k2]) k2++;
                 while(k1 < o1.length() && k2 < i2.length() && O1[k1] == I2[k2]){
                     for(int j = k2; j < i2.length() && O1[k1] == I2[j]; j++)
-                        relax(n1, n2, T1[k1], T2[j], C1[k1] + C2[j],
-                              k1, j, I1[k1], O1[k1], O2[j], cost, trail_index);
+                        relax(n1, n2,           // from pair
+                              T1[k1], T2[j],    // to pair
+                              C1[k1] + C2[j],   // cost
+                              k1, j,            // arc ids
+                              I1[k1], O1[k1], O2[j], // input, intermediate, output
+                              cost, trail_index);
                     k1++;
                 }
             }
@@ -231,7 +289,7 @@ namespace {
         // The main loop iteration.
         void radiate() {
             clear();
-            
+
             //logger("beam", beam);
             //logger("beamcost", beamcost);
 
@@ -245,7 +303,7 @@ namespace {
                          beamcost[i], i);
             }
 
-            // try accepts from control beam nodes 
+            // try accepts from control beam nodes
             // (they're not going to the next beam)
             for(int i = control_beam_start; i < beam.length(); i++)
                 try_accept(i);
@@ -282,7 +340,7 @@ namespace {
             }
         }
 
-        void bestpath(intarray &v1, intarray &v2, intarray &inputs, 
+        void bestpath(intarray &v1, intarray &v2, intarray &inputs,
                       intarray &outputs, floatarray &costs) {
             stree.clear();
 
@@ -292,14 +350,14 @@ namespace {
             beamcost[0] = 0;
 
             best_so_far = 0;
-            best_cost_so_far = fst1.getAcceptCost(fst1.getStart()) + 
+            best_cost_so_far = fst1.getAcceptCost(fst1.getStart()) +
                                fst2.getAcceptCost(fst1.getStart());
 
             while(beam.length())
                 radiate();
 
             stree.get(v1, v2, inputs, outputs, costs, best_so_far);
-            costs.push(fst1.getAcceptCost(stree.v1[best_so_far]) + 
+            costs.push(fst1.getAcceptCost(stree.v1[best_so_far]) +
                        fst2.getAcceptCost(stree.v2[best_so_far]));
 
             //logger("costs", costs);
@@ -314,10 +372,14 @@ namespace ocropus {
                      intarray &inputs,
                      intarray &outputs,
                      floatarray &costs,
-                     OcroFST &fst1, 
+                     OcroFST &fst1,
                      OcroFST &fst2,
                      int beam_width) {
         BeamSearch b(fst1, fst2, beam_width);
+        CHECK(L_SIGMA<L_EPSILON);
+        CHECK(L_RHO<L_PHI);
+        CHECK(L_PHI<L_EPSILON);
+        CHECK(L_EPSILON<1);
         fst1.sortByOutput();
         fst2.sortByInput();
         b.bestpath(vertices1, vertices2, inputs, outputs, costs);

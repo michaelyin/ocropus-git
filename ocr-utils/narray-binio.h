@@ -31,6 +31,10 @@
 #include <sys/stat.h>
 //#include "ocropus.h"
 
+// GNU C++ incorrectly warns about type punning and aliasing below;
+// all we can do is disable all such warnings
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+
 namespace narray_io {
     // using namespace ocropus;
     using namespace colib;
@@ -171,8 +175,7 @@ namespace narray_io {
     }
 
     inline double mconvert(FILE *stream,int code) {
-        // FIXME make this more portable
-        char data[8];
+        volatile char data[8];
         switch(code) {
         case 0x08:
             return (unsigned char)fgetc(stream);
@@ -200,6 +203,10 @@ namespace narray_io {
 
     template <class T>
     inline void read_mnist(narray<T> &data,FILE *stream) {
+        ASSERT(sizeof (short)==sizeof (char[2]));
+        ASSERT(sizeof (int)==sizeof (char[4]));
+        ASSERT(sizeof (float)==sizeof (char[4]));
+        ASSERT(sizeof (double)==sizeof (char[8]));
         int magic0 = fgetc(stream);
         CHECK(magic0==0);
         int magic1 = fgetc(stream);
