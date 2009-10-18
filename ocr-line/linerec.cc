@@ -468,7 +468,7 @@ namespace glinerec {
             return classifier->command(argv);
         }
 
-#if 1
+#if 0
         void save(FILE *stream) {
             // NB: to be backwards compatible, all magic strings have
             // the same size
