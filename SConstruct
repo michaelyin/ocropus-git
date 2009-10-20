@@ -120,12 +120,6 @@ if conf.CheckLibWithHeader('SDL', 'SDL/SDL.h', 'C'):
     if conf.CheckLibWithHeader('SDL_gfx', 'SDL/SDL_gfxPrimitives.h', 'C'):
         env.Append(LIBS=["SDL","SDL_gfx"])
 
-### SQLite
-
-if conf.CheckLib('sqlite3'):
-    env.Append(CPPDEFINES=['HAVE_SQLITE'])
-    env.Append(LIBS=["sqlite3"])
-
 ### Leptonica
 
 if env["lept"]:
