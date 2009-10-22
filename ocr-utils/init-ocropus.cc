@@ -65,6 +65,7 @@ namespace ocropus {
         component_register("BinarizeBySauvola",make_BinarizeBySauvola);
         component_register("SegmentLineByProjection",make_SegmentLineByProjection);
         component_register("SegmentLineByCCS",make_SegmentLineByCCS);
+        component_register("SegmentLineByGCCS",make_SegmentLineByGCCS);
         component_register("ConnectedComponentSegmenter",make_ConnectedComponentSegmenter);
         component_register("CurvedCutSegmenter",make_CurvedCutSegmenter);
         component_register("CurvedCutWithCcSegmenter",make_CurvedCutWithCcSegmenter);
