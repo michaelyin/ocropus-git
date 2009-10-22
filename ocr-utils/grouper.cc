@@ -115,16 +115,9 @@ namespace ocropus {
         bool fullheight;
 
         SimpleGrouper() {
-            maxrange = 4;
-            maxdist = 2;
-            fullheight = false;
-        }
-
-        void set(const char *s,double v) {
-            if(!strcmp(s,"maxrange")) maxrange = int(v);
-            else if(!strcmp(s,"maxdist")) maxdist = int(v);
-            else if(!strcmp(s,"fullheight")) fullheight = int(v);
-            else throw "unknown parameter";
+            pdef("maxrange",4,"maximum range");
+            pdef("maxdist",2,"maximum dist");
+            pdef("fullheight",0,"fullheight");
         }
 
         const char *name() {
@@ -138,6 +131,9 @@ namespace ocropus {
         // Set a segmentation.
 
         void setSegmentation(intarray &segmentation) {
+            maxrange = pgetf("maxrange");
+            maxdist = pgetf("maxdist");
+            fullheight = pgetf("fullheight");
             copy(labels,segmentation);
             make_line_segmentation_black(labels);
             check_approximately_sorted(labels);

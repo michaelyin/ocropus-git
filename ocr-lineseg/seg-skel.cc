@@ -127,6 +127,7 @@ namespace ocropus {
         virtual void charseg(intarray &segmentation,bytearray &image) {
             bytearray timage;
             copy(timage,image);
+            for(int i=0;i<image.length();i++) image[i] = !image[i];
             thin(timage);
             //write_png(stdio("_thinned","w"),timage);
             remove_singular_points(timage,2);

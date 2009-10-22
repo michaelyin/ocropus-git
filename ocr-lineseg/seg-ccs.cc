@@ -39,7 +39,6 @@ using namespace iulib;
 using namespace colib;
 
 namespace ocropus {
-    // FIXME/faisal what is the difference between this and SegmentLineByCCS? --tmb
     class ConnectedComponentSegmenter : public ISegmentLine {
         virtual const char *description() {
             return "connected component segmenter";
@@ -51,9 +50,9 @@ namespace ocropus {
         }
 
         virtual void charseg(intarray &segmentation,bytearray &image) {
-                bytearray temp_image;
-                copy(temp_image, image);
-                binary_autoinvert(temp_image);
+            bytearray temp_image;
+            copy(temp_image, image);
+            binary_autoinvert(temp_image);
             copy(segmentation,temp_image);
             label_components(segmentation);
         }

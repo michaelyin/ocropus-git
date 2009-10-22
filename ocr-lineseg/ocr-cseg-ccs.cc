@@ -33,10 +33,15 @@ using namespace iulib;
 using namespace colib;
 
 struct SegmentLineByCCS : ISegmentLine {
+    SegmentLineByCCS() {
+        pdef("swidth",0,"smearing width");
+        pdef("sheight",10,"smearing height");
+    }
+
     ~SegmentLineByCCS() {}
 
     const char *description() {
-        return "segment characters by 1D projection\n";
+        return "connected component segmenter\n";
     }
 
     const char *name() {
@@ -48,12 +53,14 @@ struct SegmentLineByCCS : ISegmentLine {
     }
 
     void charseg(intarray &image,bytearray &in) {
-        param_int swidth("swidth",0,"smearing width");
-        param_int sheight("sheight",10,"smearing height");
+        using namespace narray_ops;
+        int swidth = pgetf("swidth");
+        int sheight = pgetf("sheight");
         bytearray temp;
         copy(image,in);
+        for(int i=0;i<image.length();i++) image[i] = !image[i];
         copy(temp,image);
-        binary_close_rect(temp,swidth,sheight);
+        if(swidth>0||sheight>0) binary_close_rect(temp,swidth,sheight);
         intarray labels;
         copy(labels,temp);
         label_components(labels);
