@@ -97,7 +97,15 @@ namespace ocropus {
 
         // Set the cost for classifying group i as class cls.
 
-        virtual void setClass(int i,int cls,float cost) = 0;
+        void setClass(int i,int cls,float cost) {
+            ustrg s;
+            s.push(nuchar(cls));
+            setClass(i,s,cost);
+        }
+
+        // Set the cost for classifying group i as a sequence of strings
+
+        virtual void setClass(int i,ustrg &cls,float cost) = 0;
 
         // Space handling.  For any component, pixelSpace gets the amount
         // of subsequent space (-1 for the last component).
