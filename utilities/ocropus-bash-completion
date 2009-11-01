@@ -1,0 +1,48 @@
+#-*- mode: shell-script;-*-
+#
+# bash completion support for core ocropus
+#
+# Copyright (C) 2009 Neskie A. Manuel <neskiem@gmail.com>
+# Distributed under the GNU General Public License, version 2.0.
+#
+_ocropus_commands()
+{
+	local commands="$(ocropus 2>&1 | grep ocropus | cut -d ' ' -f 6)"
+    
+    COMPREPLY=( ${COMPREPLY[@]:-} $(compgen -W "$commands" -- "$cur") )
+}
+
+_ocropus_components()
+{
+	local commands="$(ocropus components 2>&1 | grep -v '^ ' | grep -v '^#' | sort -u | cut -d ' ' -f 1)"
+    
+    COMPREPLY=( ${COMPREPLY[@]:-} $(compgen -W "$commands" -- "$cur") )
+}
+
+_ocropus()
+{
+	local cur prev
+        COMPREPLY=()
+        cur="$2"
+        prev="$3"
+	
+	if [ $COMP_CWORD -lt 2 ]; then
+		_ocropus_commands
+	fi
+
+	if [ $prev == "params" ]; then
+		_ocropus_components
+	fi
+	case "$prev" in
+		ocropus)
+			_ocropus_commands
+		;;
+		params)
+			_ocropus_components
+		;;
+		fsts2text|pages2lines|lines2fsts|fsts2bestpaths|evaluate|evalconf|findconf|align|buildhtml)
+			COMPREPLY=(${COMPREPLY[@]:-} $( compgen -d -- "$cur" ))
+		;;
+    esac
+}
+complete -F _ocropus -o nospace ocropus

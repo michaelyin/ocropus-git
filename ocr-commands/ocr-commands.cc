@@ -871,7 +871,6 @@ namespace ocropus {
             command = argv[0];
             init_ocropus_components();
             init_glclass();
-            init_glclass2();
             init_glfmaps();
             init_linerec();
             load_extensions(DEFAULT_EXT_DIR);

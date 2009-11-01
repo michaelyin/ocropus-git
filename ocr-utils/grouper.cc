@@ -110,21 +110,15 @@ namespace ocropus {
         narray<rectangle> boxes;
         objlist<intarray> segments;
         narray<rectangle> rboxes;
-        floatarray classifications; // FIXME this should become a sparse array
+        narray< narray<ustrg> > class_outputs;
+        narray<floatarray> class_costs;
         floatarray spaces;
         bool fullheight;
 
         SimpleGrouper() {
-            maxrange = 4;
-            maxdist = 2;
-            fullheight = false;
-        }
-
-        void set(const char *s,double v) {
-            if(!strcmp(s,"maxrange")) maxrange = int(v);
-            else if(!strcmp(s,"maxdist")) maxdist = int(v);
-            else if(!strcmp(s,"fullheight")) fullheight = int(v);
-            else throw "unknown parameter";
+            pdef("maxrange",4,"maximum range");
+            pdef("maxdist",2,"maximum dist");
+            pdef("fullheight",0,"fullheight");
         }
 
         const char *name() {
@@ -138,12 +132,16 @@ namespace ocropus {
         // Set a segmentation.
 
         void setSegmentation(intarray &segmentation) {
+            maxrange = pgetf("maxrange");
+            maxdist = pgetf("maxdist");
+            fullheight = pgetf("fullheight");
             copy(labels,segmentation);
             make_line_segmentation_black(labels);
             check_approximately_sorted(labels);
             boxes.dealloc();
             segments.dealloc();
-            classifications.dealloc();
+            class_outputs.dealloc();
+            class_costs.dealloc();
             spaces.dealloc();
             computeGroups();
         }
@@ -158,7 +156,8 @@ namespace ocropus {
             check_approximately_sorted(labels);
             boxes.dealloc();
             segments.dealloc();
-            classifications.dealloc();
+            class_outputs.dealloc();
+            class_costs.dealloc();
             spaces.dealloc();
             computeGroups();
         }
@@ -369,9 +368,11 @@ namespace ocropus {
         }
 
         void maybeInit() {
-            if(classifications.length1d()==0) {
-                classifications.resize(boxes.length(),maxclass);
-                classifications.fill(INFINITY);
+            if(class_costs.length1d()==0) {
+                class_costs.dealloc();
+                class_costs.resize(boxes.length());
+                class_outputs.dealloc();
+                class_outputs.resize(boxes.length());
                 spaces.resize(boxes.length(),2);
                 spaces.fill(INFINITY);
             }
@@ -379,13 +380,10 @@ namespace ocropus {
 
         // After classification, set the class for the given character.
 
-        void setClass(int index,int cls,float cost) {
+        void setClass(int index,ustrg &cls,float cost) {
             maybeInit();
-            if(cls>=classifications.dim(1)) {
-                throwf("class label %d >= maxclass %d ; please increase maxclass",
-                    cls,classifications.dim(1));
-            }
-            classifications(index,cls) = cost;
+            class_outputs(index).push() = cls;
+            class_costs(index).push() = cost;
         }
 
         // Get spacing to the next component.
@@ -431,25 +429,38 @@ namespace ocropus {
                 if(!segments[i].length())
                     id = 0;
 
-                int space_state = -1;
                 float yes = spaces(i,0);
-                float no = spaces(i,1);
-                if(yes<INFINITY) {
-                    space_state = fst.newState();
-                    states.push(space_state);
-                }
-                for(int j=0;j<classifications.dim(1);j++) {
-                    if(classifications(i,j)==INFINITY) continue;
-                    if(space_state<0) {
-                        fst.addTransition(states[start],states[end+1],j,classifications(i,j), id);
-                    } else {
-                        if(no<INFINITY) {
-                            fst.addTransition(states[start],states[end+1],j,classifications(i,j)+no, id);
+                float no =  spaces(i,1);
+                // if no space is set, assume no space is present
+                if(yes==INFINITY && no==INFINITY) no = 0.0;
+
+                for(int j=0;j<class_costs(i).length();j++) {
+                    float cost = class_costs(i)(j);
+                    ustrg &str = class_outputs(i)(j);
+                    int n = str.length();
+                    int last = start;
+                    for(int k=0;k<n;k++) {
+                        int c = str[k].ord();
+                        if(k<n-1) {
+                            // add intermediate states/transitions for all but the last character
+                            states.push() = fst.newState();
+                            fst.addTransition(states[last],states.last(),c,0.0,0);
+                            last = states.length()-1;
+                        } else {
+                            // for the last character, handle the spaces as well
+                            if(no<INFINITY) {
+                                // add the last character as a direct transition with no space
+                                fst.addTransition(states[last],states[end+1],c,cost+no, id);
+                            }
+                            if(yes<INFINITY) {
+                                // insert another state to handle spaces
+                                states.push() = fst.newState();
+                                int space_state = states.last();
+                                fst.addTransition(states[start],space_state,c,cost,id);
+                                fst.addTransition(space_state,states[end+1],' ',yes,0);
+                            }
                         }
-                        fst.addTransition(states[start],space_state,j,classifications(i,j), id);
-                        fst.addTransition(space_state,states[end+1],' ',yes, 0);
                     }
-                    // printf("%d,%d : %d -> %d\n",i,j,start,end);
                 }
             }
         }

@@ -144,14 +144,13 @@ namespace {
 }
 
 namespace ocropus {
-
     void degrade(bytearray &image,
-                 double jitter_mean,
-                 double jitter_sigma,
-                 double sensitivity_mean,
-                 double sensitivity_sigma,
-                 double threshold_mean,
-                 double threshold_sigma) {
+            double jitter_mean,
+            double jitter_sigma,
+            double sensitivity_mean,
+            double sensitivity_sigma,
+            double threshold_mean,
+            double threshold_sigma) {
         floatarray a;
         copy(a, image);
         floatarray elastic;
@@ -165,25 +164,25 @@ namespace ocropus {
 
     struct Degradation : ICleanupGray {
         Degradation() {
-             pdef("jitter_mean", 0.2, "jitter mean");
-             pdef("jitter_sigma", 0.1, "jitter sigma");
-             pdef("sensitivity_mean", 0.125, "sensitivity mean");
-             pdef("sensitivity_sigma", 0.4, "sensitivity sigma");
-             pdef("threshold_mean", 0.4, "threshold mean");
-             pdef("threshold_sigma", 0.04, "threshold sigma");
-         }
-         const char *name() {
-             return "degradation";
-         }
-         void cleanup_gray(bytearray& dstImg, bytearray& srcImg) {
-             dstImg.copy(srcImg);
-             degrade(dstImg,
-                     pgetf("jitter_mean"), pgetf("jitter_sigma"),
-                     pgetf("sensitivity_mean"), pgetf("sensitivity_sigma"),
-                     pgetf("threshold_mean"), pgetf("threshold_sigma"));
-         }
-     };
-     ICleanupGray *make_Degradation() {
-         return new Degradation();
-     }
+            pdef("jitter_mean", 0.2, "jitter mean");
+            pdef("jitter_sigma", 0.1, "jitter sigma");
+            pdef("sensitivity_mean", 0.125, "sensitivity mean");
+            pdef("sensitivity_sigma", 0.4, "sensitivity sigma");
+            pdef("threshold_mean", 0.4, "threshold mean");
+            pdef("threshold_sigma", 0.04, "threshold sigma");
+        }
+        const char *name() {
+            return "degradation";
+        }
+        void cleanup_gray(bytearray& dstImg, bytearray& srcImg) {
+            dstImg.copy(srcImg);
+            degrade(dstImg,
+                    pgetf("jitter_mean"), pgetf("jitter_sigma"),
+                    pgetf("sensitivity_mean"), pgetf("sensitivity_sigma"),
+                    pgetf("threshold_mean"), pgetf("threshold_sigma"));
+        }
+    };
+    ICleanupGray *make_Degradation() {
+        return new Degradation();
+    }
 }
