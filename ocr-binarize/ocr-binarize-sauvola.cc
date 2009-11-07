@@ -38,14 +38,18 @@ using namespace colib;
 
 namespace ocropus {
 
-    param_float sauvola_k("sauvola_k",0.3,"Weighting factor");
-    param_int   sauvola_w("sauvola_w",40,"Local window size. Should always be positive");
     param_string debug_binarize("debug_binarize",0,"output the result of binarization");
 
     struct BinarizeBySauvola : IBinarize {
         float k;
         int w;
         int whalf; // Half of window size
+
+        BinarizeBySauvola() {
+            pdef("k",0.3,"Weighting factor");
+            pdef("w",40,"Local window size. Should always be positive");
+        }
+
         ~BinarizeBySauvola() {}
 
         const char *description() {
@@ -57,17 +61,6 @@ binarization algorithm based on integral images.\n";
             return "binsauvola";
         }
 
-        void set(const char *key,double value) {
-            if(!strcmp(key,"k")) this->k = value;
-            else if(!strcmp(key,"w")) this->w = int(value);
-            else throw "unknown parameter";
-        }
-
-        BinarizeBySauvola() {
-            w = sauvola_w;
-            k = sauvola_k;
-        }
-
         void binarize(bytearray &out, floatarray &in){
             bytearray image;
             copy(image,in);
@@ -75,6 +68,8 @@ binarization algorithm based on integral images.\n";
         }
 
         void binarize(bytearray &bin_image, bytearray &gray_image){
+            w = pgetf("w");
+            k = pgetf("k");
             whalf = w>>1;
             // fprintf(stderr,"[sauvola %g %d]\n",k,w);
             CHECK_ARG(k>=0.05 && k<=0.95);
