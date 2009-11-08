@@ -1740,6 +1740,7 @@ namespace glinerec {
             floatarray ul;
             floatarray junk;
 
+            CHECK_ARG2(charclass->nclasses()==jc(),"Training incomplete for all classes");
             charclass->outputs(chars,v);
 
             if(pgetf("junk") && junkclass) {
