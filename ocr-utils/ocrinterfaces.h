@@ -202,6 +202,7 @@ namespace ocropus {
         virtual void save(const char *file) = 0;
     };
 
+#if 0
     /// A generic interface for isolated character recognizers.
     /// Note that this is not the preferred interface for character recognition,
     /// since feature extraction is quite inefficient if it's done a character at a time.
@@ -234,6 +235,9 @@ namespace ocropus {
         /// to all the characters between startTraining and finishTraining
         /// other types of training are recognizer-dependent
         virtual void startTraining(const char *type="adaptation") { throw "unimplemented"; }
+
+        /// Notify the classifier of the start of a new epoch.
+        virtual void epoch(int n) {}
 
         /// \brief Train a character.
         //
@@ -290,12 +294,15 @@ namespace ocropus {
         /// destructor
         virtual ~ICharacterClassifier() {}
     };
+#endif
 
 
     /// A generic interface for text line recognition.
 
     struct IRecognizeLine : virtual IComponent {
-        const char *interface() { return "IRecognizeLine"; }
+        const char *interface() {
+            return "IRecognizeLine";
+        }
         /// \brief Recognize a text line and return a lattice representing
         /// the recognition alternatives.
         virtual void recognizeLine(IGenericFst &result,bytearray &image) = 0;
@@ -305,24 +312,38 @@ namespace ocropus {
         /// "adaptation" means temporary adaptation of the classifier
         /// to all the lines between startTraining and finishTraining
         /// other types of training are recognizer-dependent
-        virtual void startTraining(const char *type="adaptation") { throw "unimplemented"; }
+        virtual void startTraining(const char *type="adaptation") {
+            throw "unimplemented";
+        }
 
         /// \brief Train on a text line.
 
         /// Usage is: call addTrainingLine with training data, then call finishTraining
-        /// The state of the object is undefined between calling addTrainingLine and finishTraining, and it is
-        /// an error to call recognizeLine before finishTraining completes.  This allows both batch
-        /// and incemental training.
+        ///
+        /// The state of the object is undefined between calling
+        /// addTrainingLine and finishTraining, and it is
+        /// an error to call recognizeLine before finishTraining completes.
+        /// This allows both batch and incemental training.
+        ///
+        /// The return value indicates whether additional training
+        /// data is still desired by the classifier.
+        ///
         /// NB: you might train on length 1 strings for single character training
         /// and might train on words if line alignment is not working
         /// (well, for some training data)
-        virtual void addTrainingLine(bytearray &image,ustrg &transcription) { throw "unimplemented"; }
+
+        virtual bool addTrainingLine(bytearray &image,ustrg &transcription) {
+            throw "unimplemented";
+        }
 
 
         /// \brief Train on a text line, given a segmentation.
         /// This is analogous to addTrainingLine(bytearray,ustrg) except that
         /// it takes the "ground truth" line segmentation.
-        virtual void addTrainingLine(intarray &segmentation, bytearray &image_grayscale, ustrg &transcription) { throw "unimplemented"; }
+        virtual bool addTrainingLine(intarray &segmentation, bytearray &image_grayscale,
+                                     ustrg &transcription) {
+            throw "unimplemented";
+        }
 
 
         /// Align a lattice with a transcription.
@@ -348,18 +369,9 @@ namespace ocropus {
         /// this method may take a long time to complete.
         virtual void finishTraining() { throw "unimplemented"; }
 
-#if 0
-        // inherited from IComponent
-        // FIXME get rid of this
-
-        /// Save a trained model to the stream.
-        virtual void save(FILE *stream) { throw "unimplemented"; }
-        void save(const char *path) { save(stdio(path, "wb")); }
-
-        /// Load a trained model from the stream.
-        virtual void load(FILE *stream) { throw "unimplemented"; }
-        void load(const char *path) { load(stdio(path, "rb")); }
-#endif
+        /// Notify the recognizer of the start of a new epoch (i.e.,
+        /// if n>0, then we have seen the data before).
+        virtual void epoch(int n) {}
 
         /// Destructor
         virtual ~IRecognizeLine() {}

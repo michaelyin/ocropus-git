@@ -256,10 +256,12 @@ namespace glinerec {
         }
         virtual void startTraining(const char *type="adaptation") {
         }
-        virtual void addTrainingLine(bytearray &image,ustrg &transcription) {
+        virtual bool addTrainingLine(bytearray &image,ustrg &transcription) {
+            return true;
         }
-        virtual void addTrainingLine(intarray &segmentation, bytearray &image_grayscale,
+        virtual bool addTrainingLine(intarray &segmentation, bytearray &image_grayscale,
                                      ustrg &transcription) {
+            return true;
         }
         virtual void align(ustrg &chars,intarray &seg,floatarray &costs,
                            bytearray &image,IGenericFst &transcription) {
@@ -276,39 +278,40 @@ namespace glinerec {
     }
 
     struct MetaLinerec : IRecognizeLine {
-        autodel<IRecognizeLine> default_recognizer;
+        // this is a 10x10 grid; (9,9) is the default recognizer
         narray< autodel<IRecognizeLine> > recognizers;
-        intarray counts;
+        intarray raw_counts;    // characters in each bucket
+        intarray counts;        // characters actually trained in each bucket
         int sbucket,wbucket;
+        int current_epoch,start_epoch;
         MetaLinerec() {
             pdef("preload",0,"recognizer to be preloaded");
             pdef("linerec","linerec","recognizer to be instantiated");
-            pdef("sbucket",-1,"size bucket");
-            pdef("wbucket",-1,"stroke width bucket");
             pdef("maxbucket",200000,"max # training samples per bucket");
-            persist(default_recognizer,"default_recognizer");
+            pdef("minbucket",10000,"min # training samples per bucket");
             persist(recognizers,"recognizers");
+            persist(counts,"counts");
+            persist(raw_counts,"raw_counts");
+            persist(sbucket,"sbucket");
+            persist(wbucket,"wbucket");
             recognizers.resize(10,10);
             counts.resize(10,10);
+            raw_counts.resize(10,10);
             counts = 0;
             sbucket = -1;
             wbucket = -1;
             debugf("metalinerec","metalinerec initialized\n");
+            epoch(0);
+        }
+        void epoch(int n) {
+            current_epoch = n;
         }
         void load(FILE *stream) {
             this->IComponent::load(stream);
-            // environment overrides loaded values
-            import("sbucket");
-            import("wbucket");
             // persist doesn't handle 2D arrays quite right yet
             recognizers.reshape(10,10);
-        }
-        void maybe_init() {
-            if(default_recognizer) return;
-            if(pget("preload"))
-                load_component(default_recognizer,stdio(pget("preload"),"r"));
-            else
-                make_component(default_recognizer,pget("linerec"));
+            raw_counts.reshape(10,10);
+            counts.reshape(10,10);
         }
         const char *interface() {
             return "IRecognizeLine";
@@ -334,13 +337,12 @@ namespace glinerec {
             w = int(log(max(1.0,0.5+strokewidth)));
         }
         virtual void recognizeLine(intarray &segmentation,IGenericFst &result,bytearray &image) {
-            maybe_init();
             int s,w;
             bucket(s,w,image);
             if(recognizers(s,w)) {
                 recognizers(s,w)->recognizeLine(segmentation,result,image);
             } else {
-                default_recognizer->recognizeLine(segmentation,result,image);
+                recognizers(9,9)->recognizeLine(segmentation,result,image);
             }
         }
         virtual void recognizeLine(IGenericFst &result,bytearray &image) {
@@ -348,44 +350,81 @@ namespace glinerec {
             this->recognizeLine(segmentation,result,image);
         }
         virtual void startTraining(const char *type="adaptation") {
-            maybe_init();
-            sbucket = pgetf("sbucket");
-            wbucket = pgetf("wbucket");
-            if(sbucket<0) throw "must set sbucket prior to training";
-            if(wbucket<0) throw "must set wbucket prior to training";
-            make_component(recognizers(sbucket,wbucket),pget("linerec"));
-            recognizers(sbucket,wbucket)->startTraining(type);
         }
-        virtual void addTrainingLine(intarray &segmentation, bytearray &image_grayscale,
+        bool next_bucket() {
+            int mc=0,mi=-1,mj=-1;
+            for(int i=0;i<10;i++) {
+                for(int j=0;j<10;j++) {
+                    if(counts(i,j)>0) continue;
+                    if(raw_counts(i,j)<=mc) continue;
+                    mc = raw_counts(i,j);
+                    mi = i;
+                    mj = j;
+                }
+            }
+            if(mi<0) return false;
+            sbucket = mi;
+            wbucket = mj;
+            return true;
+        }
+        virtual bool addTrainingLine(intarray &segmentation, bytearray &image_grayscale,
                                      ustrg &transcription) {
-            maybe_init();
             int s,w;
             bucket(s,w,image_grayscale);
-            // printf(">>> %d %d\n",s,w);
-            if(s!=sbucket || w!=wbucket) return;
-            if(counts(s,w)>=pgetf("maxbucket")) throw DoneTraining();
+            if(current_epoch==0)
+                raw_counts(s,w) += transcription.length();
+            if(sbucket==-1) {
+                s=9; w=9;
+            } else {
+                if(s!=sbucket || w!=wbucket) return true;
+            }
+            if(counts(s,w)>=pgetf("maxbucket")) {
+                debugf("metalinerec","finishing bucket (%d,%d) with %d samples\n",
+                       s,w,counts(s,w));
+                // got enough training examples; train the model
+                // and then start on the next one
+                recognizers(s,w)->finishTraining();
+                if(!next_bucket()) return false;
+            } else if(current_epoch-start_epoch>1) {
+                debugf("metalinerec","finishing bucket (%d,%d) with %d samples (epoch)\n",
+                       s,w,counts(s,w));
+                // more than one epoch; train only if we have enough
+                // samples
+                if(counts(s,w)>pgetf("minbucket"))
+                    recognizers(s,w)->finishTraining();
+                else
+                    recognizers(s,w) = 0;
+                // move on to next bucket
+                if(!next_bucket()) return false;
+            }
+            if(!recognizers(s,w)) {
+                debugf("metalinerec","instantiating (%d,%d) with %s\n",s,w,pget("linerec"));
+                make_component(recognizers(s,w),pget("linerec"));
+            }
+
             counts(s,w) += transcription.length();
             debugf("metalinerec","%d %d : %d\n",s,w,counts(s,w));
-            recognizers(s,w)->addTrainingLine(segmentation,image_grayscale,transcription);
+            bool done = recognizers(s,w)->addTrainingLine(segmentation,image_grayscale,transcription);
+            if(done) {
+                debugf("metalinerec","finishing bucket (%d,%d) with %d samples (done)\n",
+                       s,w,counts(s,w));
+                recognizers(s,w)->finishTraining();
+                if(!next_bucket()) return false;
+            }
         }
-        virtual void addTrainingLine(bytearray &image,ustrg &transcription) {
+        virtual bool addTrainingLine(bytearray &image,ustrg &transcription) {
             intarray segmentation;
-            addTrainingLine(segmentation,image,transcription);
+            return addTrainingLine(segmentation,image,transcription);
         }
         virtual void align(ustrg &chars,intarray &seg,floatarray &costs,
                            bytearray &image,IGenericFst &transcription) {
-            maybe_init();
             int s,w;
             bucket(s,w,image);
             if(recognizers(s,w)) {
                 recognizers(s,w)->align(chars,seg,costs,image,transcription);
             } else {
-                default_recognizer->align(chars,seg,costs,image,transcription);
+                recognizers(9,9)->align(chars,seg,costs,image,transcription);
             }
-        }
-        virtual void finishTraining() {
-            maybe_init();
-            recognizers(sbucket,wbucket)->finishTraining();
         }
         virtual ~MetaLinerec() {
         }
@@ -557,7 +596,7 @@ namespace glinerec {
             addTrainingLine(cseg,gimage,tr);
         }
 
-        void addTrainingLine(intarray &cseg,bytearray &image,ustrg &tr) {
+        bool addTrainingLine(intarray &cseg,bytearray &image,ustrg &tr) {
             if(image.dim(1)>pgetf("maxheight"))
                 throwf("input line too high (%d x %d)",image.dim(0),image.dim(1));
             if(image.dim(1)*1.0/image.dim(0)>pgetf("maxaspect"))
@@ -637,6 +676,7 @@ namespace glinerec {
             debugf("detail","addTrainingLine trained %d chars, %d junk, %s total\n",total-junk,junk,
                     classifier->command("total"));
             dwait();
+            return true;
         }
 
         enum { high_cost = 100 };

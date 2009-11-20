@@ -544,6 +544,7 @@ namespace ocropus {
     }
 
     int main_trainseg(int argc,char **argv) {
+        param_int nepochs("nepochs",10,"number of epochs");
         param_bool randomize("randomize_lines",1,"randomize the order of lines before training");
         param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         param_bool retrain("retrain",0,"perform retraining");
@@ -557,95 +558,103 @@ namespace ocropus {
         dinit(512,512);
         autodel<IRecognizeLine> linerec;
         linerec = make_Linerec();
-        autodel<IDataset> dataset;
         if(linerec) linerec->startTraining("");
+        bool done = 0;
 
         int total_chars = 0;
         int total_lines = 0;
         int next = 1000;
 
-        LineSource lines;
-        char **books = argv+2;
-        lines.init(books);
+        for(int epoch=0;epoch<nepochs;epoch++) {
+            linerec->epoch(epoch);
 
-        while(!lines.done()) {
-            lines.next();
+            LineSource lines;
+            char **books = argv+2;
+            lines.init(books);
 
-            strg path;
-            intarray cseg;
-            bytearray image;
-            floatarray costs;
-            ustrg nutranscript;
+            while(!lines.done()) {
+                lines.next();
 
-            try {
-                lines.get(path,"path");
-                lines.get(image,"image");
-                if(image.length()==0) throw "no or bad line image";
-                lines.get(nutranscript,"transcript");
-                if(nutranscript.length()==0) throw "no transcription";
-                lines.get(cseg,"cseg");
-                if(cseg.length()==0) throw "no or bad cseg";
-            } catch(const char *s) {
-                debugf("warn","skipping %s (%s)\n",path.c_str(),s);
-                continue;
-            } catch(...) {
-                debugf("warn","skipping %s\n",path.c_str());
-                continue;
-            }
-
-            try {
-                make_line_segmentation_black(cseg);
-                image.makelike(cseg);
-                for(int i=0;i<image.length1d();i++)
-                    image.at1d(i) = 255*!cseg.at1d(i);
-
-                // try to convert it to see whether it's an old_cseg
-                // or new cseg
-
-                ustrg s;
-                s = nutranscript;
-                fixup_transcript(s,false);
-                bool old_csegs = (s.length()!=max(cseg));
-                if(old_csegs) nold_csegs++;
-
-                fixup_transcript(nutranscript,old_csegs);
-
-                if(nutranscript.length()!=max(cseg)) {
-                    debugf("debug","transcript = '%s'\n",nutranscript.c_str());
-                    throwf("transcript doesn't agree with cseg (transcript %d, cseg %d)",
-                           nutranscript.length(),max(cseg));
-                }
-
-                if(retrain) {
-                    lines.get(costs,"costs");
-                    remove_high_cost_segments(nutranscript,costs,cseg,retrain_threshold);
-                }
-
-                // let the user know about progress
-
-                utf8strg utf8Transcript;
-                nutranscript.utf8EncodeTerm(utf8Transcript);
-                debugf("transcript","%04d %06x (%d) [%2d,%2d] %s\n",
-                       lines.pageno,lines.lineno,total_chars,
-                       nutranscript.length(),max(cseg),utf8Transcript.c_str());
-
-                if(total_chars>=next) {
-                    debugf("info","loaded %d chars\n",total_chars);
-                    next += 1000;
-                }
-
-                // now, actually add the segmented characters to the line recognizer
+                strg path;
+                intarray cseg;
+                bytearray image;
+                floatarray costs;
+                ustrg nutranscript;
 
                 try {
-                    linerec->addTrainingLine(cseg,image,nutranscript);
-                    total_chars += nutranscript.length();
-                    total_lines++;
-                } CATCH_COMMON(continue);
-            } catch(const char *msg) {
-                debugf("error","%04d %06x: %s\n",lines.pageno,lines.lineno,msg);
+                    lines.get(path,"path");
+                    lines.get(image,"image");
+                    if(image.length()==0) throw "no or bad line image";
+                    lines.get(nutranscript,"transcript");
+                    if(nutranscript.length()==0) throw "no transcription";
+                    lines.get(cseg,"cseg");
+                    if(cseg.length()==0) throw "no or bad cseg";
+                } catch(const char *s) {
+                    debugf("warn","skipping %s (%s)\n",path.c_str(),s);
+                    continue;
+                } catch(...) {
+                    debugf("warn","skipping %s\n",path.c_str());
+                    continue;
+                }
+
+                try {
+                    make_line_segmentation_black(cseg);
+                    image.makelike(cseg);
+                    for(int i=0;i<image.length1d();i++)
+                        image.at1d(i) = 255*!cseg.at1d(i);
+
+                    // try to convert it to see whether it's an old_cseg
+                    // or new cseg
+
+                    ustrg s;
+                    s = nutranscript;
+                    fixup_transcript(s,false);
+                    bool old_csegs = (s.length()!=max(cseg));
+                    if(old_csegs) nold_csegs++;
+
+                    fixup_transcript(nutranscript,old_csegs);
+
+                    if(nutranscript.length()!=max(cseg)) {
+                        debugf("debug","transcript = '%s'\n",nutranscript.c_str());
+                        throwf("transcript doesn't agree with cseg (transcript %d, cseg %d)",
+                               nutranscript.length(),max(cseg));
+                    }
+
+                    if(retrain) {
+                        lines.get(costs,"costs");
+                        remove_high_cost_segments(nutranscript,costs,cseg,retrain_threshold);
+                    }
+
+                    // let the user know about progress
+
+                    utf8strg utf8Transcript;
+                    nutranscript.utf8EncodeTerm(utf8Transcript);
+                    debugf("transcript","%04d %06x (%d) [%2d,%2d] %s\n",
+                           lines.pageno,lines.lineno,total_chars,
+                           nutranscript.length(),max(cseg),utf8Transcript.c_str());
+
+                    if(total_chars>=next) {
+                        debugf("info","loaded %d chars\n",total_chars);
+                        next += 1000;
+                    }
+
+                    // now, actually add the segmented characters to the line recognizer
+
+                    try {
+                        linerec->addTrainingLine(cseg,image,nutranscript);
+                        total_chars += nutranscript.length();
+                        total_lines++;
+                    } catch(DoneTraining _) {
+                        done = 1;
+                        break;
+                    } CATCH_COMMON(continue);
+                } catch(const char *msg) {
+                    debugf("error","%04d %06x: %s\n",lines.pageno,lines.lineno,msg);
+                }
+                // if we have enough characters, let the loop wind down
+                if(total_chars>ntrain) break;
             }
-            // if we have enough characters, let the loop wind down
-            if(total_chars>ntrain) break;
+            if(done) break;
         }
         linerec->finishTraining();
         debugf("info","trained %d characters, %d lines\n",

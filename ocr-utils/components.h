@@ -54,6 +54,23 @@ namespace ocropus {
     };
 
     template <class T>
+    struct ScalarIOWrapper : IOWrapper {
+        T &data;
+        ScalarIOWrapper(T &data) : data(data) {}
+        void clear() {
+            data = 0;
+        }
+        void save(FILE *stream) {
+            using namespace narray_io;
+            scalar_write(stream,data);
+        }
+        void load(FILE *stream) {
+            using namespace narray_io;
+            scalar_read(stream,data);
+        }
+    };
+
+    template <class T>
     struct NarrayIOWrapper : IOWrapper {
         narray<T> &data;
         NarrayIOWrapper(narray<T> &data) : data(data) {}
@@ -186,6 +203,29 @@ namespace ocropus {
 
         narray<strg> wnames;
         narray< autodel<IOWrapper> > wrappers;
+
+        // persisting scalars
+
+        void persist(int &data,const char *name) {
+            wnames.push(name);
+            wrappers.push() = new ScalarIOWrapper<int>(data);
+        }
+        void persist(float &data,const char *name) {
+            wnames.push(name);
+            wrappers.push() = new ScalarIOWrapper<float>(data);
+        }
+        void persist(double &data,const char *name) {
+            wnames.push(name);
+            wrappers.push() = new ScalarIOWrapper<double>(data);
+        }
+        void persist(bool &data,const char *name) {
+            wnames.push(name);
+            wrappers.push() = new ScalarIOWrapper<bool>(data);
+        }
+        void persist(short &data,const char *name) {
+            wnames.push(name);
+            wrappers.push() = new ScalarIOWrapper<short>(data);
+        }
 
         // this picks up narray<autodel<IComponent>>
 

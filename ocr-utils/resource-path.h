@@ -33,12 +33,14 @@ namespace ocropus {
     void set_resource_path(const char *path);
     FILE *open_resource(const char *relative_path);
 
+#if 0
     // FIXME/mezhirov get rid of this stuff; OCR-specific object construction
     // should not be in the same file as path search functions --tmb
     void find_and_load_ICharacterClassifier(ICharacterClassifier &,
                                             const char *resource);
     void find_and_load_IRecognizeLine(IRecognizeLine &i,
                                       const char *resource);
+#endif
 }
 
 #endif
