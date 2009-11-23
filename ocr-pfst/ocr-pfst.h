@@ -188,6 +188,7 @@ namespace ocropus {
     double beam_search(ustrg &result, OcroFST &fst1, OcroFST &fst2,
                        int beam_width=1000);
 
+    void scale_fst(OcroFST &fst,float scale);
 };
 
 #endif

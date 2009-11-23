@@ -6,7 +6,7 @@
 #include <typeinfo>
 #include <stdio.h>
 #include <colib/narray.h>
-#include "narray-binio.h"
+#include "colib/narray-binio.h"
 
 namespace glinerec {
 

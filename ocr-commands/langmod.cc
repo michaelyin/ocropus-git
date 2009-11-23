@@ -67,6 +67,7 @@ namespace ocropus {
             fst.addTransition(i, i, 0, 0, ' ');
     }
 
+#if 0
     void scale_fst(OcroFST &fst,float scale) {
         if(fabs(scale-1.0)<1e-6) return;
         for(int i=0;i<fst.nStates();i++) {
@@ -76,6 +77,7 @@ namespace ocropus {
                 fst.setAcceptCost(i,accept*scale);
         }
     }
+#endif
 
     int main_fsts2text(int argc,char **argv) {
         param_bool abort_on_error("abort_on_error",0,"abort recognition if there is an unexpected error");

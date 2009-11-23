@@ -3,7 +3,7 @@
 #ifndef gldataset_h__
 #define gldataset_h__
 
-#include "narray-binio.h"
+#include "colib/narray-binio.h"
 #include "gliovecs.h"
 
 namespace glinerec {
@@ -136,7 +136,7 @@ namespace glinerec {
         }
         void add(floatarray &v,int c) {
             CHECK(min(v)>-100 && max(v)<100);
-            CHECK(c>=-1 && c<1000000);
+            CHECK(c>=-1);
             if(c>=nc) nc = c+1;
             if(nf<0) nf = v.length();
             rowpush(data,v);
@@ -214,7 +214,7 @@ namespace glinerec {
         }
         void add(floatarray &v,int c) {
             CHECK(min(v)>-100 && max(v)<100);
-            CHECK(c>=-1 && c<1000000);
+            CHECK(c>=-1);
             if(c>=nc) nc = c+1;
             if(nf<0) nf = v.length();
             data.push().copy(v);

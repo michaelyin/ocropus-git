@@ -2,7 +2,7 @@
 #define bookstore_h__
 
 #include "colib/colib.h"
-#include "components.h"
+#include "iulib/components.h"
 
 namespace ocropus {
     struct IBookStore : IComponent {

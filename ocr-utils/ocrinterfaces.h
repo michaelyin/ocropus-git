@@ -37,7 +37,7 @@
 #include "colib/misc.h"
 #include "colib/coords.h"
 #include "colib/iustring.h"
-#include "components.h"
+#include "iulib/components.h"
 
 namespace ocropus {
 

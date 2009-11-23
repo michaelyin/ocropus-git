@@ -28,7 +28,7 @@
 
 #include "colib/colib.h"
 #include "iulib/iulib.h"
-#include "components.h"
+#include "iulib/components.h"
 #include "ocrinterfaces.h"
 
 namespace ocropus {

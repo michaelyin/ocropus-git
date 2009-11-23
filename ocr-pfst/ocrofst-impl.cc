@@ -211,4 +211,15 @@ namespace ocropus {
         return new OcroFSTImpl();
     };
 
+    void scale_fst(OcroFST &fst,float scale) {
+        using namespace narray_ops;
+        if(fabs(scale-1.0)<1e-6) return;
+        for(int i=0;i<fst.nStates();i++) {
+            fst.costs(i) *= scale;
+            float accept = fst.acceptCost(i);
+            if(accept>=0 && accept<1e37)
+                fst.setAcceptCost(i,accept*scale);
+        }
+    }
 }
+
