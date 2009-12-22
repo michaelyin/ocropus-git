@@ -358,9 +358,8 @@ namespace glinerec {
         int nprotos() {
             return vectors.dim(0);
         }
-        void getproto(floatarray &v,int &c,int i) {
+        void getproto(floatarray &v,int i,int variant) {
             rowget(v,vectors,i);
-            c = classes(i);
         }
         void train(IDataset &ds) {
             floatarray v;
@@ -426,6 +425,200 @@ namespace glinerec {
             }
             min_dist = -1;
             return errs/float(vectors.dim(0));
+        }
+    };
+
+    ////////////////////////////////////////////////////////////////
+    // clustering classifier
+    ////////////////////////////////////////////////////////////////
+
+    struct EnetClassifier : IModel {
+        narray<floatarray> vectors;
+        narray<intarray> classes;
+        narray<intarray> counts;
+        int ndim,ncls;
+        int dtype;
+        float min_dist;
+        float offset;
+
+        EnetClassifier() {
+            ncls = 0;
+            ndim = -1;
+            ncls = 0;
+            min_dist = -1;
+            pdef("eps",5.0,"max dist for new cluster");
+            pdef("avg",1,"average new vectors with old ones in cluster");
+            pdef("k",1,"number of nearest neighbors");
+            pdef("verbose",0,"verbose output");
+            pdef("dtype",1,"distance type");
+            pdef("offset",0.01,"probabilistic offset");
+            pdef("fuzz",0.5,"initial smoothing");
+            persist(vectors,"vectors");
+            persist(classes,"classes");
+        }
+        const char *name() {
+            return "knn";
+        }
+        int nprotos() {
+            return vectors.dim(0);
+        }
+        void getproto(floatarray &v,int i,int variant) {
+            printf("getting %d\n",i);
+            v = vectors(i);
+        }
+        void info(int depth,FILE *stream) {
+            iprintf(stream,depth,"Clustering Classifier\n");
+            pprint(stream,depth);
+            int k = pgetf("k");
+            iprintf(stream,depth,"k=%d nclusters=%d ndim=%d nclasses=%d\n",k,vectors.dim(0),
+                ndim,nclasses());
+        }
+        void clear() {
+            ncls = 0;
+            vectors.clear();
+            classes.clear();
+            counts.clear();
+        }
+        void dealloc() {
+            ncls = 0;
+            vectors.dealloc();
+            classes.dealloc();
+            counts.dealloc();
+        }
+        int nfeatures() {
+            return vectors(0).length();
+        }
+        int nclasses() {
+            return ncls;
+        }
+        float complexity() {
+            return vectors.dim(0);
+        }
+        float distance(floatarray &v,floatarray &proto) {
+            double result = 0.0;
+            switch(dtype) {
+            case 0:
+                for(int i=0;i<v.length();i++) {
+                    float delta = v[i]-proto[i];
+                    result += (delta*delta);
+                }
+                return result;
+            case 1:
+                for(int i=0;i<v.length();i++) {
+                    float delta = v[i]-proto[i];
+                    result += -log(1.0-fabs(delta)+offset);
+                    if(isnan(result)) {
+                        printf("ERROR %g %g / %g\n",v[i],proto[i],delta);
+                        abort();
+                    }
+                }
+                return result;
+            }
+            throw "bad dtype";
+        }
+        void train(IDataset &ds) {
+            floatarray v;
+            for(int i=0;i<ds.nsamples();i++) {
+                ds.input(v,i);
+                add(v,ds.cls(i));
+            }
+        }
+        void check(floatarray &v,int c=99999999) {
+            if(dtype==1) {
+                for(int i=0;i<v.length();i++)
+                    CHECK(v[i]==0 || v[i]==1);
+            } else {
+                for(int i=0;i<v.length();i++)
+                    CHECK(v[i]>=-0.001 || v[i]<=1.001);
+            }
+            ASSERT(valid(v));
+            if(ndim<0) ndim = v.length();
+            else CHECK(v.length()==ndim);
+            if(c!=99999999) {
+                CHECK(c>=0);
+            }
+        }
+        void add_count(intarray &classes,intarray &counts,int c) {
+            for(int i=0;i<classes.length();i++) {
+                if(classes(i)==c) {
+                    counts(i)++;
+                    return;
+                }
+            }
+            classes.push(c);
+            counts.push(1);
+        }
+        void add(floatarray &v,int c) {
+            dtype = pgetf("dtype");
+            offset = pgetf("offset");
+            check(v,c);
+            floatarray distances(vectors.dim(0));
+            float eps = pgetf("eps");
+            int best = -1;
+            if(vectors.dim(0)>0) {
+#pragma omp parallel for
+                for(int i=0;i<vectors.dim(0);i++)
+                    distances(i) = distance(v,vectors(i));
+                best = argmin(distances);
+                if(pgetf("verbose")) printf("best cost %g\n",distances(best));
+            }
+            if(best>=0 && distances(best)<eps) {
+                if(pgetf("avg")) {
+                    using namespace narray_ops;
+                    int n = sum(counts(best));
+                    vectors(best) *= n;
+                    vectors(best) += v;
+                    vectors(best) *= 1.0/(n+1);
+                }
+                add_count(classes(best),counts(best),c);
+            } else {
+                floatarray temp;
+                temp = v;
+                float fuzz = pgetf("fuzz");
+                gauss2d(temp,fuzz,fuzz);
+                temp /= max(temp);
+                vectors.push() = temp;
+                add_count(classes.push(),counts.push(),c);
+            }
+            if(c>=ncls) ncls = c+1;
+            ASSERT(vectors.dim(0)==classes.length());
+        }
+        void updateModel() {
+        }
+        float outputs_impl(floatarray &result,floatarray &v) {
+            dtype = pgetf("dtype");
+            offset = pgetf("offset");
+            check(v);
+            int k = pgetf("k");
+            floatarray distances(vectors.dim(0));
+#pragma omp parallel for
+            for(int i=0;i<vectors.dim(0);i++)
+                distances(i) = distance(v,vectors(i));
+
+            NBest nbest(k);
+            for(int i=0;i<vectors.dim(0);i++)
+                nbest.add(i,-distances(i));
+
+            result.resize(ncls);
+            fill(result,0);
+            for(int i=0;i<nbest.length();i++) {
+                int k = nbest[i];
+                for(int j=0;j<classes[k].length();j++)
+                    result(classes[k][j]) += counts[k][j];
+            }
+            result /= sum(result);
+
+            if(dactive()) {
+                int r = sqrt(ndim);
+                floatarray temp;
+                temp = vectors(nbest[0]);
+                if(temp.rank()==1) temp.reshape(r,r);
+                dshown(temp,"d");
+                temp = v;
+                if(temp.rank()==1) temp.reshape(r,r);
+                dshown(temp,"c");
+            }
+            return nbest.value(0);
         }
     };
 
@@ -1877,20 +2070,27 @@ namespace glinerec {
         if(init) return;
         init = true;
 
-        component_register<MappedClassifier>("mapped");
-        component_register<AveragingClassifier>("avgclass");
-        component_register<Float8Buffer>("float8buffer");
-        component_register<KnnClassifier>("knn");
+        // base classifiers
         component_register<BitNN>("bit");
+        component_register<KnnClassifier>("knn");
+        component_register<EnetClassifier>("enet");
         component_register<AutoMlpClassifier>("mlp");
-        component_register2<MappedClassifier,AutoMlpClassifier>("mappedmlp");
-        component_register<AdaBoost>("adaboost");
-        component_register2<MappedClassifier,AdaBoost>("boosted");
+
+        // classifier combination
         component_register<CascadedMLP>("cmlp");
-        // component_register2<MappedClassifier,CascadedMLP>("mappedcascaded");
-        component_register2<MappedClassifier,CascadedMLP>("cascadedmlp");
+        component_register<AveragingClassifier>("avgclass");
+        component_register<AdaBoost>("adaboost");
+        component_register<MappedClassifier>("mapped");
         component_register<LatinClassifier>("latin");
+
+        // common combinations with mapping
+        component_register2<MappedClassifier,AutoMlpClassifier>("mappedmlp");
+        component_register2<MappedClassifier,AdaBoost>("boosted");
+        component_register2<MappedClassifier,CascadedMLP>("cascadedmlp");
+
+        // other components
         typedef RowDataset<float8> RowDataset8;
+        component_register<Float8Buffer>("float8buffer");
         component_register<RowDataset8>("rowdataset8");
     }
 

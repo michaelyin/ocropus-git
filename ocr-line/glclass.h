@@ -106,6 +106,8 @@ namespace glinerec {
         virtual int nfeatures() {throw Unimplemented();}
         virtual int nclasses() {throw Unimplemented();}
         virtual float complexity() {return 1.0;}
+        virtual int nprotos() { throw Unimplemented(); }
+        virtual void getproto(floatarray &v,int i,int variant) { throw Unimplemented(); }
 
         // submodels
         virtual int nmodels() { return 0; }
