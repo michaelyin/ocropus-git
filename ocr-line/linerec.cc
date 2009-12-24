@@ -435,7 +435,7 @@ namespace glinerec {
         enum { reject_class = '~' };
         autodel<ISegmentLine> segmenter;
         autodel<IGrouper> grouper;
-        autodel<IIncremental> classifier;
+        autodel<IModel> classifier;
         autodel<IFeatureMap> featuremap;
         intarray counts;
         bool counts_warned;

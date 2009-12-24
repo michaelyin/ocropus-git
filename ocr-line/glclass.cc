@@ -311,7 +311,7 @@ namespace glinerec {
 
     // param_int show_knn("show_knn",0,"show knn matches for debugging");
 
-    struct KnnClassifier : IModel {
+    struct KnnClassifier : IBatch {
         int ncls;
         floatarray vectors;
         intarray classes;
@@ -419,7 +419,7 @@ namespace glinerec {
         a = temp;
     }
 
-    struct BinningClassifier : IModelDense {
+    struct BinningClassifier : IBatchDense {
         intarray widths,heights;
         narray<autodel<IModel> > models;
         BinningClassifier() {
@@ -489,7 +489,7 @@ namespace glinerec {
     // clustering classifier
     ////////////////////////////////////////////////////////////////
 
-    struct EnetClassifier : IModelDense {
+    struct EnetClassifier : IBatchDense {
         narray<floatarray> vectors;
         narray<intarray> classes;
         narray<intarray> counts;
@@ -811,7 +811,7 @@ namespace glinerec {
         }
     }
 
-    struct MlpClassifier : IModelDense {
+    struct MlpClassifier : IBatchDense {
     public:
         floatarray w1,b1,w2,b2;
         float eta;
@@ -1225,7 +1225,7 @@ namespace glinerec {
 #endif
     }
 
-    struct AdaBoost : IModelDense {
+    struct AdaBoost : IBatchDense {
         narray< autodel<IModel> > models;
         floatarray alphas;
         floatarray werrs;
@@ -1459,7 +1459,7 @@ namespace glinerec {
     // doesn't train one unit at a time
     ////////////////////////////////////////////////////////////////
 
-    struct CascadedMLP : IModelDense {
+    struct CascadedMLP : IBatchDense {
         narray< autodel<IModel> > models;
 
         CascadedMLP() {
@@ -1561,7 +1561,7 @@ namespace glinerec {
     // customizations for latin script)
     ////////////////////////////////////////////////////////////////
 
-    struct LatinClassifier : IModel {
+    struct LatinClassifier : IBatch {
         autodel<IModel> junkclass;
         autodel<IModel> charclass;
         autodel<IModel> ulclass;

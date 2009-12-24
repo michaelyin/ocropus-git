@@ -94,7 +94,7 @@ namespace {
 
 namespace glinerec {
 
-    struct IIncremental : IComponent {
+    struct IModel : IComponent {
         virtual const char *name() { return "IIncremental"; }
         virtual const char *interface() { return "IIncremental"; }
         virtual void add(floatarray &v,int c) = 0;
@@ -110,6 +110,8 @@ namespace glinerec {
 
         // special inquiry functions
 
+        virtual int nclasses() { return -1; }
+        virtual int nfeatures() { return -1; }
         virtual void copy(IModel &) { throw Unimplemented(); }
         virtual int nprotos() {return 0;}
         virtual void getproto(floatarray &v,int i,int variant) { throw Unimplemented(); }
@@ -117,30 +119,33 @@ namespace glinerec {
         virtual void setModel(IModel *,int i) { throw "no submodels"; }
         virtual IComponent &getModel(int i) { throw "no submodels"; }
 
-    };
-
-    struct IModel : IIncremental {
-        virtual const char *name() { return "IModel"; }
-        virtual const char *interface() { return "IModel"; }
-
-        virtual int nfeatures() { return -1; }
-        virtual int nclasses() { return -1; }
-        virtual void train(IDataset &dataset) = 0;
-        virtual float outputs(OutputVector &result,floatarray &v) = 0;
-
         // convenience functions
 
-        virtual int classify(floatarray &v) {
+        float outputs(floatarray &p,floatarray &x) {
+            OutputVector ov;
+            float cost = outputs(ov,x);
+            ov.as_array(p);
+            return cost;
+        }
+        int classify(floatarray &v) {
             OutputVector p;
             outputs(p,v);
             return p.argmax();
         }
+    };
+
+    struct IBatch : IModel {
+        virtual const char *name() { return "IBatch"; }
+        virtual const char *interface() { return "IBatch"; }
+
+        virtual void train(IDataset &dataset) = 0;
+        virtual float outputs(OutputVector &result,floatarray &v) = 0;
 
         // incremental training for batch models
 
         autodel<IExtDataset> ds;
 
-        IModel() {
+        IBatch() {
             pdef("cds","rowdataset8","default dataset buffer class");
 
         }
@@ -165,10 +170,10 @@ namespace glinerec {
         }
     };
 
-    struct IModelDense : IModel {
+    struct IBatchDense : IBatch {
         intarray c2i,i2c;
 
-        IModelDense() {
+        IBatchDense() {
             persist(c2i,"c2i");
             persist(i2c,"i2c");
         }

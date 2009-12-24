@@ -24,7 +24,7 @@
 
 #include "ocropus.h"
 #include "glcuts.h"
-#include "glfmaps.h"            //
+#include "glfmaps.h"
 #include "bookstore.h"
 
 using namespace iulib;
