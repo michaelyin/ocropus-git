@@ -429,6 +429,99 @@ namespace glinerec {
     };
 
     ////////////////////////////////////////////////////////////////
+    // bucket dispatching classifier
+    ////////////////////////////////////////////////////////////////
+
+    inline void pad_to(floatarray &a,int w1,int h1) {
+        int w = a.dim(0), h = a.dim(1);
+        CHECK(w<=w1 && h<=h1);
+        floatarray temp(w1,h1);
+        temp = 0;
+        int dx = w1/2;
+        int dy = h1/2;
+        for(int i=0;i<w;i++) {
+            for(int j=0;j<h;j++) {
+                temp(i+dx,j+dy) = a(i,j);
+            }
+        }
+        a = temp;
+    }
+
+    struct BinningClassifier : IModel {
+        intarray widths,heights;
+        narray<autodel<IModel> > models;
+        BinningClassifier() {
+            pdef("q",5,"bin quantization");
+            pdef("model","mlp","underlying model");
+        }
+        virtual const char *name() {
+            return "BinningClassifier";
+        }
+        virtual int nmodels() {
+            return models.length();
+        }
+        virtual void setModel(IModel *model,int i) {
+            models[i] = model;
+        }
+        virtual IComponent &getModel(int i) {
+            return *models[i];
+        }
+        void bin(floatarray &temp,floatarray &v) {
+            int q = pgetf("q");
+            CHECK(v.rank()==2);
+            int w = v.dim(0);
+            int h = v.dim(1);
+            int w1 = q*((w+q-1)/q);
+            int h1 = q*((h+q-1)/q);
+            temp = v;
+            pad_to(temp,w1,h1);
+        }
+        virtual float outputs_impl(floatarray &result,floatarray &v) {
+            floatarray temp;
+            bin(temp,v);
+            int w1 = temp.dim(0), h1 = temp.dim(1);
+            for(int i=0;i<models.length();i++) {
+                if(widths[i]==w1 && heights[i]==h1) {
+                    return models[i]->outputs_impl(result,temp);
+                }
+            }
+            result.resize(0);
+            return 1e30;
+        }
+        virtual void add(floatarray &v,int c) {
+            floatarray temp;
+            bin(temp,v);
+            int w1 = temp.dim(0), h1 = temp.dim(1);
+            for(int i=0;i<models.length();i++) {
+                if(widths[i]==w1 && heights[i]==h1) {
+                    models[i]->add(temp,c);
+                    return;
+                }
+            }
+            widths.push(w1);
+            heights.push(h1);
+            models.push() = make_model(pget("model"));
+            models.last()->add(v,c);
+        }
+        virtual float outputs_impl(OutputVector &result,InputVector &v) {
+            floatarray temp;
+            float value = outputs_impl(temp,v.chunk(0));
+            result.copy(temp);
+            return value;
+        }
+        virtual void add(InputVector &v,int c) {
+            add(v.chunk(0),c);
+        }
+        virtual void updateModel() {
+            for(int i=0;i<models.length();i++)
+                models[i]->updateModel();
+        }
+        virtual void train(IDataset &dataset) {
+            throw Unimplemented();
+        }
+    };
+
+    ////////////////////////////////////////////////////////////////
     // clustering classifier
     ////////////////////////////////////////////////////////////////
 
@@ -463,7 +556,6 @@ namespace glinerec {
             return vectors.dim(0);
         }
         void getproto(floatarray &v,int i,int variant) {
-            printf("getting %d\n",i);
             v = vectors(i);
         }
         void info(int depth,FILE *stream) {

@@ -411,6 +411,7 @@ namespace glinerec {
                 recognizers(s,w)->finishTraining();
                 if(!next_bucket()) return false;
             }
+            return true;
         }
         virtual bool addTrainingLine(bytearray &image,ustrg &transcription) {
             intarray segmentation;

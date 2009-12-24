@@ -102,28 +102,15 @@ namespace glinerec {
         virtual const char *name() { return "IModel"; }
         virtual const char *interface() { return "IModel"; }
 
-        // inquiry functions
-        virtual int nfeatures() {throw Unimplemented();}
-        virtual int nclasses() {throw Unimplemented();}
-        virtual float complexity() {return 1.0;}
-        virtual int nprotos() { throw Unimplemented(); }
-        virtual void getproto(floatarray &v,int i,int variant) { throw Unimplemented(); }
+        virtual int nfeatures() = 0; // return -1 for variable
+        virtual int nclasses() = 0;
 
-        // submodels
-        virtual int nmodels() { return 0; }
-        virtual void setModel(IModel *,int i) { throw "no submodels"; }
-        virtual IComponent &getModel(int i) { throw "no submodels"; }
+        // batch training with dataset interface
 
-        // update this model in place
-        virtual void copy(IModel &) { throw Unimplemented(); }
+        virtual void train(IDataset &dataset) = 0;
 
         float outputs(OutputVector &result,InputVector &v) {
             return outputs_impl(result,v);
-        }
-        float outputs(floatarray &result,floatarray &v) {
-            OutputVector result_(result);
-            InputVector v_(v);
-            return outputs_impl(result_,v_);
         }
 
         virtual float outputs_impl(OutputVector &result,InputVector &v) {
@@ -134,55 +121,16 @@ namespace glinerec {
             result.copy(result_);
             return value;
         }
-        virtual float outputs_impl(floatarray &result,floatarray &v) {
-            throw Unimplemented();
-        }
-    public:
-#if 0
-        float outputs(OutputVector &result,floatarray &v) {
-            InputVector v_;
-            return outputs(result,v_);
-        }
-        float outputs(floatarray &result,InputVector &v) {
-            OutputVector result_(result);
-            return outputs(result_,v);
-        }
-        float outputs(floatarray &result,floatarray &v) {
-            OutputVector result_(result);
-            InputVector v_(v);
-            return outputs(result_,v_);
-        }
-#endif
 
-        virtual float cost(floatarray &v) {
-            OutputVector temp;
-            InputVector v_(v);
-            return outputs(temp,v_);
-        }
-
-        // convenience function
-        virtual int classify(floatarray &v) {
-            OutputVector p;
-            InputVector v_(v);
-            outputs(p,v_);
-            return p.argmax();
-        }
-
-        // estimate the cross validated error from the training data seen
-        virtual float crossValidatedError() { throw Unimplemented(); }
-
-        // batch training with dataset interface
-        virtual void train(IDataset &dataset) = 0;
-
-        // incremental training & default implementation in terms of batch
         autodel<IExtDataset> ds;
-        virtual void add(floatarray &v,int c) {
+        virtual void add(InputVector &v,int c) {
             if(!ds) {
                 debugf("info","allocating %s buffer for classifier\n",pget("cds"));
                 make_component(pget("cds"),ds);
             }
             ds->add(v,c);
         }
+
         virtual void updateModel() {
             if(!ds) return;
             debugf("info","updateModel %d samples, %d features, %d classes\n",
@@ -192,6 +140,58 @@ namespace glinerec {
                    (ds->nsamples() * ds->nfeatures())/1000000);
             train(*ds);
             ds = 0;
+        }
+
+        // special inquiry functions
+
+        virtual void copy(IModel &) { throw Unimplemented(); }
+        virtual int nprotos() {return 0;}
+        virtual void getproto(floatarray &v,int i,int variant) { throw Unimplemented(); }
+        virtual int nmodels() { return 0; }
+        virtual void setModel(IModel *,int i) { throw "no submodels"; }
+        virtual IComponent &getModel(int i) { throw "no submodels"; }
+
+        // convenience functions
+
+        virtual int classify(floatarray &v) {
+            OutputVector p;
+            InputVector v_(v);
+            outputs(p,v_);
+            return p.argmax();
+        }
+
+        // *** obsolete ***
+
+        float outputs(floatarray &result,floatarray &v) {
+            OutputVector result_(result);
+            InputVector v_(v);
+            return outputs_impl(result_,v_);
+        }
+
+        virtual float outputs_impl(floatarray &result,floatarray &v) {
+            throw Unimplemented();
+        }
+
+        virtual float cost(floatarray &v) {
+            OutputVector temp;
+            InputVector v_(v);
+            return outputs(temp,v_);
+        }
+
+        virtual float crossValidatedError() {
+            throw Unimplemented();
+        }
+
+        virtual void add(floatarray &v,int c) {
+            if(!ds) {
+                debugf("info","allocating %s buffer for classifier\n",pget("cds"));
+                make_component(pget("cds"),ds);
+            }
+            ds->add(v,c);
+        }
+
+        virtual float complexity() {
+            return 1.0;
         }
     };
 
