@@ -219,6 +219,72 @@ namespace glinerec {
         }
     };
 
+    template <class T>
+    struct RaggedDataset : IExtDataset {
+        objlist< narray<T> > data;
+        intarray classes;
+        RaggedDataset() {
+        }
+        RaggedDataset(narray<T> &ds,intarray &cs) {
+            add(ds,cs);
+        }
+        const char *name() {
+            return "raggeddataset";
+        }
+        void save(FILE *stream) {
+            magic_write(stream,"rdataset");
+            int t = sizeof (T);
+            scalar_write(stream,t);
+            narray_write(stream,classes);
+            for(int i=0;i<data.dim(0);i++)
+                narray_write(stream,data(i));
+        }
+        void load(FILE *stream) {
+            magic_read(stream,"rdataset");
+            int t;
+            scalar_read(stream,t);
+            CHECK(t==sizeof (T));
+            narray_read(stream,classes);
+            data.clear();
+            for(int i=0;i<classes.length();i++)
+                narray_read(stream,data.push());
+        }
+        int nsamples() {
+            return data.dim(0);
+        }
+        int nclasses() {
+            return -1;
+        }
+        int nfeatures() {
+            return -1;
+        }
+        int cls(int i) {
+            return classes(i);
+        }
+        void input(floatarray &v,int i) {
+            v.copy(data(i));
+        }
+        int id(int i) {
+            return i;
+        }
+        void add(floatarray &v,int c) {
+            CHECK(min(v)>-100 && max(v)<100);
+            CHECK(c>=-1);
+            data.push() = v;
+            classes.push() = c;
+        }
+        void add(floatarray &ds,intarray &cs) {
+            for(int i=0;i<ds.dim(0);i++) {
+                rowget(data.push(),ds,i);
+                classes.push() = cs(i);
+            }
+        }
+        void clear() {
+            data.clear();
+            classes.clear();
+        }
+    };
+
     struct MappedDataset : IDataset {
         IDataset &ds;
         intarray &classes;

@@ -435,7 +435,7 @@ namespace glinerec {
         enum { reject_class = '~' };
         autodel<ISegmentLine> segmenter;
         autodel<IGrouper> grouper;
-        autodel<IModel> classifier;
+        autodel<IIncremental> classifier;
         autodel<IFeatureMap> featuremap;
         intarray counts;
         bool counts_warned;
@@ -674,8 +674,7 @@ namespace glinerec {
 #pragma omp atomic
                 ntrained++;
             }
-            debugf("detail","addTrainingLine trained %d chars, %d junk, %s total\n",total-junk,junk,
-                    classifier->command("total"));
+            debugf("detail","addTrainingLine trained %d chars, %d junk\n",total-junk,junk);
             dwait();
             return true;
         }
@@ -767,7 +766,7 @@ namespace glinerec {
                     debugf("warn","feature extraction failed [%d]: %s\n",i,msg);
                     continue;
                 }
-                float ccost = ccost = classifier->outputs(p,v);
+                float ccost = classifier->outputs(p,v);
 #pragma omp critical
                 {
                     if(use_reject) {

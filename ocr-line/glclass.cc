@@ -380,7 +380,7 @@ namespace glinerec {
             if(c>=ncls) ncls = c+1;
             ASSERT(vectors.dim(0)==classes.length());
         }
-        float outputs(floatarray &result,floatarray &v) {
+        float outputs(OutputVector &result,floatarray &v) {
             int k = pgetf("k");
             CHECK(min(v)>-100 && max(v)<100);
             CHECK(v.dim(0)==ndim);
@@ -390,23 +390,16 @@ namespace glinerec {
                 if(fabs(d)<min_dist) continue;
                 nbest.add(i,-d);
             }
-            result.resize(ncls);
-            fill(result,0);
+            result.clear();
             for(int i=0;i<nbest.length();i++) {
                 result(classes[nbest[i]])++;
             }
-            result /= sum(result);
-
-            int r = sqrt(ndim);
-            floatarray temp(r,r);
-            for(int i=0;i<ndim;i++) temp.at1d(i) = vectors(nbest[0],i);
-            dshown(temp,"d");
-            for(int i=0;i<ndim;i++) temp.at1d(i) = v.at1d(i);
-            dshown(temp,"c");
-            return nbest.value(0);
+            result.normalize();
+            return 0.0;
         }
     };
 
+#if 0
     ////////////////////////////////////////////////////////////////
     // bucket dispatching classifier
     ////////////////////////////////////////////////////////////////
@@ -426,7 +419,7 @@ namespace glinerec {
         a = temp;
     }
 
-    struct BinningClassifier : IModel {
+    struct BinningClassifier : IModelDense {
         intarray widths,heights;
         narray<autodel<IModel> > models;
         BinningClassifier() {
@@ -490,12 +483,13 @@ namespace glinerec {
             throw Unimplemented();
         }
     };
+#endif
 
     ////////////////////////////////////////////////////////////////
     // clustering classifier
     ////////////////////////////////////////////////////////////////
 
-    struct EnetClassifier : IModel {
+    struct EnetClassifier : IModelDense {
         narray<floatarray> vectors;
         narray<intarray> classes;
         narray<intarray> counts;
@@ -578,7 +572,7 @@ namespace glinerec {
             }
             throw "bad dtype";
         }
-        void train(IDataset &ds) {
+        void train_dense(IDataset &ds) {
             floatarray v;
             for(int i=0;i<ds.nsamples();i++) {
                 ds.input(v,i);
@@ -679,228 +673,6 @@ namespace glinerec {
                 dshown(temp,"c");
             }
             return nbest.value(0);
-        }
-    };
-
-    ////////////////////////////////////////////////////////////////
-    // bitmap classifier
-    ////////////////////////////////////////////////////////////////
-
-    typedef long long uint64;
-
-    int bitcount0(uint64 v) {
-        int total = 0;
-        for(int i=0;i<64;i++) {
-            if(v&1) total++;
-            v>>=1;
-        }
-        return total;
-    }
-
-    static int counts16[65536];
-    int counts16_init() {
-        for(int i=0;i<65536;i++)
-            counts16[i] = bitcount0(i);
-        return 0;
-    }
-
-    int init_0 = counts16_init();
-
-    int bitcount(uint64 v) {
-        // this is about twice as fast as bitcount1
-        return counts16[v&0xffff]+counts16[(v>>16)&0xffff]+
-            counts16[(v>>32)&0xffff]+counts16[(v>>48)&0xffff];
-    }
-
-    struct bitvec {
-        enum { bpw=64 };
-        int nwords;
-        uint64 *data;
-        bitvec() {
-            nwords = 0;
-            data = 0;
-        }
-        ~bitvec() {
-            if(data) delete [] data;
-            data = 0;
-            nwords = 0;
-        }
-        bitvec(const bitvec &other) {
-            nwords = other.nwords;
-            data = new uint64[nwords];
-            memcpy(data,other.data,nwords * sizeof *data);
-        }
-        void operator=(const bitvec &other) {
-            if(data) delete [] data;
-            nwords = other.nwords;
-            data = new uint64[nwords];
-            memcpy(data,other.data,nwords * sizeof *data);
-        }
-        void reserve_bits(int nbits) {
-            if(data) delete [] data;
-            nwords = (nbits+bpw-1)/bpw;
-            data = new uint64[nwords];
-        }
-        void reserve_words(int n) {
-            if(data) delete [] data;
-            nwords = n;
-            data = new uint64[nwords];
-        }
-        template <class T>
-        void set(T *v,int nbits,T threshold) {
-            reserve_bits(nbits);
-            uint64 word = 0xf0f0f0f0f0f0f0f0LLU;
-            int index = 0;
-            int bitindex = 0;
-            for(int i=0;i<nbits;i++) {
-                word <<= 1;
-                if(v[i]>threshold) word |= 1;
-                bitindex++;
-                if(bitindex==bpw) {
-                    data[index++] = word;
-                    word = 0;
-                    bitindex = 0;
-                }
-            }
-            if(bitindex>0) {
-                word <<= (bpw-bitindex);
-                data[index++] = word;
-            }
-        }
-        template <class T>
-        void set(narray<T> &v) {
-            set(&v(0),v.length(),(min(v)+max(v))/2);
-        }
-        template <class T>
-        void get(T *v,int nbits) {
-            uint64 word = 0;
-            int index = 0;
-            int bitindex = 0;
-            for(int i=0;i<nbits;i++) {
-                if(bitindex==0) {
-                    word = data[index++];
-                    bitindex = bpw;
-                }
-                v[i] = !!(word&0x8000000000000000LLU);
-                word <<= 1;
-                bitindex--;
-            }
-        }
-        int countbits() {
-            int total = 0;
-            for(int i=0;i<nwords;i++)
-                total += bitcount(data[i]);
-            return total;
-        }
-        int dist(bitvec &other) {
-            int total = 0;
-            int n = min(nwords,other.nwords);
-            uint64 *p = data, *q = other.data;
-            for(int i=0;i<n;i++)
-                total += bitcount((*p++) ^ (*q++));
-            return total;
-        }
-    };
-
-    void bitvec_write(FILE *stream,bitvec &v) {
-        magic_write(stream,"BV");
-        CHECK(unsigned(v.nwords)<1000000);
-        scalar_write(stream,v.nwords);
-        CHECK(fwrite(v.data,sizeof *v.data,v.nwords,stream)==
-              unsigned(v.nwords));
-    }
-
-    void bitvec_read(FILE *stream,bitvec &v) {
-        magic_read(stream,"BV");
-        int nwords;
-        scalar_read(stream,nwords);
-        CHECK(unsigned(nwords)<1000000);
-        v.reserve_words(nwords);
-        CHECK(fread(v.data,sizeof *v.data,v.nwords,stream)==
-              unsigned(v.nwords));
-    }
-
-    void display_bits(bitvec &v,int w,int h,const char *where) {
-        bytearray image(w,h);
-        image.fill(0);
-        v.get(&image.at1d(0),w*h);
-        for(int i=0;i<w*h;i++)
-            if(image.at1d(i)) image.at1d(i) = 255;
-        dshow(image,where);
-    }
-
-    struct BitNN : IModel {
-        int nfeat;
-        objlist<bitvec> prototypes;
-        intarray classes;
-        BitNN() {
-            pdef("k",1,"number of nearest neighbors");
-            nfeat = 0;
-        }
-        const char *name() {
-            return "bit";
-        }
-        void info(int depth,FILE *stream) {
-            iprintf(stream,depth,"BitNN\n");
-            pprint(stream,depth);
-            int k = pgetf("k");
-            iprintf(stream,depth,"nfeat %d nprotos %d nclasses %d k %d\n",
-                    nfeat,prototypes.length(),max(classes)+1,k);
-        }
-        void save(FILE *stream) {
-            psave(stream);
-            narray_write(stream,classes);
-            for(int i=0;i<classes.length();i++) {
-                bitvec_write(stream,prototypes[i]);
-            }
-        }
-        void load(FILE *stream) {
-            pload(stream);
-            narray_read(stream,classes);
-            prototypes.resize(classes.length());
-            for(int i=0;i<classes.length();i++) {
-                bitvec_read(stream,prototypes[i]);
-            }
-        }
-        int nfeatures() {
-            return nfeat;
-        }
-        int nclasses() {
-            return max(classes)+1;
-        }
-        void print() {
-            printf("<BitNN #protos %d>\n",prototypes.length());
-        }
-        void train(IDataset &ds) {
-            floatarray v;
-            for(int i=0;i<ds.nsamples();i++) {
-                ds.input(v,i);
-                add(v,ds.cls(i));
-            }
-        }
-        void add(floatarray &v,int c) {
-            if(nfeat==0) nfeat = v.length();
-            else CHECK(nfeat==v.length());
-            prototypes.push().set(v);
-            classes.push(c);
-        }
-        void updateModel() {
-        }
-        float outputs_dense(floatarray &result,floatarray &v) {
-            floatarray p;
-            int k = pgetf("k");
-            bitvec bv;
-            bv.set(v);
-            int n = prototypes.length();
-            floatarray dists(n);
-#pragma omp parallel for
-            for(int j=0;j<n;j++)
-                dists(j) = prototypes[j].dist(bv);
-            knn_posterior(p,classes,dists,k);
-            int nearest = argmin(dists);
-            float cost = dists(nearest)/10.0;
-            result = p;
-            return cost;
         }
     };
 
@@ -1039,7 +811,7 @@ namespace glinerec {
         }
     }
 
-    struct MlpClassifier : IModel {
+    struct MlpClassifier : IModelDense {
     public:
         floatarray w1,b1,w2,b2;
         float eta;
@@ -1250,7 +1022,7 @@ namespace glinerec {
                 b1(i) -= eta * delta1(i);
         }
 
-        void train(IDataset &ds) {
+        void train_dense(IDataset &ds) {
             dsection("mlp");
             int nclasses = ds.nclasses();
             float miters = pgetf("miters");
@@ -1435,73 +1207,6 @@ namespace glinerec {
     };
 
     ////////////////////////////////////////////////////////////////
-    // Float8Buffer is a classifier that allows incremental training
-    // with an efficient float8 internall buffer.
-    ////////////////////////////////////////////////////////////////
-
-    struct Float8Buffer : IModel {
-        RowDataset<float8> ds8;
-        int nf,nc,n;
-        Float8Buffer() {
-            pdef("datafile","","datafile where the data is to be saved");
-            nf = -1;
-            nc = -1;
-            n = 0;
-        }
-        const char *name() {
-            return "float8buffer";
-        }
-        void info(int depth,FILE *stream) {
-            iprintf(stream,depth,"Float8Buffer (incremental training with 8bit buffering)\n");
-            pprint(stream,depth);
-        }
-        int nfeatures() {
-            return nf;
-        }
-        int nclasses() {
-            return nc;
-        }
-        void train(IDataset &ds) {
-            floatarray v;
-            for(int i=0;i<ds.nsamples();i++) {
-                int c = ds.cls(i);
-                ds.input(v,i);
-                add(v,c);
-            }
-        }
-        void add(floatarray &v,int c) {
-            if(c>=nc) nc = c+1;
-            if(nf<0) nf = v.length();
-            else CHECK(nf==v.length());
-            ds8.add(v,c);
-        }
-        // NB: there is currently no way of saving the model and
-        // then training on it separately
-        autodel<IModel> cf;
-        void updateModel() {
-            const char *datafile = pget("datafile");
-            if(datafile && datafile[0]) {
-                debugf("info","%s: Float8Buffer saving: %d samples, %d features, %d classes\n",
-                       pget("datafile"),ds8.nsamples(),ds8.nfeatures(),ds8.nclasses());
-                save_component(stdio(datafile,"w"),&ds8);
-            } else {
-                throwf("float8buffer can only save, not train; use new dataset variable in IModel");
-            }
-        }
-        void save(FILE *stream) {
-            psave(stream);
-            save_component(stream,cf);
-        }
-        void load(FILE *stream) {
-            pload(stream);
-            load_component(stream,cf);
-        }
-        int classify(floatarray &x) {
-            return cf->classify(x);
-        }
-    };
-
-    ////////////////////////////////////////////////////////////////
     // AdaBoost
     ////////////////////////////////////////////////////////////////
 
@@ -1520,7 +1225,7 @@ namespace glinerec {
 #endif
     }
 
-    struct AdaBoost : IModel {
+    struct AdaBoost : IModelDense {
         narray< autodel<IModel> > models;
         floatarray alphas;
         floatarray werrs;
@@ -1646,7 +1351,7 @@ namespace glinerec {
             alphas = x;
         }
 
-        void train(IDataset &ds) {
+        void train_dense(IDataset &ds) {
             int nrounds = pgetf("rounds");
             int n = ds.nsamples();
             int nclass = ds.nclasses();
@@ -1754,7 +1459,7 @@ namespace glinerec {
     // doesn't train one unit at a time
     ////////////////////////////////////////////////////////////////
 
-    struct CascadedMLP : IModel {
+    struct CascadedMLP : IModelDense {
         narray< autodel<IModel> > models;
 
         CascadedMLP() {
@@ -1805,7 +1510,7 @@ namespace glinerec {
             return make_model("mappedmlp");
         }
 
-        void train(IDataset &ds) {
+        void train_dense(IDataset &ds) {
             int nrounds = pgetf("rounds");
             AugmentedDataset ads(ds);
             for(int round=0;round<nrounds;round++) {
@@ -1960,7 +1665,7 @@ namespace glinerec {
             }
         }
 
-        float outputs_dense(floatarray &result,floatarray &v) {
+        float outputs(OutputVector &result,floatarray &v) {
             OutputVector ov;
             floatarray chars;
             floatarray ul;
@@ -1995,113 +1700,7 @@ namespace glinerec {
         }
     };
 
-    ////////////////////////////////////////////////////////////////
-    // train multiple classifiers and average
-    ////////////////////////////////////////////////////////////////
-
-    struct AveragingClassifier : IModel {
-        narray< autodel<IModel> > classifiers;
-        int last_is_trained;
-        int count;
-        AveragingClassifier() {
-            pdef("tempsave","_tempsave_%03d.model","pattern for temporary save files");
-            pdef("classifier","latin","base classifier");
-            pdef("mintrain",1000,"minimum number of samples to use for final training");
-            pdef("chunk",100000,"size of each training chunk");
-            persist(classifiers,"classifiers");
-            // the last classifier is always untrained
-            make_component(classifiers.push(),pget("classifier"));
-            count = 0;
-        }
-        int nfeatures() {
-            return classifiers[0]->nfeatures();
-        }
-        int nclasses() {
-            int nc = 0;
-            for(int i=0;i<classifiers.length()-1;i++) {
-                nc = max(nc,classifiers[i]->nclasses());
-            }
-            return nc;
-        }
-        const char *name() {
-            return "avgclass";
-        }
-        void info(int depth,FILE *stream) {
-            iprintf(stream,depth,"avgclass has %d classifiers\n",classifiers.length());
-            for(int i=0;i<classifiers.length();i++) {
-                iprintf(stream,depth,"classifier %d:\n",i);
-                classifiers[i]->info(depth+1,stream);
-            }
-        }
-        int nmodels() {
-            return classifiers.length();
-        }
-        void setModel(IModel *cf,int which) {
-            classifiers[which] = cf;
-        }
-        IModel &getModel(int which) {
-            return *classifiers[which];
-        }
-
-        void train(IDataset &ds) {
-            floatarray v;
-            for(int i=0;i<ds.nsamples();i++) {
-                int c = ds.cls(i);
-                ds.input(v,i);
-                add(v,c);
-            }
-        }
-
-        void updateModel() {
-            if(count>pgetf("mintrain")) {
-                classifiers.last()->updateModel();
-                // the last classifier is always untrained, so add a new one
-                make_component(classifiers.push(),pget("classifier"));
-                count = 0;
-            } else {
-                debugf("warn","not updating last classifier since there are only %d samples\n",count);
-            }
-        }
-
-        void add(floatarray &v,int c) {
-            if(count>=pgetf("chunk")) {
-                classifiers.last()->updateModel();
-                if(pget("tempsave") && current_recognizer_) {
-                    strg file;
-                    sprintf(file,pget("tempsave"),classifiers.length()-1);
-                    debugf("info","saving %s\n",file.c_str());
-                    save_component(stdio(file.c_str(),"w"),current_recognizer_);
-#if 1
-                    // load it back right away to debug I/O problems
-                    autodel<IRecognizeLine> model;
-                    load_component(stdio(file.c_str(),"r"),model);
-                    debugf("info","%s loaded OK\n",file.c_str());
-#endif
-                }
-                debugf("info","avgclass starting chunk %d\n",classifiers.length());
-                make_component(classifiers.push(),pget("classifier"));
-                count = 0;
-            }
-            classifiers.last()->add(v,c);
-            count++;
-        }
-
-        float outputs_dense(floatarray &result,floatarray &v) {
-            int nc = nclasses();
-            result.resize(nc);
-            result = 0;
-            floatarray w;
-            for(int i=0;i<classifiers.length()-1;i++) {
-                OutputVector ov;
-                classifiers[i]->outputs(ov,v);
-                ov.as_array(w);
-                while(w.length()<nc) w.push(0.0);
-                result += w;
-            }
-            result /= (classifiers.length()-1);
-            return 0.0;
-        }
-    };
+    // train multiple classifiers and average (FIXME: implement with resampling etc.)
 
     void init_glclass() {
         static bool init = false;
@@ -2109,27 +1708,20 @@ namespace glinerec {
         init = true;
 
         // base classifiers
-        component_register<BitNN>("bit");
         component_register<KnnClassifier>("knn");
         component_register<EnetClassifier>("enet");
         component_register<AutoMlpClassifier>("mlp");
 
         // classifier combination
         component_register<CascadedMLP>("cmlp");
-        component_register<AveragingClassifier>("avgclass");
         component_register<AdaBoost>("adaboost");
-        component_register<MappedClassifier>("mapped");
         component_register<LatinClassifier>("latin");
-
-        // common combinations with mapping
-        component_register2<MappedClassifier,AutoMlpClassifier>("mappedmlp");
-        component_register2<MappedClassifier,AdaBoost>("boosted");
-        component_register2<MappedClassifier,CascadedMLP>("cascadedmlp");
 
         // other components
         typedef RowDataset<float8> RowDataset8;
-        component_register<Float8Buffer>("float8buffer");
+        typedef RaggedDataset<float8> RaggedDataset8;
         component_register<RowDataset8>("rowdataset8");
+        component_register<RaggedDataset8>("raggeddataset8");
     }
 
     IRecognizeLine *current_recognizer_ = 0;

@@ -121,6 +121,16 @@ namespace glinerec {
             using namespace narray_ops;
             values /= value;
         }
+        float sum() {
+            double total;
+            for(int i=0;i<values.length();i++)
+                total += values[i];
+            return total;
+        }
+        void normalize() {
+            using namespace narray_ops;
+            values /= sum();
+        }
         int argmax() {
             int index = iulib::argmax(values);
             return keys[index];
