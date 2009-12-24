@@ -157,7 +157,7 @@ namespace glinerec {
             debugf("lineinfo","LineInfo %g %g %g\n",intercept,slope,xheight);
         }
 
-        void pushProps(InputVector &iv,rectangle b) {
+        void pushProps(floatarray &iv,rectangle b) {
             float baseline = intercept + slope * b.x0;
             float bottom = (b.y0-baseline)/xheight;
             float top = (b.y1-baseline)/xheight;
@@ -172,10 +172,10 @@ namespace glinerec {
             push_unary(v,height,-1,4,csize);
             push_unary(v,aspect,-1,4,csize);
             v.resize(v.length()/csize,csize);
-            iv.append(v,"props");
+            for(int i=0;i<v.length();i++) iv.push(v[i]);
         }
 
-        void extractFeatures(InputVector &v,rectangle b_,bytearray &mask) {
+        void extractFeatures(floatarray &v,rectangle b_,bytearray &mask) {
             rectangle b;
             b = b_;
             dsection("featcenter");
@@ -657,17 +657,17 @@ namespace glinerec {
                 rectangle b;
                 bytearray mask;
                 grouper->getMask(b,mask,i,0);
-                InputVector v;
+                floatarray v;
                 featuremap->extractFeatures(v,b,mask);
 #pragma omp atomic
                 total++;
 #pragma omp critical
                 {
                     if(use_reject) {
-                        classifier->add(v.ravel(),c);
+                        classifier->add(v,c);
                     } else {
                         if(c!=reject_class)
-                            classifier->add(v.ravel(),c);
+                            classifier->add(v,c);
                     }
                     if(c!=reject_class) inc_class(c);
                 }
@@ -760,18 +760,14 @@ namespace glinerec {
                 rectangle b;
                 bytearray mask;
                 grouper->getMask(b,mask,i,0);
-                InputVector v;
+                floatarray v;
                 try {
                     featuremap->extractFeatures(v,b,mask);
                 } catch(const char *msg) {
                     debugf("warn","feature extraction failed [%d]: %s\n",i,msg);
                     continue;
                 }
-                float ccost = 0.0;
-                {
-                    InputVector temp(v);
-                    ccost = classifier->outputs(p,temp);
-                }
+                float ccost = ccost = classifier->outputs(p,v);
 #pragma omp critical
                 {
                     if(use_reject) {

@@ -21,37 +21,12 @@ namespace glinerec {
             v = 0;
             v(cls(i)) = 1;
         }
-        // this is for storing structured input vectors
-        InputVector schema_;
-        virtual InputVector &schema() {
-            if(schema_.nchunks()==0) {
-                floatarray v(nfeatures());
-                schema_ = v;
-            }
-            return schema_;
-        }
-        virtual void input(InputVector &v,int i) {
-            floatarray v_;
-            input(v_,i);
-            v.makelike(schema());
-            v.fillwith(v_);
-        }
     };
 
     struct IExtDataset : IDataset {
         virtual void add(floatarray &v,int c) = 0;
         virtual void add(floatarray &ds,intarray &cs) = 0;
         virtual void clear() = 0;
-        // storing structured input vectors
-        virtual void add(InputVector &v,int c) {
-            if(schema_.nchunks()==0)
-                schema_ = v;
-            else
-                schema_.checklike(v);
-            floatarray v_;
-            v.ravel(v_);
-            add(v_,c);
-        }
     };
 
     struct float8 {

@@ -365,10 +365,10 @@ namespace glinerec {
             floatarray v;
             for(int i=0;i<ds.nsamples();i++) {
                 ds.input(v,i);
-                add(v,ds.cls(i));
+                train1(v,ds.cls(i));
             }
         }
-        void add(floatarray &v,int c) {
+        void train1(floatarray &v,int c) {
             CHECK(min(v)>-100 && max(v)<100);
             ASSERT(valid(v));
             ASSERT(v.rank()==1);
@@ -380,9 +380,7 @@ namespace glinerec {
             if(c>=ncls) ncls = c+1;
             ASSERT(vectors.dim(0)==classes.length());
         }
-        void updateModel() {
-        }
-        float outputs_impl(floatarray &result,floatarray &v) {
+        float outputs(floatarray &result,floatarray &v) {
             int k = pgetf("k");
             CHECK(min(v)>-100 && max(v)<100);
             CHECK(v.dim(0)==ndim);
@@ -406,25 +404,6 @@ namespace glinerec {
             for(int i=0;i<ndim;i++) temp.at1d(i) = v.at1d(i);
             dshown(temp,"c");
             return nbest.value(0);
-        }
-        float crossValidatedError() {
-            int errs = 0;
-            min_dist = 1e-6;
-            for(int i=0;i<vectors.dim(0);i++) {
-                NBest nbest(1);
-                floatarray v;
-                rowget(v,vectors,i);
-#pragma omp parallel for
-                for(int j=0;j<vectors.dim(0);j++) {
-                    if(i==j) continue;
-                    double d = rowdist_euclidean(vectors,j,v);
-                    nbest.add(j,-d);
-                }
-                int c = classes(nbest[0]);
-                if(c!=classes(i)) errs++;
-            }
-            min_dist = -1;
-            return errs/float(vectors.dim(0));
         }
     };
 
@@ -476,19 +455,19 @@ namespace glinerec {
             temp = v;
             pad_to(temp,w1,h1);
         }
-        virtual float outputs_impl(floatarray &result,floatarray &v) {
+        float outputs(OutputVector &result,floatarray &v) {
             floatarray temp;
             bin(temp,v);
             int w1 = temp.dim(0), h1 = temp.dim(1);
             for(int i=0;i<models.length();i++) {
                 if(widths[i]==w1 && heights[i]==h1) {
-                    return models[i]->outputs_impl(result,temp);
+                    return models[i]->outputs(result,temp);
                 }
             }
-            result.resize(0);
+            result.clear();
             return 1e30;
         }
-        virtual void add(floatarray &v,int c) {
+        void add(floatarray &v,int c) {
             floatarray temp;
             bin(temp,v);
             int w1 = temp.dim(0), h1 = temp.dim(1);
@@ -502,15 +481,6 @@ namespace glinerec {
             heights.push(h1);
             models.push() = make_model(pget("model"));
             models.last()->add(v,c);
-        }
-        virtual float outputs_impl(OutputVector &result,InputVector &v) {
-            floatarray temp;
-            float value = outputs_impl(temp,v.chunk(0));
-            result.copy(temp);
-            return value;
-        }
-        virtual void add(InputVector &v,int c) {
-            add(v.chunk(0),c);
         }
         virtual void updateModel() {
             for(int i=0;i<models.length();i++)
@@ -612,7 +582,7 @@ namespace glinerec {
             floatarray v;
             for(int i=0;i<ds.nsamples();i++) {
                 ds.input(v,i);
-                add(v,ds.cls(i));
+                train1(v,ds.cls(i));
             }
         }
         void check(floatarray &v,int c=99999999) {
@@ -640,7 +610,7 @@ namespace glinerec {
             classes.push(c);
             counts.push(1);
         }
-        void add(floatarray &v,int c) {
+        void train1(floatarray &v,int c) {
             dtype = pgetf("dtype");
             offset = pgetf("offset");
             check(v,c);
@@ -675,9 +645,7 @@ namespace glinerec {
             if(c>=ncls) ncls = c+1;
             ASSERT(vectors.dim(0)==classes.length());
         }
-        void updateModel() {
-        }
-        float outputs_impl(floatarray &result,floatarray &v) {
+        float outputs_dense(floatarray &result,floatarray &v) {
             dtype = pgetf("dtype");
             offset = pgetf("offset");
             check(v);
@@ -918,7 +886,7 @@ namespace glinerec {
         }
         void updateModel() {
         }
-        float outputs_impl(floatarray &result,floatarray &v) {
+        float outputs_dense(floatarray &result,floatarray &v) {
             floatarray p;
             int k = pgetf("k");
             bitvec bv;
@@ -931,13 +899,6 @@ namespace glinerec {
             knn_posterior(p,classes,dists,k);
             int nearest = argmin(dists);
             float cost = dists(nearest)/10.0;
-#if 0
-            int r = int(sqrt(v.length()));
-            display_bits(bv,r,r,"c");
-            display_bits(prototypes[nearest],r,r,"d");
-            fprintf(stderr,"match %d %c %g\n",nearest,argmax(p),cost);
-            dwait();
-#endif
             result = p;
             return cost;
         }
@@ -1174,7 +1135,7 @@ namespace glinerec {
             b2.copy(other.b2);
         }
 
-        float outputs_impl(floatarray &result,floatarray &x_raw) {
+        float outputs_dense(floatarray &result,floatarray &x_raw) {
             floatarray z;
             int sparse = pgetf("sparse");
             floatarray y,x;
@@ -1538,9 +1499,6 @@ namespace glinerec {
         int classify(floatarray &x) {
             return cf->classify(x);
         }
-        float outputs_impl(OutputVector &z,InputVector &x) {
-            return cf->outputs(z,x);
-        }
     };
 
     ////////////////////////////////////////////////////////////////
@@ -1660,7 +1618,9 @@ namespace glinerec {
                 ds.input(v,sample);
                 int cls = ds.cls(sample);
                 for(int k=0;k<models.length();k++) {
-                    models(k)->outputs(p,v);
+                    OutputVector ov;
+                    models(k)->outputs(ov,v);
+                    ov.as_array(v);
                     for(int r=0;r<nclasses();r++) {
                         b(sample,r) = (r==cls);
                         A(sample,r,k) = p(r);
@@ -1745,23 +1705,20 @@ namespace glinerec {
                 models.push() = net.move();
                 alphas.push() = alpha;
                 werrs.push() = werr;
-                int errs,errs1;
+                int errs;
                 if(1) {
                     int n = min(1000,ds.nsamples());
                     errs=0;
-                    errs1=0;
                     floatarray v;
                     for(int i=0;i<n;i++) {
                         int cls = ds.cls(i);
                         ds.input(v,i);
                         if(classify(v)!=cls) errs++;
-                        if(classify1(v)!=cls) errs1++;
                     }
                     debugf("train",
-                            "AdaBoost error estimate: errs %g errs1 %g\n",
-                            errs/float(n),errs1/float(n));
+                            "AdaBoost error estimate: errs %g\n",
+                           errs/float(n));
                     pset("%error_posterior",errs/float(n));
-                    pset("%error_regular",errs1/float(n));
                 }
                 if(current_recognizer_ && pgetf("save_intermediates")) {
                     char buf[1000];
@@ -1776,13 +1733,12 @@ namespace glinerec {
             }
         }
 
-        float outputs_impl(floatarray &result,floatarray &v) {
+        float outputs_dense(floatarray &result,floatarray &v) {
             result.resize(nclasses());
             result = 0;
             OutputVector p;
             for(int round=0;round<models.length();round++) {
-                InputVector temp(v);
-                models(round)->outputs(p,temp);
+                models(round)->outputs(p,v);
                 double alpha = alphas(round);
                 for(int i=0;i<p.length();i++)
                     result(i) += alpha * p(i);
@@ -1790,26 +1746,6 @@ namespace glinerec {
             result += min(result);
             result /= sum(result);
             return 0.0;
-        }
-
-        // alternative classification
-
-        float outputs_impl1(floatarray &result,floatarray &v) {
-            result.resize(nclasses());
-            result = 0;
-            floatarray p;
-            for(int round=0;round<models.length();round++) {
-                models(round)->outputs(p,v);
-                result(argmax(p)) += alphas(round);
-            }
-            result /= sum(result);
-            return 0.0;
-        }
-
-        int classify1(floatarray &v) {
-            floatarray p;
-            outputs_impl1(p,v);
-            return argmax(p);
         }
     };
 
@@ -1881,7 +1817,9 @@ namespace glinerec {
                     floatarray v;
                     floatarray p;
                     ads.input(v,i);
-                    net->outputs(p,v);
+                    OutputVector ov;
+                    net->outputs(ov,v);
+                    ov.as_array(p);
                     if(argmax(p)!=ds.cls(i))
                         errs++;
                     ads.augment(i,p);
@@ -1892,7 +1830,7 @@ namespace glinerec {
             }
         }
 
-        float outputs_impl(floatarray &result,floatarray &v) {
+        float outputs_dense(floatarray &result,floatarray &v) {
             int lrounds = pgetf("lrounds");
             result.resize(nclasses());
             result = 0;
@@ -1902,7 +1840,9 @@ namespace glinerec {
             floatarray p;
             for(int round=0;round<lrounds && round<models.length();round++) {
                 if(round>0) a.append(p);
-                models(round)->outputs(p,a);
+                OutputVector ov;
+                models(round)->outputs(ov,a);
+                ov.as_array(p);
             }
             result = p;
             result /= sum(result);
@@ -2020,16 +1960,19 @@ namespace glinerec {
             }
         }
 
-        float outputs_impl(floatarray &result,floatarray &v) {
+        float outputs_dense(floatarray &result,floatarray &v) {
+            OutputVector ov;
             floatarray chars;
             floatarray ul;
             floatarray junk;
 
             CHECK_ARG2(charclass->nclasses()==jc(),"Training incomplete for all classes");
-            charclass->outputs(chars,v);
+            charclass->outputs(ov,v);
+            ov.as_array(chars);
 
             if(pgetf("junk") && junkclass) {
-                junkclass->outputs(junk,v);
+                junkclass->outputs(ov,v);
+                ov.as_array(junk);
                 chars /= sum(chars);
                 chars *= junk(0);
                 while(chars.length()<=jc()) chars.push(0);
@@ -2037,7 +1980,8 @@ namespace glinerec {
             }
 
             if(pgetf("ul") && ulclass) {
-                ulclass->outputs(ul,v);
+                ulclass->outputs(ov,v);
+                ov.as_array(ul);
                 ul /= sum(ul);
                 for(int c='A';c<='Z';c++) {
                     float total = chars(c) + chars(c-'A'+'a');
@@ -2142,13 +2086,15 @@ namespace glinerec {
             count++;
         }
 
-        float outputs_impl(floatarray &result,floatarray &v) {
+        float outputs_dense(floatarray &result,floatarray &v) {
             int nc = nclasses();
             result.resize(nc);
             result = 0;
             floatarray w;
             for(int i=0;i<classifiers.length()-1;i++) {
-                classifiers[i]->outputs(w,v);
+                OutputVector ov;
+                classifiers[i]->outputs(ov,v);
+                ov.as_array(w);
                 while(w.length()<nc) w.push(0.0);
                 result += w;
             }

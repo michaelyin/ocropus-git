@@ -102,35 +102,29 @@ namespace glinerec {
         virtual const char *name() { return "IModel"; }
         virtual const char *interface() { return "IModel"; }
 
-        virtual int nfeatures() = 0; // return -1 for variable
-        virtual int nclasses() = 0;
-
-        // batch training with dataset interface
-
+        virtual int nfeatures() { return -1; }
+        virtual int nclasses() { return -1; }
         virtual void train(IDataset &dataset) = 0;
-
-        float outputs(OutputVector &result,InputVector &v) {
-            return outputs_impl(result,v);
+        virtual float outputs(OutputVector &result,floatarray &v) {
+            floatarray out;
+            float cost = outputs_dense(out,v);
+            result = out;
+            return cost;
+        }
+        virtual float outputs_dense(floatarray &result,floatarray &v) {
+            throw Unimplemented();
         }
 
-        virtual float outputs_impl(OutputVector &result,InputVector &v) {
-            floatarray result_;
-            floatarray v_;
-            v.ravel(v_);
-            float value = outputs_impl(result_,v_);
-            result.copy(result_);
-            return value;
-        }
+        // simple incremental training
 
         autodel<IExtDataset> ds;
-        virtual void add(InputVector &v,int c) {
+        virtual void add(floatarray &v,int c) {
             if(!ds) {
                 debugf("info","allocating %s buffer for classifier\n",pget("cds"));
                 make_component(pget("cds"),ds);
             }
             ds->add(v,c);
         }
-
         virtual void updateModel() {
             if(!ds) return;
             debugf("info","updateModel %d samples, %d features, %d classes\n",
@@ -155,43 +149,8 @@ namespace glinerec {
 
         virtual int classify(floatarray &v) {
             OutputVector p;
-            InputVector v_(v);
-            outputs(p,v_);
+            outputs(p,v);
             return p.argmax();
-        }
-
-        // *** obsolete ***
-
-        float outputs(floatarray &result,floatarray &v) {
-            OutputVector result_(result);
-            InputVector v_(v);
-            return outputs_impl(result_,v_);
-        }
-
-        virtual float outputs_impl(floatarray &result,floatarray &v) {
-            throw Unimplemented();
-        }
-
-        virtual float cost(floatarray &v) {
-            OutputVector temp;
-            InputVector v_(v);
-            return outputs(temp,v_);
-        }
-
-        virtual float crossValidatedError() {
-            throw Unimplemented();
-        }
-
-        virtual void add(floatarray &v,int c) {
-            if(!ds) {
-                debugf("info","allocating %s buffer for classifier\n",pget("cds"));
-                make_component(pget("cds"),ds);
-            }
-            ds->add(v,c);
-        }
-
-        virtual float complexity() {
-            return 1.0;
         }
     };
 
@@ -261,7 +220,7 @@ namespace glinerec {
         int classify(floatarray &x) {
             return i2c(cf->classify(x));
         }
-        float outputs_impl(OutputVector &z,InputVector &x) {
+        float outputs(OutputVector &z,floatarray &x) {
             float result = cf->outputs(z,x);
             ctranslate_vec(z,i2c);
             return result;

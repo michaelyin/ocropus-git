@@ -389,7 +389,12 @@ namespace glinerec {
             dwait();
         }
 
-        void extractFeatures(InputVector &v,rectangle b,bytearray &mask) {
+        void append(floatarray &v,floatarray &x,const char *name) {
+            for(int i=0;i<x.length();i++)
+                v.push(x[i]);
+        }
+
+        void extractFeatures(floatarray &v,rectangle b,bytearray &mask) {
             dsection("features");
             b.shift_by(pad,pad);
 
@@ -400,22 +405,22 @@ namespace glinerec {
             if(strchr(ftypes,'b')) {
                 extractFeatures(u,b,mask,binarized);
                 CHECK(min(u)>=-1.1 && max(u)<=1.1);
-                v.append(u,"b");
+                append(v,u,"b");
             }
             if(strchr(ftypes,'h')) {
                 extractFeatures(u,b,mask,holes,false);
                 CHECK(min(u)>=-1.1 && max(u)<=1.1);
-                v.append(u,"h");
+                append(v,u,"h");
             }
             if(strchr(ftypes,'j')) {
                 extractFeatures(u,b,mask,junctions);
                 CHECK(min(u)>=-1.1 && max(u)<=1.1);
-                v.append(u,"j");
+                append(v,u,"j");
             }
             if(strchr(ftypes,'e')) {
                 extractFeatures(u,b,mask,endpoints);
                 CHECK(min(u)>=-1.1 && max(u)<=1.1);
-                v.append(u,"e");
+                append(v,u,"e");
             }
             if(strchr(ftypes,'r')) {
                 floatarray temp;
@@ -424,25 +429,25 @@ namespace glinerec {
                     push_array(temp,u);
                 }
                 CHECK(min(temp)>=-1.1 && max(temp)<=1.1);
-                v.append(temp,"r");
+                append(v,temp,"r");
             }
             if(strchr(ftypes,'t')) {
                 extractFeatures(u,b,mask,troughs);
                 CHECK(min(u)>=-1.1 && max(u)<=1.1);
-                v.append(u,"t");
+                append(v,u,"t");
             }
             if(strchr(ftypes,'D')) {
                 extractFeatures(u,b,mask,dt);
                 CHECK(min(u)>=-1.1 && max(u)<=1.1);
-                v.append(u,"D");
+                append(v,u,"D");
             }
             if(strchr(ftypes,'G')) {
                 extractFeatures(u,b,mask,dt_x);
                 CHECK(min(u)>=-1.1 && max(u)<=1.1);
-                v.append(u,"Gx");
+                append(v,u,"Gx");
                 extractFeatures(u,b,mask,dt_y);
                 CHECK(min(u)>=-1.1 && max(u)<=1.1);
-                v.append(u,"Gy");
+                append(v,u,"Gy");
             }
             if(strchr(ftypes,'M')) {
                 floatarray temp;
@@ -451,17 +456,7 @@ namespace glinerec {
                     push_array(temp,u);
                 }
                 CHECK(min(temp)>=-1.1 && max(temp)<=1.1);
-                v.append(temp,"M");
-            }
-
-            if(dactive()) {
-                floatarray temp;
-                temp = v.chunk("b");
-                for(int i=1;i<5;i++) for(int j=1;j<5;j++)
-                    temp(temp.dim(0)-i,temp.dim(1)-j) = max(temp);
-                dshown(temp,"y");
-                dshown(mask,"Y");
-                dwait();
+                append(v,temp,"M");
             }
         }
 

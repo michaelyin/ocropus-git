@@ -11,7 +11,7 @@ namespace glinerec {
     struct IFeatureMap : IComponent {
         const char *interface() { return "IFeatureMap"; }
         virtual void setLine(bytearray &image) = 0;
-        virtual void extractFeatures(glinerec::InputVector &v,
+        virtual void extractFeatures(floatarray &v,
                                      rectangle b,
                                      bytearray &mask) = 0;
     };
