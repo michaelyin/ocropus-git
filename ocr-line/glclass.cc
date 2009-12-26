@@ -1671,7 +1671,7 @@ namespace glinerec {
             floatarray ul;
             floatarray junk;
 
-            CHECK_ARG2(charclass->nclasses()==jc(),"Training incomplete for all classes");
+            // CHECK_ARG2(charclass->nclasses()==jc(),"Training incomplete for all classes");
             charclass->outputs(ov,v);
             ov.as_array(chars);
 
