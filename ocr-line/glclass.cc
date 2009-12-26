@@ -1079,7 +1079,7 @@ namespace glinerec {
         AutoMlpClassifier() {
         }
 
-        void train(IDataset &ds) {
+        void train_dense(IDataset &ds) {
             pset("%nsamples",ds.nsamples());
             float split = pgetf("cv_split");
             int mlp_cv_max = pgetf("cv_max");
@@ -1711,6 +1711,7 @@ namespace glinerec {
         component_register<KnnClassifier>("knn");
         component_register<EnetClassifier>("enet");
         component_register<AutoMlpClassifier>("mlp");
+        component_register<AutoMlpClassifier>("mappedmlp");
 
         // classifier combination
         component_register<CascadedMLP>("cmlp");
