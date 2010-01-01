@@ -94,11 +94,73 @@ namespace {
 
 namespace glinerec {
 
+    struct IExtractor : IComponent {
+        virtual const char *name() { return "IExtractor"; }
+        virtual const char *interface() { return "IExtractor"; }
+        virtual void extract(narray<floatarray> &out,floatarray &in) = 0;
+        virtual void extract(floatarray &out,floatarray &in) {
+            out.clear();
+            narray<floatarray> items;
+            extract(items,in);
+            for(int i=0;i<items.length();i++) {
+                floatarray &a = items[i];
+                for(int j=0;j<a.length();j++)
+                    out.push(a[j]);
+            }
+        }
+        virtual void extract(bytearray &out,bytearray &in) {
+            floatarray fin,fout;
+            fin = in;
+            extract(fout,fin);
+            out = fout;
+        }
+    };
+
+    struct ExtractedDataset : IDataset {
+        IDataset &ds;
+        IExtractor &ex;
+        ExtractedDataset(IDataset &ds,IExtractor &ex)
+            : ds(ds),ex(ex) {}
+        int nsamples() { return ds.nsamples(); }
+        int nclasses() { return ds.nclasses(); }
+        int nfeatures() { return ds.nfeatures(); }
+        void input(floatarray &v,int i) {
+            floatarray temp;
+            ds.input(temp,i);
+            ex.extract(v,temp);
+        }
+        int cls(int i) { return ds.cls(i); }
+        int id(int i) { return ds.id(i); }
+    };
+
     struct IModel : IComponent {
-        virtual const char *name() { return "IIncremental"; }
-        virtual const char *interface() { return "IIncremental"; }
-        virtual void add(floatarray &v,int c) = 0;
+        autodel<IExtractor> extractor;
+        virtual const char *name() { return "IModel"; }
+        virtual const char *interface() { return "IModel"; }
+        void xadd(floatarray &v,int c) {
+            floatarray temp;
+            if(extractor) extractor->extract(temp,v);
+            else temp = v;
+            add(temp,c);
+        }
+        float xoutputs(OutputVector &ov,floatarray &v) {
+            floatarray temp;
+            if(extractor) extractor->extract(temp,v);
+            else temp = v;
+            return outputs(ov,temp);
+        }
+
+        void xtrain(IDataset &ds) {
+            if(!extractor) {
+                train(ds);
+            } else {
+                ExtractedDataset eds(ds,*extractor);
+                train(eds);
+            }
+        }
         virtual void updateModel() = 0;
+    protected:
+        virtual void add(floatarray &v,int c) = 0;
         virtual float outputs(OutputVector &ov,floatarray &x) = 0;
         virtual void train(IDataset &ds) {
             floatarray v;
@@ -107,6 +169,7 @@ namespace glinerec {
                 add(v,ds.cls(i));
             }
         }
+    public:
 
         // special inquiry functions
 

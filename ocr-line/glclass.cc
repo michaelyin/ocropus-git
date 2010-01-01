@@ -101,7 +101,7 @@ namespace glinerec {
             // FIXME use sampling without replacement
             int i = lrand48()%data.nsamples();
             floatarray u;
-            data.input(u,i);
+            data.input1d(u,i);
             int n = data.nsamples();
             floatarray dists(n);
 #pragma omp parallel for shared(dists)
@@ -110,7 +110,7 @@ namespace glinerec {
                     dists(j)= 1e30;
                 } else {
                     floatarray v;
-                    data.input(v,j);
+                    data.input1d(v,j);
                     dists(j) = dist2squared(u,v);
                 }
             }
@@ -124,14 +124,14 @@ namespace glinerec {
         int total = 0;
         for(int i=0;i<testing.nsamples();i++) {
             floatarray u;
-            testing.input(u,i);
+            testing.input1d(u,i);
 
             int n = training.nsamples();
             floatarray dists(n);
 #pragma omp parallel for shared(dists)
             for(int j=0;j<training.nsamples();j++) {
                 floatarray v;
-                training.input(v,j);
+                training.input1d(v,j);
                 dists(j) = dist2squared(u,v);
             }
             int index = argmin(dists);
@@ -148,7 +148,7 @@ namespace glinerec {
         for(int i=0;i<ds.nsamples();i++) {
             int cls = ds.cls(i);
             if(cls==-1) continue;
-            ds.input(v,i);
+            ds.input1d(v,i);
             int pred = classifier.classify(v);
             count++;
             if(pred!=cls) errors++;
@@ -179,7 +179,7 @@ namespace glinerec {
             floatarray v;
             int cls = ds.cls(i);
             if(cls==-1) continue;
-            ds.input(v,i);
+            ds.input1d(v,i);
             int pred = classifier.classify(v);
             confusion(pred,cls)++;
         }
@@ -364,7 +364,7 @@ namespace glinerec {
         void train(IDataset &ds) {
             floatarray v;
             for(int i=0;i<ds.nsamples();i++) {
-                ds.input(v,i);
+                ds.input1d(v,i);
                 train1(v,ds.cls(i));
             }
         }
@@ -575,7 +575,7 @@ namespace glinerec {
         void train_dense(IDataset &ds) {
             floatarray v;
             for(int i=0;i<ds.nsamples();i++) {
-                ds.input(v,i);
+                ds.input1d(v,i);
                 train1(v,ds.cls(i));
             }
         }
@@ -965,7 +965,7 @@ namespace glinerec {
             floatarray v;
             for(int i=0;i<w1.dim(0);i++) {
                 int row = indexes(i);
-                ds.input(v,row);
+                ds.input1d(v,row);
                 v /= sqr(norm(v));
                 rowput(w1,i,v);
             }
@@ -1041,7 +1041,7 @@ namespace glinerec {
 #else
                 ds.output(target,row);
 #endif
-                ds.input(x,row);
+                ds.input1d(x,row);
                 trainOne(z,target,x,eta);
                 err += dist2squared(z,target);
                 if(dactive()) {
@@ -1155,7 +1155,7 @@ namespace glinerec {
 
             floatarray v;
             for(int i=0;i<ds.nsamples();i++) {
-                ds.input(v,i);
+                ds.input1d(v,i);
                 CHECK(min(v)>-100 && max(v)<100);
             }
             CHECK(ds.nsamples()>=10 && ds.nsamples()<100000000);
@@ -1320,11 +1320,11 @@ namespace glinerec {
             for(int sample=0;sample<ds.nsamples();sample++) {
                 floatarray v;
                 floatarray p;
-                ds.input(v,sample);
+                ds.input1d(v,sample);
                 int cls = ds.cls(sample);
                 for(int k=0;k<models.length();k++) {
                     OutputVector ov;
-                    models(k)->outputs(ov,v);
+                    models(k)->xoutputs(ov,v);
                     ov.as_array(v);
                     for(int r=0;r<nclasses();r++) {
                         b(sample,r) = (r==cls);
@@ -1382,11 +1382,11 @@ namespace glinerec {
                 intarray subsample;
                 weighted_sample(subsample,weights,nsubsample);
                 Datasubset sds(ds,subsample);
-                net->train(sds);
+                net->xtrain(sds);
                 intarray predicted(n);
                 floatarray v;
                 for(int i=0;i<n;i++) {
-                    ds.input(v,i);
+                    ds.input1d(v,i);
                     predicted(i) = net->classify(v);
                 }
                 int err = 0;
@@ -1417,7 +1417,7 @@ namespace glinerec {
                     floatarray v;
                     for(int i=0;i<n;i++) {
                         int cls = ds.cls(i);
-                        ds.input(v,i);
+                        ds.input1d(v,i);
                         if(classify(v)!=cls) errs++;
                     }
                     debugf("train",
@@ -1443,7 +1443,7 @@ namespace glinerec {
             result = 0;
             OutputVector p;
             for(int round=0;round<models.length();round++) {
-                models(round)->outputs(p,v);
+                models(round)->xoutputs(p,v);
                 double alpha = alphas(round);
                 for(int i=0;i<p.length();i++)
                     result(i) += alpha * p(i);
@@ -1515,15 +1515,15 @@ namespace glinerec {
             AugmentedDataset ads(ds);
             for(int round=0;round<nrounds;round++) {
                 autodel<IModel> net(make_Model());
-                net->train(ads);
+                net->xtrain(ads);
                 int errs = 0;
 #pragma omp parallel for
                 for(int i=0;i<ds.nsamples();i++) {
                     floatarray v;
                     floatarray p;
-                    ads.input(v,i);
+                    ads.input1d(v,i);
                     OutputVector ov;
-                    net->outputs(ov,v);
+                    net->xoutputs(ov,v);
                     ov.as_array(p);
                     if(argmax(p)!=ds.cls(i))
                         errs++;
@@ -1546,7 +1546,7 @@ namespace glinerec {
             for(int round=0;round<lrounds && round<models.length();round++) {
                 if(round>0) a.append(p);
                 OutputVector ov;
-                models(round)->outputs(ov,a);
+                models(round)->xoutputs(ov,a);
                 ov.as_array(p);
             }
             result = p;
@@ -1632,9 +1632,9 @@ namespace glinerec {
                     if(ds.cls(i)!=jc())
                         nonjunk.push(i);
                 Datasubset nonjunkds(ds,nonjunk);
-                charclass->train(nonjunkds);
+                charclass->xtrain(nonjunkds);
             } else {
-                charclass->train(ds);
+                charclass->xtrain(ds);
             }
 
             if(pgetf("junk") && junkclass) {
@@ -1643,7 +1643,7 @@ namespace glinerec {
                 for(int i=0;i<ds.nsamples();i++)
                     isjunk.push((ds.cls(i)==jc()));
                 MappedDataset junkds(ds,isjunk);
-                junkclass->train(junkds);
+                junkclass->xtrain(junkds);
             }
 
             if(pgetf("ul") && ulclass) {
@@ -1661,7 +1661,7 @@ namespace glinerec {
                 MappedDataset isupperds(alphabeticds,isupper);
                 CHECK(isupperds.nsamples()>10);
                 CHECK(isupperds.nclasses()==2);
-                ulclass->train(isupperds);
+                ulclass->xtrain(isupperds);
             }
         }
 
@@ -1672,11 +1672,11 @@ namespace glinerec {
             floatarray junk;
 
             // CHECK_ARG2(charclass->nclasses()==jc(),"Training incomplete for all classes");
-            charclass->outputs(ov,v);
+            charclass->xoutputs(ov,v);
             ov.as_array(chars);
 
             if(pgetf("junk") && junkclass) {
-                junkclass->outputs(ov,v);
+                junkclass->xoutputs(ov,v);
                 ov.as_array(junk);
                 chars /= sum(chars);
                 chars *= junk(0);
@@ -1685,7 +1685,7 @@ namespace glinerec {
             }
 
             if(pgetf("ul") && ulclass) {
-                ulclass->outputs(ov,v);
+                ulclass->xoutputs(ov,v);
                 ov.as_array(ul);
                 ul /= sum(ul);
                 for(int c='A';c<='Z';c++) {

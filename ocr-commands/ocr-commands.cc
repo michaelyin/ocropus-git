@@ -616,8 +616,14 @@ namespace ocropus {
 
                     if(nutranscript.length()!=max(cseg)) {
                         debugf("debug","transcript = '%s'\n",nutranscript.c_str());
+#if 1
+                        debugf("warn","transcript doesn't agree with cseg (transcript %d, cseg %d)\n",
+                               nutranscript.length(),max(cseg));
+                        continue;
+#else
                         throwf("transcript doesn't agree with cseg (transcript %d, cseg %d)",
                                nutranscript.length(),max(cseg));
+#endif
                     }
 
                     if(retrain) {
@@ -678,7 +684,7 @@ namespace ocropus {
                ds->nsamples(),ds->nfeatures(),ds->nclasses());
         autodel<IModel> model;
         make_component(cmodel,model);
-        model->train(*ds);
+        model->xtrain(*ds);
         save_component(stdio(argv[1],"w"),model);
         return 0;
     }

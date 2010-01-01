@@ -21,6 +21,10 @@ namespace glinerec {
             v = 0;
             v(cls(i)) = 1;
         }
+        void input1d(floatarray &v,int i) {
+            input(v,i);
+            v.reshape(v.length());
+        }
     };
 
     struct IExtDataset : IDataset {
