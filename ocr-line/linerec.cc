@@ -883,6 +883,7 @@ namespace glinerec {
             pdef("maxcost",20.0,"maximum cost of a character to be added to the output");
             pdef("minclass",32,"minimum output class to be added (default=unicode space)");
             pdef("minprob",1e-6,"minimum probability for a character to appear in the output at all");
+            pdef("invert",1,"invert the input line prior to char extraction");
             // segmentation
             pdef("maxrange",5,"maximum number of components that are grouped together");
             // sanity limits on input
@@ -988,6 +989,7 @@ namespace glinerec {
         bytearray binarized;
         void setLine(bytearray &image) {
             CHECK_ARG(image.dim(1)<pgetf("maxheight"));
+
             // run the segmenter
             binarize_simple(binarized,image);
             segmenter->charseg(segmentation,binarized);
@@ -1018,7 +1020,9 @@ namespace glinerec {
             addTrainingLine(cseg,gimage,tr);
         }
 
-        bool addTrainingLine(intarray &cseg,bytearray &image,ustrg &tr) {
+        bool addTrainingLine(intarray &cseg,bytearray &image_,ustrg &tr) {
+            bytearray image;
+            image = image_;
             if(image.dim(0)<pgetf("minheight")) {
                 debugf("warn","input line too small (%d x %d)\n",image.dim(0),image.dim(1));
                 return false;
@@ -1038,7 +1042,8 @@ namespace glinerec {
 
             // check and set the transcript
             transcript = tr;
-            setLine(image);
+            setLine(image_);
+            if(pgetf("invert")) sub(max(image),image);
             for(int i=0;i<transcript.length();i++)
                 CHECK_ARG(transcript(i).ord()>=32);
 
@@ -1156,7 +1161,8 @@ namespace glinerec {
             image = image_;
             dsection("recognizing");
             logger.log("input\n",image);
-            setLine(image);
+            setLine(image_);
+            if(pgetf("invert")) sub(max(image),image);
             segmentation_ = segmentation;
             bytearray available;
             floatarray cp,ccosts,props;

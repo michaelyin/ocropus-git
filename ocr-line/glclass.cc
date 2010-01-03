@@ -311,7 +311,7 @@ namespace glinerec {
 
     // param_int show_knn("show_knn",0,"show knn matches for debugging");
 
-    struct KnnClassifier : IBatch {
+    struct KnnClassifier : virtual IBatch {
         int ncls;
         floatarray vectors;
         intarray classes;
@@ -419,7 +419,7 @@ namespace glinerec {
         a = temp;
     }
 
-    struct BinningClassifier : IBatchDense {
+    struct BinningClassifier : virtual IBatchDense {
         intarray widths,heights;
         narray<autodel<IModel> > models;
         BinningClassifier() {
@@ -489,7 +489,7 @@ namespace glinerec {
     // clustering classifier
     ////////////////////////////////////////////////////////////////
 
-    struct EnetClassifier : IBatchDense {
+    struct EnetClassifier : virtual IBatchDense {
         narray<floatarray> vectors;
         narray<intarray> classes;
         narray<intarray> counts;
@@ -811,7 +811,7 @@ namespace glinerec {
         }
     }
 
-    struct MlpClassifier : IBatchDense {
+    struct MlpClassifier : virtual IBatchDense {
     public:
         floatarray w1,b1,w2,b2;
         float eta;
@@ -1074,7 +1074,7 @@ namespace glinerec {
     // validation and parallel training
     ////////////////////////////////////////////////////////////////
 
-    struct AutoMlpClassifier : MlpClassifier {
+    struct AutoMlpClassifier : virtual MlpClassifier {
 
         AutoMlpClassifier() {
         }
@@ -1225,7 +1225,7 @@ namespace glinerec {
 #endif
     }
 
-    struct AdaBoost : IBatchDense {
+    struct AdaBoost : virtual IBatchDense {
         narray< autodel<IModel> > models;
         floatarray alphas;
         floatarray werrs;
@@ -1459,7 +1459,7 @@ namespace glinerec {
     // doesn't train one unit at a time
     ////////////////////////////////////////////////////////////////
 
-    struct CascadedMLP : IBatchDense {
+    struct CascadedMLP : virtual IBatchDense {
         narray< autodel<IModel> > models;
 
         CascadedMLP() {
@@ -1561,7 +1561,7 @@ namespace glinerec {
     // customizations for latin script)
     ////////////////////////////////////////////////////////////////
 
-    struct LatinClassifier : IBatch {
+    struct LatinClassifier : virtual IBatch {
         autodel<IModel> junkclass;
         autodel<IModel> charclass;
         autodel<IModel> ulclass;
@@ -1700,6 +1700,61 @@ namespace glinerec {
         }
     };
 
+    struct RaveledExtractor : virtual IExtractor {
+        virtual const char *name() { return "raveledfe"; }
+        void extract(narray<floatarray> &out,floatarray &in) {
+            out.clear();
+            out.push() = in;
+        }
+    };
+
+    struct ScaledImageExtractor : virtual IExtractor {
+        virtual const char *name() { return "scaledfe"; }
+        ScaledImageExtractor() {
+            pdef("csize",30,"taget image size");
+            pdef("aa",0,"anti-aliasing");
+            pdef("noupscale",1,"no upscaling");
+        }
+        void rescale(floatarray &v,floatarray &sub) {
+            CHECK_ARG(sub.rank()==2);
+            int csize = int(pgetf("csize"));
+            float s = max(sub.dim(0),sub.dim(1))/float(csize);
+            if(pgetf("noupscale") && s<1.0) s = 1.0;
+            float sig = s * pgetf("aa");
+            float dx = (csize*s-sub.dim(0))/2;
+            float dy = (csize*s-sub.dim(1))/2;
+            if(sig>1e-3) gauss2d(sub,sig,sig);
+            v.resize(csize,csize);
+            v = 0;
+            for(int i=0;i<csize;i++) {
+                for(int j=0;j<csize;j++) {
+                    float x = i*s-dx;
+                    float y = j*s-dy;
+                    if(x<0||x>=sub.dim(0)) continue;
+                    if(y<0||y>=sub.dim(1)) continue;
+                    float value = bilin(sub,x,y);
+                    v(i,j) = value;
+                }
+            }
+            debugf("fe","%d %d (%g) -> %d %d (%g)\n",
+                   sub.dim(0),sub.dim(1),max(sub),
+                   v.dim(0),v.dim(1),max(v));
+            dsection("fe");
+            if(dactive()) {
+                dshown(sub,"a");
+                dshown(v,"b");
+                dwait();
+                fprintf(stderr,"ok\n");
+            }
+        }
+        void extract(narray<floatarray> &out,floatarray &in) {
+            out.clear();
+            floatarray &image = out.push();
+            rescale(image,in);
+            image /= max(1.0,max(image));
+        }
+    };
+
     // train multiple classifiers and average (FIXME: implement with resampling etc.)
 
     void init_glclass() {
@@ -1717,6 +1772,10 @@ namespace glinerec {
         component_register<CascadedMLP>("cmlp");
         component_register<AdaBoost>("adaboost");
         component_register<LatinClassifier>("latin");
+
+        // feature extractors
+        component_register<RaveledExtractor>("raveledfe");
+        component_register<ScaledImageExtractor>("scaledfe");
 
         // other components
         typedef RowDataset<float8> RowDataset8;

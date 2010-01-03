@@ -94,7 +94,7 @@ namespace {
 
 namespace glinerec {
 
-    struct IExtractor : IComponent {
+    struct IExtractor : virtual IComponent {
         virtual const char *name() { return "IExtractor"; }
         virtual const char *interface() { return "IExtractor"; }
         virtual void extract(narray<floatarray> &out,floatarray &in) = 0;
@@ -116,7 +116,7 @@ namespace glinerec {
         }
     };
 
-    struct ExtractedDataset : IDataset {
+    struct ExtractedDataset : virtual IDataset {
         IDataset &ds;
         IExtractor &ex;
         ExtractedDataset(IDataset &ds,IExtractor &ex)
@@ -133,8 +133,19 @@ namespace glinerec {
         int id(int i) { return ds.id(i); }
     };
 
-    struct IModel : IComponent {
+    struct IModel : virtual IComponent {
         autodel<IExtractor> extractor;
+        IModel() {
+            persist(extractor,"extractor");
+            pdef("extractor","scaledfe","feature extractor");
+            make_component(extractor,pget("extractor"));
+        }
+        void setExtractor(const char *name) {
+            if(name==0)
+                extractor = 0;
+            else
+                make_component(extractor,name);
+        }
         virtual const char *name() { return "IModel"; }
         virtual const char *interface() { return "IModel"; }
         void xadd(floatarray &v,int c) {
@@ -197,7 +208,7 @@ namespace glinerec {
         }
     };
 
-    struct IBatch : IModel {
+    struct IBatch : virtual IModel {
         virtual const char *name() { return "IBatch"; }
         virtual const char *interface() { return "IBatch"; }
 
@@ -233,7 +244,7 @@ namespace glinerec {
         }
     };
 
-    struct IBatchDense : IBatch {
+    struct IBatchDense : virtual IBatch {
         intarray c2i,i2c;
 
         IBatchDense() {
@@ -250,7 +261,7 @@ namespace glinerec {
             return cost;
         }
 
-        struct TranslatedDataset : IDataset {
+        struct TranslatedDataset : virtual IDataset {
             IDataset &ds;
             intarray &c2i;
             int nc;
