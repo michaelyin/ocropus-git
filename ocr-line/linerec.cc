@@ -873,6 +873,7 @@ namespace glinerec {
         Linerec() {
             // component choices
             pdef("classifier","latin","character classifier");
+            pdef("extractor","scaledfe","feature extractor");
             // retraining
             pdef("cpreload","none","classifier to be loaded prior to training");
             // debugging
@@ -904,6 +905,7 @@ namespace glinerec {
             segmenter = make_DpSegmenter();
             grouper = make_SimpleGrouper();
             classifier = make_model(pget("classifier"));
+            classifier->setExtractor(pget("extractor"));
             if(!classifier) throw "construct_model didn't yield an IModel";
             ntrained = 0;
             counts_warned = 0;
@@ -1095,6 +1097,7 @@ namespace glinerec {
                 grouper->extractWithMask(cv,mask,image,i,0);
                 floatarray v;
                 v = cv;
+                v /= 255.0;
                 debugf("cdim","character dimensions (%d,%d)\n",v.dim(0),v.dim(1));
 #pragma omp atomic
                 total++;
@@ -1201,6 +1204,7 @@ namespace glinerec {
                 grouper->extractWithMask(cv,mask,image,i,0);
                 floatarray v;
                 v = cv;
+                v /= 255.0;
                 float ccost = classifier->xoutputs(p,v);
 #pragma omp critical
                 {

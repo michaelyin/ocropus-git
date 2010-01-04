@@ -908,6 +908,7 @@ namespace glinerec {
         }
 
         float outputs_dense(floatarray &result,floatarray &x_raw) {
+            CHECK_ARG(x_raw.length()==w1.dim(1));
             floatarray z;
             int sparse = pgetf("sparse");
             floatarray y,x;
@@ -993,6 +994,9 @@ namespace glinerec {
         // do a single stochastic gradient descent step
 
         void trainOne(floatarray &z,floatarray &target,floatarray &x,float eta) {
+            CHECK_ARG(target.length()==w2.dim(0));
+            CHECK_ARG(x.length()==w1.dim(1));
+
             int sparse = pgetf("sparse");
             int nhidden = this->nhidden();
             int noutput = nclasses();
@@ -1782,6 +1786,9 @@ namespace glinerec {
         typedef RaggedDataset<float8> RaggedDataset8;
         component_register<RowDataset8>("rowdataset8");
         component_register<RaggedDataset8>("raggeddataset8");
+
+        extern void init_glbits();
+        init_glbits();
     }
 
     IRecognizeLine *current_recognizer_ = 0;

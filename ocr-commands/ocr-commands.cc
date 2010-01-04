@@ -666,7 +666,7 @@ namespace ocropus {
         debugf("info","trained %d characters, %d lines\n",
                 total_chars,total_lines);
         if(nold_csegs>total_lines/100)
-            debugf("warn","%d old csegs",nold_csegs);
+            debugf("warn","%d old csegs\n",nold_csegs);
         debugf("info","saving %s\n",argv[1]);
         save_component(stdio(argv[1],"w"),linerec);
         return 0;
