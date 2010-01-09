@@ -1299,8 +1299,8 @@ namespace glinerec {
         if(init) return;
         init = true;
         component_register<CenterFeatureMap>("cfmap");
-        component_register<LinerecExtracted>("linerecf");
-        component_register<LinerecExtracted>("linerec1");
+        component_register<LinerecExtracted>("linerec_extracted");
+        component_register<Linerec>("linerec");
         component_register<NullLinerec>("nulllinerec");
         component_register<MetaLinerec>("metalinerec");
     }

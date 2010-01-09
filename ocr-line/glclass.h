@@ -137,11 +137,11 @@ namespace glinerec {
         autodel<IExtractor> extractor;
         IModel() {
             persist(extractor,"extractor");
-            pdef("extractor","raveledfe","feature extractor");
-            make_component(extractor,pget("extractor"));
+            pdef("extractor","none","feature extractor");
+            setExtractor(pget("extractor"));
         }
         void setExtractor(const char *name) {
-            if(name==0)
+            if(name==0 || !strcmp("none",name))
                 extractor = 0;
             else
                 make_component(extractor,name);

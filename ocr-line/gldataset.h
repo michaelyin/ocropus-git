@@ -31,6 +31,11 @@ namespace glinerec {
         virtual void add(floatarray &v,int c) = 0;
         virtual void add(floatarray &ds,intarray &cs) = 0;
         virtual void clear() = 0;
+        void add(const char *style,const char *which,floatarray &v,int c,
+                 int pred,float cost) {
+
+            add(v,c);
+        }
     };
 
     struct float8 {

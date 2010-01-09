@@ -1759,6 +1759,209 @@ namespace glinerec {
         }
     };
 
+#ifdef HAVE_SQLITE3
+#include <sqlite3.h>
+
+    struct SqliteDataset : IDataset {
+        sqlite3 *db;
+        int n;
+        int nc;
+        int nf;
+
+        SqliteDataset() {
+            pdef("file","dataset.sqlite3","location for dataset");
+            pdef("sync",0,"commit after each insert");
+            n = 0;
+            nc = 0;
+            nf = -1;
+            db = 0;
+        }
+        ~SqliteDataset() {
+            close();
+        }
+        const char *name() {
+            return "sqliteds";
+        }
+        void save(FILE *stream) {
+        }
+        void load(FILE *stream) {
+        }
+        void open(const char *file) {
+            debugf("info","binding to database %s\n",file);
+            int status = sqlite3_open_v2(file,&db,
+                                         SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE,0);
+            if(status!=SQLITE_OK) throwf("%s: cannot open",file);
+            // try to create the table (silently fails if it already
+            // exists or if there is an error)
+            const char *schema =
+                "create table clusters ("
+                "id integer primary key,"
+                "image blob,"
+                "cls text,"
+                "count integer,"
+                "classes text,"
+                "key text,"
+                "pred text,"
+                "cost real,"
+                "style text,"
+                "which text"
+                ")";
+            if(sqlite3_exec(db,schema,0,0,0)!=SQLITE_OK) {
+                debugf("info","create table: %s\n",sqlite3_errmsg(db));
+            }
+            sqlite3_exec(db,"PRAGMA synchronous=off",0,0,0);
+        }
+        void close() {
+            sqlite3_close(db);
+            db = 0;
+        }
+        static void pickle(bytearray &v,floatarray &image) {
+            int w = image.dim(0);
+            int h = image.dim(1);
+            floatarray temp(h,w);
+            float m = max(image);
+            for(int i=0;i<w;i++)
+                for(int j=0;j<h;j++)
+                    temp(h-j-1,i) = image(i,j)*255.0/m;
+            v.clear();
+            v.push(h);
+            v.push(w);
+            for(int i=0;i<temp.length();i++)
+                v.push(int(temp[i]));
+        }
+        static void unpickle(floatarray &image,bytearray &v) {
+            int h = v[0];
+            int w = v[1];
+            image.resize(w,h);
+            for(int j=0;j<h;j++)
+                for(int i=0;i<w;i++)
+                    image(i,j) = v[2+(h-j-1)*w+i]/255.0;
+        }
+        void add(const char *style,const char *which,floatarray &v,int c,
+                 int pred,float cost) {
+            CHECK(v.rank()==2);
+            CHECK(v.dim(0)>0);
+            CHECK(v.dim(0)<256);
+            CHECK(v.dim(1)>0);
+            CHECK(v.dim(1)<256);
+            if(!db) open(pget("file"));
+            const char *cmd = "insert into clusters (style,which,image,cls,pred,cost) "
+                "values (?,?,?,?,?,?)";
+            sqlite3_stmt *stmt;
+            if(sqlite3_prepare(db,cmd,-1,&stmt,0)!=SQLITE_OK) {
+                debugf("info","prepare: %s\n",sqlite3_errmsg(db));
+                throw "oops";
+            }
+            // style, which
+            CHECK(sqlite3_bind_text(stmt,1,style,strlen(style),SQLITE_TRANSIENT)==SQLITE_OK);
+            CHECK(sqlite3_bind_text(stmt,2,which,strlen(which),SQLITE_TRANSIENT)==SQLITE_OK);
+            // image
+            bytearray bv;
+            pickle(bv,v);
+            CHECK(bv.length()==v.length()+2);
+            CHECK(sqlite3_bind_blob(stmt,3,&bv(0),bv.length(),SQLITE_TRANSIENT)==SQLITE_OK);
+            // cls, pred
+            char text[2];
+            text[0] = c; text[1] = 0;
+            CHECK(sqlite3_bind_text(stmt,4,text,strlen(text),SQLITE_TRANSIENT)==SQLITE_OK);
+            text[0] = pred; text[1] = 0;
+            CHECK(sqlite3_bind_text(stmt,5,text,strlen(text),SQLITE_TRANSIENT)==SQLITE_OK);
+            // cost
+            CHECK(sqlite3_bind_double(stmt,6,cost)==SQLITE_OK);
+            CHECK(sqlite3_step(stmt)==SQLITE_DONE);
+            if(sqlite3_finalize(stmt)!=SQLITE_OK) {
+                debugf("info","finalize: %s\n",sqlite3_errmsg(db));
+                throw "oops";
+            }
+            if(pgetf("sync")) {
+                char *err = 0;
+                if(sqlite3_exec(db,"COMMIT",0,0,&err)!=SQLITE_OK)
+                    throwf("%s:COMMIT",err);
+            }
+            debugf("debug","inserted\n");
+            n++;
+            if(c>=nc) nc = c+1;
+            if(nf<0) nf = v.length();
+        }
+        void add(floatarray &v,int c) {
+            add("","",v,c,-1,-1);
+        }
+        int nsamples() {
+            return n;
+        }
+        int nclasses() {
+            return nc;
+        }
+        int nfeatures() {
+            return nf;
+        }
+        void clear() {
+            throw "unimplemented";
+        }
+        int cls(int i) {
+            throw "unimplemented";
+        }
+        void input(floatarray &v,int i) {
+            throw "unimplemented";
+        }
+        int id(int i) {
+            throw "unimplemented";
+        }
+    };
+
+    struct SqliteBuffer : IModel {
+        int nf,nc,n;
+        autodel<SqliteDataset> ds;
+        SqliteBuffer() {
+            pdef("file","data.sqlite3","database file name");
+            n = 0;
+            nf = -1;
+            nc = -1;
+        }
+        const char *name() {
+            return "sqlitebuffer";
+        }
+        void info(int depth,FILE *stream) {
+            iprintf(stream,depth,"SqliteBuffer\n");
+            pprint(stream,depth);
+        }
+        void train(IDataset &ds) {
+            floatarray v;
+            for(int i=0;i<ds.nsamples();i++) {
+                int c = ds.cls(i);
+                ds.input(v,i);
+                add(v,c);
+            }
+        }
+        void add(floatarray &v,int c) {
+            if(!ds) {
+                ds = new SqliteDataset();
+                ds->open(pget("file"));
+            }
+            debugf("debug","adding %dx%d [%g,%g] %d\n",v.dim(0),v.dim(1),min(v),max(v),c);
+            if(c>=nc) nc = c+1;
+            nf = v.length();
+            ds->add(v,c);
+            n++;
+        }
+        void updateModel() {
+        }
+        // ignore these
+        void save(FILE *stream) {
+            debugf("warn","%s: ignoring save; data in %s",name(),pget("file"));
+        }
+        void load(FILE *stream) {
+            debugf("warn","%s: ignoring load; data in %s",name(),pget("file"));
+        }
+        // we can't classify
+        float outputs(OutputVector &z,floatarray &x) {
+            throw Unimplemented();
+        }
+    };
+#endif
+
+
+
     // train multiple classifiers and average (FIXME: implement with resampling etc.)
 
     void init_glclass() {
@@ -1786,6 +1989,8 @@ namespace glinerec {
         typedef RaggedDataset<float8> RaggedDataset8;
         component_register<RowDataset8>("rowdataset8");
         component_register<RaggedDataset8>("raggeddataset8");
+        component_register<SqliteDataset>("sqliteds");
+        component_register<SqliteBuffer>("sqlitebuffer");
 
         extern void init_glbits();
         init_glbits();

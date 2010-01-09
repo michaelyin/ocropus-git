@@ -544,7 +544,7 @@ namespace ocropus {
     }
 
     int main_trainseg(int argc,char **argv) {
-        param_int nepochs("nepochs",10,"number of epochs");
+        param_int nepochs("nepochs",1,"number of epochs");
         param_bool randomize("randomize_lines",1,"randomize the order of lines before training");
         param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         param_bool retrain("retrain",0,"perform retraining");

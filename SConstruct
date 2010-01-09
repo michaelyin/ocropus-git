@@ -63,6 +63,7 @@ opts.Add(PathVariable('leptonica', 'The installation root of leptonica', "/usr/l
 opts.Add(BoolVariable('gsl', "use GSL-dependent features", "no"))
 opts.Add(BoolVariable('omp', "use OpenMP", "no"))
 opts.Add(BoolVariable('lept', "use Leptonica", "no"))
+opts.Add(BoolVariable('sqlite3', "use sqlite3", "yes"))
 
 opts.Add(BoolVariable('test', "Run some tests after the build", "no"))
 opts.Add(BoolVariable('style', 'Check style', "no"))
@@ -141,6 +142,10 @@ if env["lept"]:
         assert conf.CheckLibWithHeader('lept', ['stdlib.h', 'stdio.h', 'allheaders.h'], 'C')
 else:
     sources = [s for s in sources if not "leptonica" in s]
+
+if env["sqlite3"]:
+    env.Append(CPPDEFINES=['HAVE_SQLITE3'])
+    env.Append(LIBS=["sqlite3"])
 
 ### gsl
 
