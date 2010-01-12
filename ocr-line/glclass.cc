@@ -1769,6 +1769,7 @@ namespace glinerec {
         int nf;
 
         SqliteDataset() {
+            pdef("table","chars","table name for characters");
             pdef("file","dataset.sqlite3","location for dataset");
             pdef("sync",0,"commit after each insert");
             n = 0;
@@ -1794,7 +1795,7 @@ namespace glinerec {
             // try to create the table (silently fails if it already
             // exists or if there is an error)
             const char *schema =
-                "create table clusters ("
+                "create table %s ("
                 "id integer primary key,"
                 "image blob,"
                 "cls text,"
@@ -1806,7 +1807,9 @@ namespace glinerec {
                 "style text,"
                 "which text"
                 ")";
-            if(sqlite3_exec(db,schema,0,0,0)!=SQLITE_OK) {
+            char schema_buf[10000];
+            sprintf(schema_buf,schema,pget("table"));
+            if(sqlite3_exec(db,schema_buf,0,0,0)!=SQLITE_OK) {
                 debugf("info","create table: %s\n",sqlite3_errmsg(db));
             }
             sqlite3_exec(db,"PRAGMA synchronous=off",0,0,0);
