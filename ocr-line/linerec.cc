@@ -874,6 +874,8 @@ namespace glinerec {
             // component choices
             pdef("classifier","latin","character classifier");
             pdef("extractor","scaledfe","feature extractor");
+            pdef("segmenter","DpSegmenter","line segmenter");
+            pdef("grouper","SimpleGrouper","line segmenter");
             // retraining
             pdef("cpreload","none","classifier to be loaded prior to training");
             // debugging
@@ -901,14 +903,20 @@ namespace glinerec {
 
             persist(classifier,"classifier");
             persist(counts,"counts");
+            persist(segmenter,"segmenter");
+            persist(grouper,"grouper");
 
-            segmenter = make_DpSegmenter();
-            grouper = make_SimpleGrouper();
+            make_component(segmenter,pget("segmenter"));
+            make_component(grouper,pget("grouper"));
             classifier = make_model(pget("classifier"));
-            classifier->setExtractor(pget("extractor"));
             if(!classifier) throw "construct_model didn't yield an IModel";
+            classifier->setExtractor(pget("extractor"));
             ntrained = 0;
             counts_warned = 0;
+        }
+
+        void setClassifier(IModel *classifier) {
+            this->classifier = classifier;
         }
 
         const char *name() {
@@ -1292,6 +1300,24 @@ namespace glinerec {
 
     IRecognizeLine *make_Linerec() {
         return new Linerec();
+    }
+
+    IRecognizeLine *load_linerec(const char *file) {
+        IComponent *component = load_component(stdio(file,"r"));
+
+        IRecognizeLine *recognizer = dynamic_cast<IRecognizeLine*>(component);
+        if(recognizer) {
+            return recognizer;
+        }
+
+        IModel *cmodel = dynamic_cast<IModel*>(component);
+        if(cmodel) {
+            Linerec *linerec = new Linerec();
+            linerec->setClassifier(cmodel);
+            return linerec;
+        }
+
+        return 0;
     }
 
     void init_linerec() {

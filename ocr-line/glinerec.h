@@ -62,6 +62,7 @@ namespace {
 namespace glinerec {
     void init_linerec();
     void init_glclass();
+    IRecognizeLine *load_linerec(const char *file);
 }
 
 #endif

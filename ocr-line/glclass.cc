@@ -1799,6 +1799,7 @@ namespace glinerec {
                 "id integer primary key,"
                 "image blob,"
                 "cls text,"
+                "cluster integer,"
                 "count integer,"
                 "classes text,"
                 "key text,"
@@ -1848,34 +1849,32 @@ namespace glinerec {
             CHECK(v.dim(1)>0);
             CHECK(v.dim(1)<256);
             if(!db) open(pget("file"));
-            const char *cmd = "insert into clusters (style,which,image,cls,pred,cost) "
+            const char *cmd = "insert into %s (style,which,image,cls,pred,cost) "
                 "values (?,?,?,?,?,?)";
+            char cmd_buf[1024];
+            sprintf(cmd_buf,cmd,pget("table"));
             sqlite3_stmt *stmt;
-            if(sqlite3_prepare(db,cmd,-1,&stmt,0)!=SQLITE_OK) {
-                debugf("info","prepare: %s\n",sqlite3_errmsg(db));
-                throw "oops";
-            }
+#define SQLCHECK(S) \
+    if((S)!=SQLITE_OK) { const char *err = sqlite3_errmsg(db); throwf("sqlite error: %s\n",err); }
+            SQLCHECK(sqlite3_prepare(db,cmd_buf,-1,&stmt,0));
             // style, which
-            CHECK(sqlite3_bind_text(stmt,1,style,strlen(style),SQLITE_TRANSIENT)==SQLITE_OK);
-            CHECK(sqlite3_bind_text(stmt,2,which,strlen(which),SQLITE_TRANSIENT)==SQLITE_OK);
+            SQLCHECK(sqlite3_bind_text(stmt,1,style,strlen(style),SQLITE_TRANSIENT));
+            SQLCHECK(sqlite3_bind_text(stmt,2,which,strlen(which),SQLITE_TRANSIENT));
             // image
             bytearray bv;
             pickle(bv,v);
             CHECK(bv.length()==v.length()+2);
-            CHECK(sqlite3_bind_blob(stmt,3,&bv(0),bv.length(),SQLITE_TRANSIENT)==SQLITE_OK);
+            SQLCHECK(sqlite3_bind_blob(stmt,3,&bv(0),bv.length(),SQLITE_TRANSIENT));
             // cls, pred
             char text[2];
             text[0] = c; text[1] = 0;
-            CHECK(sqlite3_bind_text(stmt,4,text,strlen(text),SQLITE_TRANSIENT)==SQLITE_OK);
+            SQLCHECK(sqlite3_bind_text(stmt,4,text,strlen(text),SQLITE_TRANSIENT));
             text[0] = pred; text[1] = 0;
-            CHECK(sqlite3_bind_text(stmt,5,text,strlen(text),SQLITE_TRANSIENT)==SQLITE_OK);
+            SQLCHECK(sqlite3_bind_text(stmt,5,text,strlen(text),SQLITE_TRANSIENT));
             // cost
-            CHECK(sqlite3_bind_double(stmt,6,cost)==SQLITE_OK);
+            SQLCHECK(sqlite3_bind_double(stmt,6,cost));
             CHECK(sqlite3_step(stmt)==SQLITE_DONE);
-            if(sqlite3_finalize(stmt)!=SQLITE_OK) {
-                debugf("info","finalize: %s\n",sqlite3_errmsg(db));
-                throw "oops";
-            }
+            SQLCHECK(sqlite3_finalize(stmt));
             if(pgetf("sync")) {
                 char *err = 0;
                 if(sqlite3_exec(db,"COMMIT",0,0,&err)!=SQLITE_OK)

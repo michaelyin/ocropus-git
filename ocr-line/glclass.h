@@ -208,6 +208,40 @@ namespace glinerec {
         }
     };
 
+    struct OmpClassifier {
+        autodel<IModel> model;
+        narray<floatarray> inputs;
+        narray<OutputVector> outputs;
+        void clear() {
+            inputs.clear();
+            outputs.clear();
+        }
+        void classify() {
+            int total = inputs.length();
+#pragma omp parallel for
+            for(int i=0;i<inputs.length();i++) {
+                model->xoutputs(outputs[i],inputs[i]);
+#pragma omp critical
+                if(total--%1000==0) {
+                    debugf("info","remaining %d\n",total);
+                }
+            }
+        }
+        int input(floatarray &a) {
+            int result = inputs.length();
+            inputs.push() = a;
+            outputs.push();
+            return result;
+        }
+        void output(OutputVector &ov,int i) {
+            ov = outputs[i];
+        }
+        void load(const char *file) {
+            model = dynamic_cast<IModel*>(load_component(stdio(file,"r")));
+            CHECK(model!=0);
+        }
+    };
+
     struct IBatch : virtual IModel {
         virtual const char *name() { return "IBatch"; }
         virtual const char *interface() { return "IBatch"; }
