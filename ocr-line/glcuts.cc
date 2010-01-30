@@ -145,6 +145,30 @@ namespace {
         }
     }
 
+    void extract_holes(bytearray &holes,bytearray &binarized) {
+        using namespace narray_ops;
+        intarray temp;
+        temp.copy(binarized);
+        sub(255,temp);
+        label_components(temp);
+        int background = -1;
+        for(int i=0;i<temp.dim(0);i++) {
+            if(temp(i,0)!=0) {
+                background = temp(i,0);
+                break;
+            }
+        }
+        makelike(holes,temp);
+        holes = 0;
+        CHECK(background>0);
+        for(int i=0;i<temp.dim(0);i++) {
+            for(int j=0;j<temp.dim(1);j++) {
+                if(temp(i,j)>0 && temp(i,j)!=background)
+                    holes(i,j) = 255;
+            }
+        }
+    }
+
     param_int seg_cuts_merge("seg_cuts_merge",10,"merge components smaller than this in seg-cuts");
 
     void line_segmentation_merge_small_components(intarray &segmentation,int r=10) {
@@ -227,6 +251,7 @@ namespace glinerec {
             pdef("min_thresh",80.0,"min threshold value");
             pdef("component_segmentation",1,"also perform connected component segmentation");
             pdef("fix_diacritics",1,"group dots above characters back with those characters");
+            pdef("fill_holes",1,"fill holes prior to dp segmentation (for cases like oo)");
         }
         const char *name() {
             return "dpseg";
@@ -367,6 +392,15 @@ namespace glinerec {
 
         void setImage(bytearray &image) {
             copy(dimage,image);
+            if(pgetf("fill_holes")) {
+                bytearray holes;
+                extract_holes(holes,image);
+                for(int i=0;i<image.length();i++)
+                    if(holes[i]) dimage[i] = 255;
+                dsection("segholes");
+                holes = dimage;
+                dshow(holes,"y");
+            }
             int w = image.dim(0), h = image.dim(1);
             wimage.resize(w,h);
             fill(wimage, 0);

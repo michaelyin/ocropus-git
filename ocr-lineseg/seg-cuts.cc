@@ -119,6 +119,34 @@ namespace {
         }
     }
 
+    void extract_holes(bytearray &holes,bytearray &binarized) {
+        using namespace narray_ops;
+        intarray temp;
+        temp.copy(binarized);
+        sub(255,temp);
+        label_components(temp);
+        int background = -1;
+        for(int i=0;i<temp.dim(0);i++) {
+            if(temp(i,0)!=0) {
+                background = temp(i,0);
+                break;
+            }
+        }
+        makelike(holes,temp);
+        holes = 0;
+        CHECK(background>0);
+        for(int i=0;i<temp.dim(0);i++) {
+            for(int j=0;j<temp.dim(1);j++) {
+                if(temp(i,j)>0 && temp(i,j)!=background)
+                    holes(i,j) = 255;
+            }
+        }
+        fprintf(stderr,"segholes\n");
+        dsection("segholes");
+        dshow(holes,"y");
+    }
+
+
     param_int seg_cuts_merge("seg_cuts_merge",10,"merge components smaller than this in seg-cuts");
 
     void line_segmentation_merge_small_components(intarray &segmentation,int r=10) {
@@ -181,6 +209,7 @@ namespace ocropus {
         int boundary_weight;
         int outside_weight;
         int min_range;
+        int fill_holes;
         float min_thresh;
         //virtual void params_for_chars() = 0;
         virtual void params_for_lines() = 0;
@@ -228,6 +257,7 @@ namespace ocropus {
             min_range = 3;
             //min_thresh = -2.0;
             min_thresh = 10.0;
+            fill_holes = 1;
         }
 
         // this function calculates the actual costs
@@ -357,7 +387,15 @@ namespace ocropus {
             //dshow(dimage,"Y");
         }
 
-        void setImage(bytearray &image) {
+        void setImage(bytearray &image_) {
+            bytearray image;
+            image = image_;
+            if(fill_holes) {
+                bytearray holes;
+                extract_holes(holes,image);
+                for(int i=0;i<image.length();i++)
+                    if(holes[i]) image[i] = 255;
+            }
             copy(dimage,image);
             int w = image.dim(0), h = image.dim(1);
             wimage.resize(w,h);
@@ -401,7 +439,9 @@ namespace ocropus {
 
         virtual void set(const char *key,double value) {
             log_main.format("set parameter %s to %f", key, value);
-            if(!strcmp(key,"down_cost"))
+            if(!strcmp(key,"fill_holes"))
+                segmenter->fill_holes = (int)value;
+            else if(!strcmp(key,"down_cost"))
                 segmenter->down_cost = (int)value;
             else if(!strcmp(key,"small_merge_threshold"))
                 small_merge_threshold = (int)value;
