@@ -331,6 +331,20 @@ namespace glinerec {
         virtual float outputs_dense(floatarray &result,floatarray &v) = 0;
     };
 
+    struct IDistComp : IModel {
+        virtual const char *name() { return "IDistComp"; }
+        virtual const char *interface() { return "IDistComp"; }
+        virtual void add(bytearray &obj) = 0;
+        virtual void distances(floatarray &ds,bytearray &obj) = 0;
+        virtual void merge(int i,bytearray &obj,float weight) = 0;
+        virtual int counts(int i) = 0;
+        int nearest(bytearray &obj) {
+            floatarray ds;
+            distances(ds,obj);
+            return argmin(ds);
+        }
+    };
+
     void confusion_matrix(intarray &confusion,IModel &classifier,floatarray &data,intarray &classes);
     void confusion_matrix(intarray &confusion,IModel &classifier,IDataset &ds);
     void confusion_print(intarray &confusion);

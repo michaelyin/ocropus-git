@@ -390,17 +390,18 @@ namespace glinerec {
             //dshow(dimage,"Y");
         }
 
-        void setImage(bytearray &image) {
+        void setImage(bytearray &image_) {
+            bytearray image;
+            image = image_;
             copy(dimage,image);
             if(pgetf("fill_holes")) {
                 bytearray holes;
                 extract_holes(holes,image);
                 for(int i=0;i<image.length();i++)
-                    if(holes[i]) dimage[i] = 255;
-                dsection("segholes");
-                holes = dimage;
-                dshow(holes,"y");
+                    if(holes[i]) image[i] = 255;
             }
+            dsection("segholes");
+            dshow(image,"y");
             int w = image.dim(0), h = image.dim(1);
             wimage.resize(w,h);
             fill(wimage, 0);
