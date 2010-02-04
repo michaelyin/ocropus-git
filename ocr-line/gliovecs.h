@@ -52,7 +52,7 @@ namespace glinerec {
         int key(int i) {
             return keys[i];
         }
-        float value(int i) {
+        float &value(int i) {
             return values[i];
         }
 

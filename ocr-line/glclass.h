@@ -276,6 +276,9 @@ namespace glinerec {
             train(*ds);
             ds = 0;
         }
+        virtual const char *command(const char **argv) {
+            return IModel::command(argv);
+        }
     };
 
     struct IBatchDense : virtual IBatch {
@@ -284,6 +287,15 @@ namespace glinerec {
         IBatchDense() {
             persist(c2i,"c2i");
             persist(i2c,"i2c");
+        }
+
+        virtual const char *command(const char **argv) {
+            if(!strcmp(argv[0],"debug_map")) {
+                for(int i=0;i<i2c.length();i++)
+                    printf("%d -> %d\n",i,i2c[i]);
+                return 0;
+            }
+            return IBatch::command(argv);
         }
 
         float outputs(OutputVector &result,floatarray &v) {
@@ -331,13 +343,17 @@ namespace glinerec {
         virtual float outputs_dense(floatarray &result,floatarray &v) = 0;
     };
 
-    struct IDistComp : IModel {
+    struct IDistComp : IComponent {
         virtual const char *name() { return "IDistComp"; }
         virtual const char *interface() { return "IDistComp"; }
         virtual void add(bytearray &obj) = 0;
         virtual void distances(floatarray &ds,bytearray &obj) = 0;
-        virtual void merge(int i,bytearray &obj,float weight) = 0;
-        virtual int counts(int i) = 0;
+        virtual void merge(int i,bytearray &obj,float weight) {
+            throw Unimplemented();
+        }
+        virtual int counts(int i) {
+            throw Unimplemented();
+        }
         int nearest(bytearray &obj) {
             floatarray ds;
             distances(ds,obj);

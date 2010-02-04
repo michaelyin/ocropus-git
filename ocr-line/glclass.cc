@@ -1651,55 +1651,32 @@ namespace glinerec {
             }
 
             if(pgetf("ul") && ulclass) {
-                debugf("info","training upper/lower classifier\n");
-                intarray isupper;
-                intarray alphabetic;
-                for(int i=0;i<ds.nsamples();i++) {
-                    int cls = ds.cls(i);
-                    if((cls>='a' && cls<='z')||(cls>='A' && cls<='Z')) {
-                        isupper.push((cls>='A' && cls<='Z'));
-                        alphabetic.push(i);
-                    }
-                }
-                Datasubset alphabeticds(ds,alphabetic);
-                MappedDataset isupperds(alphabeticds,isupper);
-                CHECK(isupperds.nsamples()>10);
-                CHECK(isupperds.nclasses()==2);
-                ulclass->xtrain(isupperds);
+                throw "ulclass not implemented";
             }
         }
 
         float outputs(OutputVector &result,floatarray &v) {
             OutputVector ov;
-            floatarray chars;
-            floatarray ul;
-            floatarray junk;
 
-            // CHECK_ARG2(charclass->nclasses()==jc(),"Training incomplete for all classes");
-            charclass->xoutputs(ov,v);
-            ov.as_array(chars);
+            result.clear();
+            charclass->xoutputs(result,v);
+            CHECK(result.nkeys()>0);
 
             if(pgetf("junk") && junkclass) {
-                junkclass->xoutputs(ov,v);
-                ov.as_array(junk);
-                chars /= sum(chars);
-                chars *= junk(0);
-                while(chars.length()<=jc()) chars.push(0);
-                chars(jc()) = junk(1);
+                result.normalize();
+                OutputVector jv;
+                junkclass->xoutputs(jv,v);
+                floatarray junk;
+                jv.as_array(junk);
+                for(int i=0;i<result.nkeys();i++)
+                    result.values(i) *= junk(0);
+                result(jc()) = junk(1);
             }
 
             if(pgetf("ul") && ulclass) {
-                ulclass->xoutputs(ov,v);
-                ov.as_array(ul);
-                ul /= sum(ul);
-                for(int c='A';c<='Z';c++) {
-                    float total = chars(c) + chars(c-'A'+'a');
-                    chars(c) = ul(1) * total;
-                    chars(c-'A'+'a') = ul(0) * total;
-                }
+                throw "ulclass not implemented";
             }
 
-            result = chars;
             return 0.0;
         }
     };
@@ -1963,6 +1940,38 @@ namespace glinerec {
 #endif
 
 
+    struct AbsDistances : IDistComp {
+        narray<floatarray> vectors;
+        virtual const char *name() { return "absdist"; }
+        virtual void add(bytearray &obj) {
+            vectors.push() = obj;
+        }
+        virtual void distances(floatarray &ds,bytearray &obj) {
+            int n = obj.length();
+            ds.clear();
+#pragma omp parallel for
+            for(int i=0;i<vectors.length();i++) {
+                double total = 0.0;
+                floatarray &v = vectors[i];
+                if(v.length()!=n) {
+                    ds.push() = 1e38;
+                    continue;
+                }
+                byte *p = &obj[0];
+                float *q = &v[0];
+                for(int j=0;j<n;j++)
+                    total += fabs(p[j]-q[j]);
+                ds.push() = total;
+            }
+        }
+        virtual void merge(int i,bytearray &obj,float weight) {
+            throw Unimplemented();
+        }
+        virtual int counts(int i) {
+            throw Unimplemented();
+        }
+    };
+
 
     // train multiple classifiers and average (FIXME: implement with resampling etc.)
 
@@ -1985,6 +1994,9 @@ namespace glinerec {
         // feature extractors
         component_register<RaveledExtractor>("raveledfe");
         component_register<ScaledImageExtractor>("scaledfe");
+
+        // distance components
+        component_register<AbsDistances>("absdist");
 
         // other components
         typedef RowDataset<float8> RowDataset8;
