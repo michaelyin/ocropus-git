@@ -40,6 +40,7 @@ namespace ocropus {
         // component_register("SimpleFeatureMap",make_SimpleFeatureMap);
         // component_register("RidgeFeatureMap",make_RidgeFeatureMap);
         component_register("SimpleGrouper",make_SimpleGrouper);
+        component_register("simplegrouper",make_SimpleGrouper);
         component_register("StandardGrouper",make_StandardGrouper);
         component_register("DocClean",make_DocClean);
         // component_register("DocCleanConComp",make_DocCleanConComp);

@@ -26,7 +26,7 @@
 
 import os
 if os.system("uname -a | egrep 'Ubuntu.*2009' > /dev/null")!=0:
-    print "WARNING: scons not supported on platforms other than Ubuntu 9.04"
+    print "WARNING: scons not supported on platforms other than Ubuntu 9.10"
 
 EnsureSConsVersion(0,97)
 from SCons.Script import *
@@ -104,6 +104,11 @@ env.Append(CPPPATH=["${iulib}/include"])
 env.Append(LIBS=["iulib"])
 assert conf.CheckLibWithHeader("iulib","iulib/iulib.h","C++");
 assert conf.CheckHeader("colib/colib.h",language="C++")
+
+# dl (do we need this?)
+
+env.Append(LIBS=["dl"])
+assert conf.CheckLib('dl')
 
 ### TIFF, JPEG, PNG
 

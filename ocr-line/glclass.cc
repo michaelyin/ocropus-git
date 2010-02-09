@@ -2006,8 +2006,9 @@ namespace glinerec {
         component_register<SqliteDataset>("sqliteds");
         component_register<SqliteBuffer>("sqlitebuffer");
 
-        extern void init_glbits();
+        extern void init_glbits(),init_glcuts();
         init_glbits();
+        init_glcuts();
     }
 
     IRecognizeLine *current_recognizer_ = 0;

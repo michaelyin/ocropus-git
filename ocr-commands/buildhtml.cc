@@ -54,62 +54,65 @@ namespace ocropus {
         fprintf(output, "</head>\n");
     }
 
-    void hocr_dump_line(FILE *output, const char *path,
-                        RegionExtractor &r, int index, int h) {
+    void hocr_dump_line(FILE *output,IBookStore &bookstore,
+                        RegionExtractor &r, int page, int line, int h) {
         fprintf(output, "<span class=\"ocr_line\"");
-        if(index > 0 && index < r.length()) {
+        if(line > 0 && line < r.length()) {
             fprintf(output, " title=\"bbox %d %d %d %d\"",
-                        r.x0(index), h - 1 - r.y0(index),
-                        r.x1(index), h - 1 - r.y1(index));
+                        r.x0(line), h - 1 - r.y0(line),
+                        r.x1(line), h - 1 - r.y1(line));
         }
         fprintf(output, ">\n");
         ustrg s;
-        fgetsUTF8(s, stdio(path, "r"));
-        fwriteUTF8(s, output);
+        if (file_exists(bookstore.path(page,line,0,"txt"))) {
+            fgetsUTF8(s, stdio(bookstore.path(page,line,0,"txt"), "r"));
+            fwriteUTF8(s, output);
+        }
         fprintf(output, "</span>");
     }
 
-    void hocr_dump_page(FILE *output, const char *path) {
+    void hocr_dump_page(FILE *output, IBookStore & bookstore, int page) {
         strg pattern;
 
-        sprintf(pattern,"%s.pseg.png",path);
-        if(!file_exists(pattern))
-            sprintf(pattern,"%s.seg.png",path); // temporary backwards compatibility
         intarray page_seg;
-        read_image_packed(page_seg, pattern);
+        //bookstore.getPageSegmentation(page_seg, page);
+        if (!bookstore.getPage(page_seg, page, "pseg")) {
+            if(page>0)
+                debugf("warn","%d: page not found\n",page);
+                return;
+        }
         int h = page_seg.dim(1);
 
         RegionExtractor regions;
         regions.setPageLines(page_seg);
         rectarray bboxes;
 
-        sprintf(pattern,"%s/[0-9][0-9][0-9][0-9].txt",path);
-        // FIXME pathname dependency; replace with IBookStore object
-        Glob lines(pattern);
         fprintf(output, "<div class=\"ocr_page\">\n");
-        for(int i=0;i<lines.length();i++) {
-            // we have to figure out line number from the path because
-            // the loop index is unreliable: it skips lines that didn't work
-            pattern = lines(i);
-            pattern.erase(pattern.length() - 4); // cut .txt
-            int line_index = atoi(pattern.substr(pattern.length() - 4));
-            hocr_dump_line(output, lines(i), regions, line_index, h);
+        
+        int nlines = bookstore.linesOnPage(page);
+
+        for(int i=0;i<nlines;i++) {
+            int line = bookstore.getLineId(page,i);
+            hocr_dump_line(output, bookstore, regions, page, line, h);
         }
         fprintf(output, "</div>\n");
     }
 
     int main_buildhtml(int argc,char **argv) {
+        param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         if(argc!=2) throw "usage: ... dir";
-        strg pattern;
-        sprintf(pattern,"%s/[0-9][0-9][0-9][0-9]",argv[1]);
-        Glob pages(pattern);
+        autodel<IBookStore> bookstore;
+        make_component(bookstore,cbookstore);
+        bookstore->setPrefix(argv[1]);
+        
         FILE *output = stdout;
         hocr_dump_preamble(output);
         fprintf(output, "<html>\n");
         hocr_dump_head(output);
         fprintf(output, "<body>\n");
-        for(int i = 0; i < pages.length(); i++) {
-            hocr_dump_page(output, pages(i));
+        int npages = bookstore->numberOfPages();
+        for(int page=0;page<npages;page++) {
+            hocr_dump_page(output, *bookstore, page);
         }
         fprintf(output, "</body>\n");
         fprintf(output, "</html>\n");

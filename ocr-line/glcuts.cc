@@ -490,4 +490,13 @@ namespace glinerec {
     IDpSegmenter *make_DpSegmenter() {
         return new DpSegmenter();
     }
+
+    void init_glcuts() {
+        static bool init = false;
+        if(init) return;
+        init = true;
+
+        // base classifiers
+        component_register<DpSegmenter>("dpseg");
+    }
 }
