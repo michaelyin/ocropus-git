@@ -141,10 +141,15 @@ namespace glinerec {
             setExtractor(pget("extractor"));
         }
         void setExtractor(const char *name) {
-            if(name==0 || !strcmp("none",name))
+            if(name==0 || !strcmp("none",name)) {
                 extractor = 0;
-            else
+            } else {
                 make_component(extractor,name);
+            }
+            pset("extractor",name);
+        }
+        IExtractor *getExtractor() {
+            return extractor.ptr();
         }
         virtual const char *name() { return "IModel"; }
         virtual const char *interface() { return "IModel"; }
@@ -197,13 +202,13 @@ namespace glinerec {
 
         float outputs(floatarray &p,floatarray &x) {
             OutputVector ov;
-            float cost = outputs(ov,x);
+            float cost = xoutputs(ov,x);
             ov.as_array(p);
             return cost;
         }
         int classify(floatarray &v) {
             OutputVector p;
-            outputs(p,v);
+            xoutputs(p,v);
             return p.argmax();
         }
     };
