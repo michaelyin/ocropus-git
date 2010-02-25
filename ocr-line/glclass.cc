@@ -1940,35 +1940,48 @@ namespace glinerec {
 #endif
 
 
-    struct AbsDistances : IDistComp {
+    inline float sqr(float x) { return x*x; }
+
+    struct EuclideanDistances : IDistComp {
+        intarray counts_;
         narray<floatarray> vectors;
-        virtual const char *name() { return "absdist"; }
-        virtual void add(bytearray &obj) {
+        virtual const char *name() { return "edist"; }
+        virtual void add(floatarray &obj) {
             vectors.push() = obj;
+            counts_.push() = 1;
         }
-        virtual void distances(floatarray &ds,bytearray &obj) {
+        virtual void distances(floatarray &ds,floatarray &obj) {
             int n = obj.length();
-            ds.clear();
+            ds.resize(n);
+            ds = 1e38;
 #pragma omp parallel for
             for(int i=0;i<vectors.length();i++) {
                 double total = 0.0;
                 floatarray &v = vectors[i];
-                if(v.length()!=n) {
-                    ds.push() = 1e38;
-                    continue;
-                }
-                byte *p = &obj[0];
+                if(v.length()!=n) continue;
+                float *p = &obj[0];
                 float *q = &v[0];
-                for(int j=0;j<n;j++)
-                    total += fabs(p[j]-q[j]);
-                ds.push() = total;
+                for(int j=0;j<n;j++) total += sqr(p[j]-q[j]);
+                ds(i) = total;
             }
         }
-        virtual void merge(int i,bytearray &obj,float weight) {
-            throw Unimplemented();
+        virtual void merge(int i,floatarray &obj,float weight) {
+            CHECK_ARG(weight>=0.0 && weight<=1.0);
+            CHECK_ARG(vectors(i).length()==obj.length());
+            int n = obj.length();
+            float cweight = 1.0-weight;
+            floatarray &v = vectors(i);
+            for(int j=0;j<n;j++) v(i) = cweight*v(i) + weight*obj(i);
+            counts_(i)++;
         }
         virtual int counts(int i) {
-            throw Unimplemented();
+            return counts_(i);
+        }
+        virtual void vector(floatarray &v,int i) {
+            v = vectors(i);
+        }
+        virtual floatarray &vector(int i) {
+            return vectors(i);
         }
     };
 
@@ -1996,7 +2009,7 @@ namespace glinerec {
         component_register<ScaledImageExtractor>("scaledfe");
 
         // distance components
-        component_register<AbsDistances>("absdist");
+        component_register<EuclideanDistances>("edist");
 
         // other components
         typedef RowDataset<float8> RowDataset8;

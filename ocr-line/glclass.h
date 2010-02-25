@@ -351,15 +351,21 @@ namespace glinerec {
     struct IDistComp : IComponent {
         virtual const char *name() { return "IDistComp"; }
         virtual const char *interface() { return "IDistComp"; }
-        virtual void add(bytearray &obj) = 0;
-        virtual void distances(floatarray &ds,bytearray &obj) = 0;
-        virtual void merge(int i,bytearray &obj,float weight) {
+        virtual void add(floatarray &obj) = 0;
+        virtual void distances(floatarray &ds,floatarray &obj) = 0;
+        virtual void merge(int i,floatarray &obj,float weight) {
             throw Unimplemented();
         }
         virtual int counts(int i) {
             throw Unimplemented();
         }
-        int nearest(bytearray &obj) {
+        virtual floatarray &vector(int i) {
+            throw Unimplemented();
+        }
+        virtual void vector(floatarray &v,int i) {
+            throw Unimplemented();
+        }
+        int nearest(floatarray &obj) {
             floatarray ds;
             distances(ds,obj);
             return argmin(ds);
