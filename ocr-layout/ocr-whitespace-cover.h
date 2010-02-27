@@ -42,6 +42,7 @@ namespace ocropus {
     enum qfunc {width, height, area};
 
     class WhitespaceCover {
+        // FIXME this violates coding conventions in several ways
     private:
         int   verbose;
         int   max_results;
@@ -91,6 +92,13 @@ namespace ocropus {
         WhitespaceCover();
         WhitespaceCover(colib::rectangle image_boundary);
         ~WhitespaceCover() {}
+        void clear() {
+            rects.clear();
+            initial_nrects = 0;
+            queue.clear();
+            results.clear();
+            bounds = rectangle(0,0,1,1);
+        }
         void init();
         const char *description();
         void compute(colib::rectarray &whitespaces, colib::rectarray &obstacles);
