@@ -64,6 +64,7 @@ namespace ocropus {
         component_register("BinarizeByRange",make_BinarizeByRange);
         component_register("BinarizeByOtsu",make_BinarizeByOtsu);
         component_register("BinarizeBySauvola",make_BinarizeBySauvola);
+        component_register("BinarizeByHT",make_BinarizeByHT);
         component_register("SegmentLineByProjection",make_SegmentLineByProjection);
         component_register("SegmentLineByCCS",make_SegmentLineByCCS);
         component_register("SegmentLineByGCCS",make_SegmentLineByGCCS);

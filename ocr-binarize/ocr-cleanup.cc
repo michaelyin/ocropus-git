@@ -251,9 +251,35 @@ namespace ocropus {
             pdef("binclean8","","binary page cleanup");
             pdef("binclean9","","binary page cleanup");
             pdef("bindeskew","DeskewPageByRAST","binary deskewing");
-            import();
+            reinit();
+            persist(graydeskew,"graydeskew");
+            persist(binarizer,"binarizer");
+            persist(graydeskew,"bindeskew");
+            for(int i=0;i<10;i++) {
+                char buf[100];
+                sprintf(buf,"grayclean%d",i);
+                persist(grayclean[i],buf);
+                sprintf(buf,"binclean%d",i);
+                persist(binclean[i],buf);
+            }
         }
-        void import() {
+        const char *command(const char *argv[]) {
+            if(!strcmp(argv[0],"init")) {
+                reinit();
+                return "OK";
+            }
+            if(!strcmp(argv[0],"binarizer_pset")) {
+                CHECK_ARG(argv[1] && argv[2]);
+                if((argv[2][0]>='0' && argv[2][0]<='9') || argv[2][0]=='-') {
+                    binarizer->pset(argv[1],atof(argv[2]));
+                } else {
+                    binarizer->pset(argv[1],argv[2]);
+                }
+                return argv[2];
+            }
+            return 0;
+        }
+        void reinit() {
             make_component(binarizer,pget("binarizer"));
             make_component(bindeskew,pget("bindeskew"));
             make_component(graydeskew,pget("graydeskew"));

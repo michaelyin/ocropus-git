@@ -72,7 +72,7 @@ binarization algorithm based on integral images.\n";
             k = pgetf("k");
             whalf = w>>1;
             // fprintf(stderr,"[sauvola %g %d]\n",k,w);
-            CHECK_ARG(k>=0.05 && k<=0.95);
+            CHECK_ARG(k>=0.001 && k<=0.999);
             CHECK_ARG(w>0 && k<1000);
             if(bin_image.length1d()!=gray_image.length1d())
                 makelike(bin_image,gray_image);
@@ -180,4 +180,68 @@ binarization algorithm based on integral images.\n";
         return new BinarizeBySauvola();
     }
 
+    struct BinarizeByHT : IBinarize {
+        p_float k0;
+        p_float k1;
+        p_float width;
+
+        BinarizeByHT() {
+            k0.bind(this,"k0",0.2,"low threshold");
+            k1.bind(this,"k1",0.6,"high threshold");
+            width.bind(this,"width",40.0,"width of region");
+        }
+
+        ~BinarizeByHT() {}
+
+        const char *description() {
+            return "binarization by hysteresis thresholding";
+        }
+
+        const char *name() {
+            return "binht";
+        }
+
+        void binarize(bytearray &out, floatarray &in){
+            bytearray image;
+            copy(image,in);
+            binarize(out,image);
+        }
+
+        void binarize(bytearray &bin_image, bytearray &image){
+            dsection("binht");
+            using namespace narray_ops;
+            autodel<IBinarize> threshold;
+            make_component(threshold,"BinarizeBySauvola");
+            threshold->pset("w",width);
+            bytearray &image0 = bin_image;
+            bytearray image1;
+            threshold->pset("k",k0);
+            threshold->binarize(image0,image);
+            threshold->pset("k",k1);
+            threshold->binarize(image1,image);
+            sub(max(image0),image0);
+            sub(max(image1),image1);
+            dshown(image0,"a");
+            dshown(image1,"b");
+            intarray blobs;
+            blobs = image0;
+            int n = label_components(blobs);
+            intarray flags(n+1);
+            flags = 0;
+            for(int i=0;i<blobs.length();i++) {
+                if(!image1[i]) continue;
+                flags[blobs[i]] = 1;
+            }
+            debugf("debug","retained %d of %d blobs\n",int(sum(flags)),flags.length());
+            for(int i=0;i<image0.length();i++)
+                if(!flags[blobs[i]])
+                    image0[i] = 0;
+            for(int i=0;i<image0.length();i++)
+                image0[i] = 255*!image0[i];
+        }
+    };
+
+    IBinarize *make_BinarizeByHT() {
+        return new BinarizeByHT();
+    }
 } //namespace

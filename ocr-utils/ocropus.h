@@ -37,6 +37,7 @@ namespace ocropus {
     IBinarize *make_BinarizeByRange();
     IBinarize *make_BinarizeByOtsu();
     IBinarize *make_BinarizeBySauvola();
+    IBinarize *make_BinarizeByHT();
 
     ISegmentLine *make_SegmentLineByProjection();
     ISegmentLine *make_SegmentLineByCCS();
