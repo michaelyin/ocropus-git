@@ -318,12 +318,17 @@ namespace ocropus {
             }
         }
         void binarize(bytearray &out,bytearray &in) {
+            bytearray gray;
+            binarize(out,gray,in);
+        }
+        void binarize(bytearray &out,bytearray &gray,bytearray &in) {
             if(contains_only(in,0,255)) {
                 bytearray temp;
                 cleanup(out,in);
                 if(bindeskew) {
                     temp.move(out);
                     bindeskew->cleanup(out,temp);
+                    gray = out;
                 }
             } else {
                 bool deskewed = 0;
@@ -333,6 +338,7 @@ namespace ocropus {
                     temp.move(out);
                     graydeskew->cleanup_gray(out,temp);
                     deskewed = 1;
+                    gray = out;
                 }
                 temp.move(out);
                 binarizer->binarize(out,temp);

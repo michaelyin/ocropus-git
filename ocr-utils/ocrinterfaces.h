@@ -63,6 +63,27 @@ namespace ocropus {
         virtual void cleanup(bytearray &out,bytearray &in) = 0;
     };
 
+    /// Perform binarization of grayscale images.
+
+    struct IBinarize : virtual IComponent {
+        const char *interface() { return "IBinarize"; }
+        /// Binarize an image stored in a floatarray. Override this.
+        /// virtual void binarize(bytearray &out,floatarray &in) = 0;
+        /// \brief Binarize an image stored in a bytearray.
+        /// Override this if you want to provide a more efficient
+        /// implementation.
+        virtual void binarize(bytearray &out,bytearray &in) = 0;
+
+        /// A second interface that simultaneoulsy yields a grayscale
+        /// and a binary image.  This is important if the binarization process
+        /// involves a step like deskewing (or if it enhances the grayscale
+        /// image).
+        virtual void binarize(bytearray &out,bytearray &gray,bytearray &in) {
+            binarize(out,in);
+            gray = in;
+        }
+    };
+
     /// Compute text/image probabilities
 
     /// The output is in the standard RGB format
@@ -72,18 +93,6 @@ namespace ocropus {
         const char *interface() { return "ITextImageClassification"; }
         /// Compute text/image probabilities.
         virtual void textImageProbabilities(intarray &out,bytearray &in) = 0;
-    };
-
-    /// Perform binarization of grayscale images.
-
-    struct IBinarize : virtual IComponent {
-        const char *interface() { return "IBinarize"; }
-        /// Binarize an image stored in a floatarray. Override this.
-        // virtual void binarize(bytearray &out,floatarray &in) = 0;
-        /// \brief Binarize an image stored in a bytearray.
-        /// Override this if you want to provide a more efficient
-        /// implementation.
-        virtual void binarize(bytearray &out,bytearray &in) = 0;
     };
 
     /// Compute page segmentation into columns, lines, etc.
