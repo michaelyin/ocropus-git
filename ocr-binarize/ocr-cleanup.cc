@@ -312,8 +312,12 @@ namespace ocropus {
             out = in;
             for(int i=0;i<grayclean.length();i++) {
                 if(!grayclean[i]) continue;
-                grayclean[i]->cleanup_gray(temp,out);
-                out.move(temp);
+                try {
+                    grayclean[i]->cleanup_gray(temp,out);
+                    out.move(temp);
+                } catch(const char *s) {
+                    debugf("warn","grayclean%d failed: %s\n",i,s);
+                }
             }
         }
         void cleanup(bytearray &out,bytearray &in) {
@@ -321,8 +325,12 @@ namespace ocropus {
             out = in;
             for(int i=0;i<binclean.length();i++) {
                 if(!binclean[i]) continue;
-                binclean[i]->cleanup(temp,out);
-                out.move(temp);
+                try {
+                    binclean[i]->cleanup(temp,out);
+                    out.move(temp);
+                } catch(const char *s) {
+                    debugf("warn","binclean%d failed: %s\n",i,s);
+                }
             }
         }
         void binarize(bytearray &out,bytearray &in) {
