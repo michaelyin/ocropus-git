@@ -53,12 +53,15 @@ namespace ocropus {
     }
 #endif
 
+    static int max_n = 5000;
+
     static void count_noise_boxes(intarray &counts,bytearray &image,int mw,int mh){
         intarray segmentation;
         segmentation = image;
         using namespace narray_ops;
         sub(255,segmentation);
-        label_components(segmentation);
+        int n = label_components(segmentation);
+        if(n>max_n) throw "too many connected components";
         narray<rectangle> bboxes;
         bounding_boxes(bboxes,segmentation);
         counts.resize(2);
@@ -75,7 +78,9 @@ namespace ocropus {
     struct RmHalftone : ICleanupBinary {
         p_float factor;
         p_int threshold;
+        p_int max_n_;
         RmHalftone() {
+            max_n_.bind(this,"max_n",5000,"maximum number of connected components");
             factor.bind(this,"factor",3.0,"trigger removal if # small components > factor * # large components");
             threshold.bind(this,"threshold",4,"small components fit into this size box");
         }
@@ -95,6 +100,7 @@ namespace ocropus {
                 if(in[i]>128) in[i] = 255;
             out = in;
             intarray counts;
+            max_n = max_n_;
             count_noise_boxes(counts,in,threshold,threshold);
             if(counts(0)>factor*counts(1)) {
                 debugf("info","removing halftoning\n");
@@ -137,6 +143,7 @@ namespace ocropus {
 
     struct RmBig: ICleanupBinary {
         RmBig() {
+            pdef("max_n",5000,"maximum number of components");
             pdef("mw",300,"maximum width");
             pdef("mh",100,"maximum height");
             pdef("minaspect",0.03,"minimum aspect ratio");
@@ -161,7 +168,8 @@ namespace ocropus {
             // compute bounding boxes
             using namespace narray_ops;
             sub(255,segmentation);
-            label_components(segmentation);
+            int n = label_components(segmentation);
+            if(n>pgetf("max_n")) throw "too many connected components";
             narray<rectangle> bboxes;
             bounding_boxes(bboxes,segmentation);
             debugf("info","got %d bboxes\n",bboxes.length());
@@ -336,17 +344,34 @@ namespace ocropus {
                 cleanup_gray(out,in);
                 if(graydeskew) {
                     temp.move(out);
-                    graydeskew->cleanup_gray(out,temp);
+                    try {
+                        graydeskew->cleanup_gray(out,temp);
+                    } catch(const char *s) {
+                        debugf("warn","graydeskew failed: %s\n",s);
+                        // just continue as if nothing happened
+                        out.move(temp);
+                    }
                     deskewed = 1;
                     gray = out;
                 }
                 temp.move(out);
-                binarizer->binarize(out,temp);
-                temp.move(out);
+                try {
+                    binarizer->binarize(out,temp);
+                    temp.move(out);
+                } catch(const char *s) {
+                    debugf("warn","binarizer failed: %s\n",s);
+                    // just continue as if nothing happened
+                }
                 cleanup(out,temp);
                 if(!deskewed && bindeskew) {
                     temp.move(out);
-                    bindeskew->cleanup(out,temp);
+                    try {
+                        bindeskew->cleanup(out,temp);
+                    } catch(const char *s) {
+                        debugf("warn","bindeskew failed: %s\n",s);
+                        // just continue as if nothing happened
+                        out.move(temp);
+                    }
                 }
             }
         }

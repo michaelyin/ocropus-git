@@ -45,6 +45,7 @@ namespace ocropus {
     //////////////////////////////////////////////////////////////////////////
 
     struct CharStats {
+        // FIXME this violates coding conventions
         int    img_height;
         int    img_width;
         int    xheight;

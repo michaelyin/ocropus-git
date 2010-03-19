@@ -68,6 +68,8 @@ namespace ocropus {
         autodel<CharStats> charstats(make_CharStats());
         charstats->getCharBoxes(bboxes);
         charstats->calcCharStats();
+        if(bboxes.length()>max_n)
+            throw "too many character boxes for deskewing";
 
         // Extract textlines
         autodel<CTextlineRAST> ctextline(make_CTextlineRAST());
