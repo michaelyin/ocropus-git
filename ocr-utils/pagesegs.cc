@@ -53,7 +53,8 @@ namespace ocropus {
         }
         // character segments need to be numbered sequentially (no gaps)
         // (gaps usually happen when someone passes a binary image instead of a segmentation)
-        CHECK_ARG(nused==mused || nused==mused+1);
+        if(!(nused==mused || nused==mused+1))
+            debugf("warn","check_page_segmentation found non-sequentially numbered segments\n");
     }
 
     // FIXME/mezhirov add comments --tmb
