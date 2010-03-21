@@ -50,7 +50,7 @@ namespace ocropus {
     struct ICleanupGray : virtual IComponent {
         const char *interface() { return "ICleanupGray"; }
         /// Clean up a gray image.
-        virtual void cleanup_gray(bytearray &out,bytearray &in) = 0;
+        virtual void cleanup_gray(bytearray &out,bytearray &in) { throw Unimplemented(); }
     };
 
     /// Cleanup for binary document images.
@@ -60,7 +60,7 @@ namespace ocropus {
     struct ICleanupBinary : virtual IComponent {
         const char *interface() { return "ICleanupBinary"; }
         /// Clean up a binary image.
-        virtual void cleanup(bytearray &out,bytearray &in) = 0;
+        virtual void cleanup(bytearray &out,bytearray &in) { throw Unimplemented(); }
     };
 
     /// Perform binarization of grayscale images.
@@ -72,7 +72,7 @@ namespace ocropus {
         /// \brief Binarize an image stored in a bytearray.
         /// Override this if you want to provide a more efficient
         /// implementation.
-        virtual void binarize(bytearray &out,bytearray &in) = 0;
+        virtual void binarize(bytearray &out,bytearray &in)  { throw Unimplemented(); }
 
         /// A second interface that simultaneoulsy yields a grayscale
         /// and a binary image.  This is important if the binarization process
@@ -92,7 +92,7 @@ namespace ocropus {
     struct ITextImageClassification : virtual IComponent {
         const char *interface() { return "ITextImageClassification"; }
         /// Compute text/image probabilities.
-        virtual void textImageProbabilities(intarray &out,bytearray &in) = 0;
+        virtual void textImageProbabilities(intarray &out,bytearray &in)  { throw Unimplemented(); }
     };
 
     /// Compute page segmentation into columns, lines, etc.
@@ -103,9 +103,8 @@ namespace ocropus {
     struct ISegmentPage : virtual IComponent {
         const char *interface() { return "ISegmentPage"; }
         /// Segment the page.
-        virtual void segment(intarray &out,bytearray &in) = 0;
-        virtual void segment(intarray &out,bytearray &in,rectarray &obstacles)
-            { throw "unimplemented"; }
+        virtual void segment(intarray &out,bytearray &in)  { throw Unimplemented(); }
+        virtual void segment(intarray &out,bytearray &in,rectarray &obstacles)  { throw Unimplemented(); }
     };
 
     /// Compute line segmentation into character hypotheses.
@@ -116,7 +115,7 @@ namespace ocropus {
     struct ISegmentLine : virtual IComponent {
         const char *interface() { return "ISegmentLine"; }
         /// Segment a line.
-        virtual void charseg(intarray &out,bytearray &in) = 0;
+        virtual void charseg(intarray &out,bytearray &in)  { throw Unimplemented(); }
     };
 
     /// \brief A generic interface for language models.
@@ -128,13 +127,13 @@ namespace ocropus {
     struct IGenericFst : virtual IComponent {
         const char *interface() { return "IGenericFst"; }
         /// Clear the language model
-        virtual void clear() = 0;
+        virtual void clear() { throw Unimplemented(); }
 
         /// Get a single new state
-        virtual int newState() = 0;
+        virtual int newState() { throw Unimplemented(); }
 
         /// Add a transition between the given states
-        virtual void addTransition(int from,int to,int output,float cost,int input) = 0;
+        virtual void addTransition(int from,int to,int output,float cost,int input) { throw Unimplemented(); }
 
         /// A variant of addTransition() with equal input and output.
         virtual void addTransition(int from,int to,int symbol,float cost) {
@@ -142,17 +141,17 @@ namespace ocropus {
         }
 
         /// Set the start state
-        virtual void setStart(int node) = 0;
+        virtual void setStart(int node) { throw Unimplemented(); }
 
         /// Set a state as an accept state
-        virtual void setAccept(int node,float cost=0.0) = 0;
+        virtual void setAccept(int node,float cost=0.0) { throw Unimplemented(); }
 
         /// Obtain codes for "specials" (language model dependent)
-        virtual int special(const char *s) = 0;
+        virtual int special(const char *s) { throw Unimplemented(); }
 
         /// \brief Compute the best path through the language model.
         /// Useful for simple OCR tasks and for debugging.
-        virtual void bestpath(ustrg &result) = 0;
+        virtual void bestpath(ustrg &result) { throw Unimplemented(); }
 
         /// destroy the language model
         virtual ~IGenericFst() {}
@@ -173,13 +172,13 @@ namespace ocropus {
         // reading methods
 
         /// Get the number of states.
-        virtual int nStates() { throw "unimplemented"; }
+        virtual int nStates() { throw Unimplemented(); }
 
         /// Get the starting state.
-        virtual int getStart() { throw "unimplemented"; }
+        virtual int getStart() { throw Unimplemented(); }
 
         /// Get the accept cost of a given vertex (a cost to finish the line and quit).
-        virtual float getAcceptCost(int node) { throw "unimplemented"; }
+        virtual float getAcceptCost(int node) { throw Unimplemented(); }
 
         /// Determine whether the given node is an accepting state.
         virtual bool isAccepting(int node) { return getAcceptCost(node)<1e30; }
@@ -189,7 +188,7 @@ namespace ocropus {
                           colib::intarray &targets,
                           colib::intarray &outputs,
                           colib::floatarray &costs,
-                          int from) { throw "unimplemented"; } // WARN_DEPRECATED
+                          int from) { throw Unimplemented(); } // WARN_DEPRECATED
 
         /// A variant of addTransition() with equal input and output.
         virtual void getTransitions(intarray &tos,intarray &symbols,floatarray &costs,intarray &inputs,int from) {
@@ -197,7 +196,7 @@ namespace ocropus {
         }
 
         /// Change a transition score between the given states
-        virtual void rescore(int from,int to,int output,float new_cost,int input) { throw "unimplemented"; }
+        virtual void rescore(int from,int to,int output,float new_cost,int input) { throw Unimplemented(); }
 
         /// A variant of rescore() with equal input and output.
         virtual void rescore(int from, int to, int symbol, float new_cost) {
@@ -207,8 +206,8 @@ namespace ocropus {
         /// These methods should load and save in OpenFST format.
         /// (A simple way of doing that is to convert internally to OpenFST,
         /// then call its load/save methods.)
-        virtual void load(const char *file) = 0;
-        virtual void save(const char *file) = 0;
+        virtual void load(const char *file) { throw Unimplemented(); }
+        virtual void save(const char *file) { throw Unimplemented(); }
     };
 
 #if 0
@@ -221,29 +220,29 @@ namespace ocropus {
         /// \brief Classify a character without any information about position on the line.
         ///
         /// May throw an exception if it's not implemented.
-        virtual void setImage(bytearray &input_image) = 0;
+        virtual void setImage(bytearray &input_image) { throw Unimplemented(); }
 
         /// \brief Classify a character with information about position on the line.
         //
         /// May throw an exception if it's not implemented.
-        virtual void setImage(bytearray &image,int base_y, int xheight_y, int descender_y, int ascender_y) = 0;
+        virtual void setImage(bytearray &image,int base_y, int xheight_y, int descender_y, int ascender_y) { throw Unimplemented(); }
 
         /// Get the number of classes returned. Corresponds to indices to cls() and cost().
-        virtual int length() = 0;
+        virtual int length() { throw Unimplemented(); }
 
         /// Unicode character or character string.
         //
         /// Note that some classifiers may return multiple characters per class
-        virtual void cls(ustrg &result, int i) = 0;
+        virtual void cls(ustrg &result, int i) { throw Unimplemented(); }
 
         /// cost value for this classification; lower costs = better
         /// should aim to return negative log likelihoods
-        virtual float cost(int i) = 0;
+        virtual float cost(int i) { throw Unimplemented(); }
 
         /// "adaptation" means temporary adaptation of the classifier
         /// to all the characters between startTraining and finishTraining
         /// other types of training are recognizer-dependent
-        virtual void startTraining(const char *type="adaptation") { throw "unimplemented"; }
+        virtual void startTraining(const char *type="adaptation") { throw Unimplemented(); }
 
         /// Notify the classifier of the start of a new epoch.
         virtual void epoch(int n) {}
@@ -254,19 +253,19 @@ namespace ocropus {
         /// This may be also train on ligatures (if supported),
         /// that's why `characters' is a ustrg.
         virtual void addTrainingChar(bytearray &input_image,ustrg &characters)
-            { throw "unimplemented"; }
+            { throw Unimplemented(); }
 
         /// Train a character.
         virtual void addTrainingChar(bytearray &image,int base_y, int xheight_y, int descender_y,
-                int ascender_y,ustrg &characters) { throw "unimplemented"; }
+                int ascender_y,ustrg &characters) { throw Unimplemented(); }
 
         /// Train a character in context (think about this some more).
         virtual void addTrainingChar(bytearray &image,bytearray &mask,ustrg &characters)
-                { throw "unimplemented"; }
+                { throw Unimplemented(); }
 
         /// Finish training and switch back to recognition; this method may
         /// take a long time to complete.
-        virtual void finishTraining() { throw "unimplemented"; }
+        virtual void finishTraining() { throw Unimplemented(); }
 
 #if 0
         // inherited from IComponent
@@ -274,11 +273,11 @@ namespace ocropus {
         // FIXME get rid of this
 
         /// Save a trained model to the stream.
-        virtual void save(FILE *stream) { throw "unimplemented"; }
+        virtual void save(FILE *stream) { throw Unimplemented(); }
         void save(const char *path) { save(stdio(path, "wb")); }
 
         /// Load a trained model from the stream.
-        virtual void load(FILE *stream) { throw "unimplemented"; }
+        virtual void load(FILE *stream) { throw Unimplemented(); }
         void load(const char *path) { load(stdio(path, "rb")); }
 #endif
 
@@ -314,7 +313,7 @@ namespace ocropus {
         }
         /// \brief Recognize a text line and return a lattice representing
         /// the recognition alternatives.
-        virtual void recognizeLine(IGenericFst &result,bytearray &image) = 0;
+        virtual void recognizeLine(IGenericFst &result,bytearray &image) { throw Unimplemented(); }
 
         /// \brief Start training of the given type.
 
@@ -322,7 +321,7 @@ namespace ocropus {
         /// to all the lines between startTraining and finishTraining
         /// other types of training are recognizer-dependent
         virtual void startTraining(const char *type="adaptation") {
-            throw "unimplemented";
+            throw Unimplemented();
         }
 
         /// \brief Train on a text line.
@@ -342,7 +341,7 @@ namespace ocropus {
         /// (well, for some training data)
 
         virtual bool addTrainingLine(bytearray &image,ustrg &transcription) {
-            throw "unimplemented";
+            throw Unimplemented();
         }
 
 
@@ -351,7 +350,7 @@ namespace ocropus {
         /// it takes the "ground truth" line segmentation.
         virtual bool addTrainingLine(intarray &segmentation, bytearray &image_grayscale,
                                      ustrg &transcription) {
-            throw "unimplemented";
+            throw Unimplemented();
         }
 
 
@@ -367,16 +366,16 @@ namespace ocropus {
         /// \param[in] image Input grayscale image
         /// \param[in] transcription The "ground truth" lattice to align
         virtual void align(ustrg &chars,intarray &seg,floatarray &costs,
-                           bytearray &image,IGenericFst &transcription) { throw "unimplemented"; }
+                           bytearray &image,IGenericFst &transcription) { throw Unimplemented(); }
 
         // eventually?
-        // virtual void addTrainingLine(bytearray &image,IGenericFst &transcription) { throw "unimplemented"; }
+        // virtual void addTrainingLine(bytearray &image,IGenericFst &transcription) { throw Unimplemented(); }
 
         /// \brief Finish training, possibly making complex calculations.
 
         /// Call this when training is done and the system should switch back to recognition;
         /// this method may take a long time to complete.
-        virtual void finishTraining() { throw "unimplemented"; }
+        virtual void finishTraining() { throw Unimplemented(); }
 
         /// Notify the recognizer of the start of a new epoch (i.e.,
         /// if n>0, then we have seen the data before).
@@ -400,7 +399,7 @@ namespace ocropus {
         // segmentation is really used for the recognition
         virtual void recognizeLineSeg(intarray &segmentation,IGenericFst &result,
                                       bytearray &image, bool useit)
-            WARN_DEPRECATED { throw "unimplemented"; }
+            WARN_DEPRECATED { throw Unimplemented(); }
     };
 
     struct DoneTraining { };

@@ -97,7 +97,9 @@ namespace glinerec {
     struct IExtractor : virtual IComponent {
         virtual const char *name() { return "IExtractor"; }
         virtual const char *interface() { return "IExtractor"; }
-        virtual void extract(narray<floatarray> &out,floatarray &in) = 0;
+        virtual void extract(narray<floatarray> &out,floatarray &in) {
+            throw Unimplemented();
+        }
         virtual void extract(floatarray &out,floatarray &in) {
             out.clear();
             narray<floatarray> items;
@@ -174,10 +176,16 @@ namespace glinerec {
                 train(eds);
             }
         }
-        virtual void updateModel() = 0;
+        virtual void updateModel() {
+            throw Unimplemented();
+        }
     protected:
-        virtual void add(floatarray &v,int c) = 0;
-        virtual float outputs(OutputVector &ov,floatarray &x) = 0;
+        virtual void add(floatarray &v,int c) {
+            throw Unimplemented();
+        }
+        virtual float outputs(OutputVector &ov,floatarray &x) {
+            throw Unimplemented();
+        }
         virtual void train(IDataset &ds) {
             floatarray v;
             for(int i=0;i<ds.nsamples();i++) {
@@ -251,8 +259,12 @@ namespace glinerec {
         virtual const char *name() { return "IBatch"; }
         virtual const char *interface() { return "IBatch"; }
 
-        virtual void train(IDataset &dataset) = 0;
-        virtual float outputs(OutputVector &result,floatarray &v) = 0;
+        virtual void train(IDataset &dataset) {
+            throw Unimplemented();
+        }
+        virtual float outputs(OutputVector &result,floatarray &v) {
+            throw Unimplemented();
+        }
 
         // incremental training for batch models
 
@@ -344,15 +356,23 @@ namespace glinerec {
             train_dense(mds);
         }
 
-        virtual void train_dense(IDataset &dataset) = 0;
-        virtual float outputs_dense(floatarray &result,floatarray &v) = 0;
+        virtual void train_dense(IDataset &dataset) {
+            throw Unimplemented();
+        }
+        virtual float outputs_dense(floatarray &result,floatarray &v) {
+            throw Unimplemented();
+        }
     };
 
     struct IDistComp : IComponent {
         virtual const char *name() { return "IDistComp"; }
         virtual const char *interface() { return "IDistComp"; }
-        virtual void add(floatarray &obj) = 0;
-        virtual void distances(floatarray &ds,floatarray &obj) = 0;
+        virtual void add(floatarray &obj) {
+            throw Unimplemented();
+        }
+        virtual void distances(floatarray &ds,floatarray &obj) {
+            throw Unimplemented();
+        }
         virtual void merge(int i,floatarray &obj,float weight) {
             throw Unimplemented();
         }
