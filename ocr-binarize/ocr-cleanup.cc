@@ -343,7 +343,13 @@ namespace ocropus {
                 cleanup(out,in);
                 if(bindeskew) {
                     temp.move(out);
-                    bindeskew->cleanup(out,temp);
+                    try {
+                        bindeskew->cleanup(out,temp);
+                    } catch(const char *s) {
+                        debugf("warn","graydeskew failed: %s\n",s);
+                        // just continue as if nothing happened
+                        out.move(temp);
+                    }
                     gray = out;
                 }
             } else {
