@@ -700,6 +700,8 @@ namespace ocropus {
                 out(y,in.dim(0)-x-1) = in(x,y);
     }
     template void rotate_90<byte>(narray<byte> &,narray<byte> &);
+    template void rotate_90<int>(narray<int> &,narray<int> &);
+    template void rotate_90<float>(narray<float> &,narray<float> &);
 
 
     template<class T>
@@ -711,6 +713,8 @@ namespace ocropus {
         }
     }
     template void rotate_270<byte>(narray<byte> &,narray<byte> &);
+    template void rotate_270<int>(narray<int> &,narray<int> &);
+    template void rotate_270<float>(narray<float> &,narray<float> &);
 
     template<class T>
     void rotate_180(narray<T> &out, narray<T> &in) {
@@ -721,6 +725,8 @@ namespace ocropus {
         }
     }
     template void rotate_180<byte>(narray<byte> &,narray<byte> &);
+    template void rotate_180<int>(narray<int> &,narray<int> &);
+    template void rotate_180<float>(narray<float> &,narray<float> &);
 
     float estimate_linesize(bytearray &image,float f,float minsize) {
         floatarray sizes;
@@ -849,4 +855,29 @@ namespace ocropus {
         label_components(temp);
         njunctions = max(temp);
     }
+
+    template <class T>
+    void copy_rect(narray<T> &dst,int x,int y,narray<T> &src,int x0,int y0,int x1,int y1) {
+        CHECK_ARG(dst.rank()==src.rank());
+        int dw = dst.dim(0), dh = dst.dim(1);
+        int sw = src.dim(0), sh = src.dim(1);
+        int w = min(min(sw-x0,x1-x0),dw-x);
+        int h = min(min(sh-y0,y1-y0),dh-y);
+        if(src.rank()==2) {
+            for(int i=0;i<w;i++) for(int j=0;j<h;j++) {
+                dst(i+x,j+y) = src(i+x0,j+y0);
+            }
+        } else if(src.rank()==3) {
+            CHECK_ARG(dst.dim(2)==src.dim(2));
+            for(int i=0;i<w;i++) for(int j=0;j<h;j++) {
+                for(int k=0;k<src.dim(2);k++)
+                    dst(i+x,j+y,k) = src(i+x0,j+y0,k);
+            }
+        } else {
+            throw "bad rank";
+        }
+    }
+    template void copy_rect<byte>(narray<byte> &,int,int,narray<byte> &,int,int,int,int);
+    template void copy_rect<int>(narray<int> &,int,int,narray<int> &,int,int,int,int);
+    template void copy_rect<float>(narray<float> &,int,int,narray<float> &,int,int,int,int);
 }

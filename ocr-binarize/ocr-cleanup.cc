@@ -53,7 +53,7 @@ namespace ocropus {
     }
 #endif
 
-    static int max_n = 5000;
+    static int max_n = 10000;
 
     static void count_noise_boxes(intarray &counts,bytearray &image,int mw,int mh){
         intarray segmentation;
@@ -80,7 +80,7 @@ namespace ocropus {
         p_int threshold;
         p_int max_n_;
         RmHalftone() {
-            max_n_.bind(this,"max_n",5000,"maximum number of connected components");
+            max_n_.bind(this,"max_n",10000,"maximum number of connected components");
             factor.bind(this,"factor",3.0,"trigger removal if # small components > factor * # large components");
             threshold.bind(this,"threshold",4,"small components fit into this size box");
         }
@@ -143,7 +143,7 @@ namespace ocropus {
 
     struct RmBig: ICleanupBinary {
         RmBig() {
-            pdef("max_n",5000,"maximum number of components");
+            pdef("max_n",10000,"maximum number of components");
             pdef("mw",300,"maximum width");
             pdef("mh",100,"maximum height");
             pdef("minaspect",0.03,"minimum aspect ratio");

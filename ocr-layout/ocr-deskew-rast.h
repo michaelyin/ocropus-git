@@ -36,7 +36,7 @@ namespace ocropus {
     struct DeskewPageByRAST : virtual ICleanupBinary, virtual ICleanupGray {
         p_int max_n;
         DeskewPageByRAST() {
-            max_n.bind(this,"max_n",3000,"maximum number of character boxes for deskewing");
+            max_n.bind(this,"max_n",10000,"maximum number of character boxes for deskewing");
         }
         ~DeskewPageByRAST() {
         }
