@@ -180,17 +180,6 @@ namespace ocropus {
         if(minq12 < pf.min_q)
             quality = 0;
 
-        // check for total length; we can do that because the cboxes
-        // are in sorted order
-        if(matches.length() >= 2) {
-            int start = matches[0];
-            int end = matches[matches.length()-1];
-            float length = pf.lineboxes[end].x1-pf.lineboxes[start].x0;
-            if(length<pf.min_length) quality = 0;
-        } else {
-            quality = 0;
-        }
-
         priority = quality.hi;
         generation = pf.generation;
     }
@@ -260,9 +249,9 @@ namespace ocropus {
     }
 
     void PageFrameRAST::pushResult(CState &result){
-        Matches &matches = result->matches;
-        for(int i=0;i<matches.length();i++)
-            used[matches[i]] = true;
+        //Matches &matches = result->matches;
+        //for(int i=0;i<matches.length();i++)
+        //    used[matches[i]] = true;
 
         results.push(result);
         generation++;
@@ -281,7 +270,14 @@ namespace ocropus {
 
         autodel<ISegmentPage> segmenter(make_SegmentPageByRAST());
         segmenter->segment(lineimage,in);
-        replace_values(lineimage,0x00ffff00,0x00ffffff);
+        //replace_values(lineimage,0x00ffff00,0x00ffffff);
+        int N_MAX_COLUMNS = 32; // defined by color coding convention
+        for(int i=0,l=lineimage.length1d(); i<l; i++){
+            // Red channel represents column index
+            int red_value = lineimage.at1d(i) >> 16;
+            if (red_value > N_MAX_COLUMNS )
+                lineimage.at1d(i) = 0x00ffffff; // Remove non-text parts
+        }
         bounding_boxes(lineboxesall,lineimage);
         for(int i=0,l=lineboxesall.length()-1;i<l;i++)
             if(lineboxesall[i].area()){
