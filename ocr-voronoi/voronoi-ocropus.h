@@ -32,14 +32,14 @@
 namespace ocropus {
 
     struct SegmentPageByVORONOI : ISegmentPage {
-        bool  remove_noise; // remove noise from output image
+        p_int remove_noise; // remove noise from output image
         p_int nm;
         p_int sr;
         p_float fr;
         p_int ta;
 
         SegmentPageByVORONOI() {
-            remove_noise=false;
+            remove_noise.bind(this,"remove_noise",0,"remove noise parameter");
             nm.bind(this,"nm",-1,"nm parameter");
             sr.bind(this,"sr",-1,"nm parameter");
             fr.bind(this,"fr",-1,"nm parameter");
