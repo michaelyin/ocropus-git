@@ -33,17 +33,17 @@ namespace ocropus {
 
     struct SegmentPageByVORONOI : ISegmentPage {
         bool  remove_noise; // remove noise from output image
-        int   nm;
-        int   sr;
-        float fr;
-        int   ta;
+        p_int nm;
+        p_int sr;
+        p_float fr;
+        p_int ta;
 
         SegmentPageByVORONOI() {
             remove_noise=false;
-            nm=-1; // use default value
-            sr=-1; // use default value
-            fr=-1; // use default value
-            ta=-1; // use default value
+            nm.bind(this,"nm",-1,"nm parameter");
+            sr.bind(this,"sr",-1,"nm parameter");
+            fr.bind(this,"fr",-1,"nm parameter");
+            ta.bind(this,"ta",-1,"nm parameter");
         }
         ~SegmentPageByVORONOI() {}
 
@@ -53,20 +53,6 @@ namespace ocropus {
 
         const char *description() {
             return "segment page by Voronoi algorithm\n";
-        }
-
-        void set(const char *key,double value) {
-            if(!strcmp(key,"remove_noise"))
-                this->remove_noise = bool(value);
-            else if(!strcmp(key,"nm"))
-                this->nm = int(value);
-            else if(!strcmp(key,"sr"))
-                this->sr = int(value);
-            else if(!strcmp(key,"fr"))
-                this->fr = float(value);
-            else if(!strcmp(key,"ta"))
-                this->ta = int(value);
-            else throw "unknown parameter";
         }
 
         void segment(intarray &image,bytearray &in);

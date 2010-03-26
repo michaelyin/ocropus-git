@@ -61,7 +61,7 @@ opts.Add(PathVariable('destdir', 'Destination root directory', "", PathVariable.
 opts.Add(PathVariable('leptonica', 'The installation root of leptonica', "/usr/local"))
 
 opts.Add(BoolVariable('gsl', "use GSL-dependent features", "no"))
-opts.Add(BoolVariable('omp', "use OpenMP", "no"))
+opts.Add(BoolVariable('omp', "use OpenMP", "yes"))
 opts.Add(BoolVariable('lept', "use Leptonica", "no"))
 opts.Add(BoolVariable('sqlite3', "use sqlite3", "yes"))
 

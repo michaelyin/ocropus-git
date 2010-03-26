@@ -583,14 +583,34 @@ namespace ocropus {
         return binarize_simple(image, image);
     }
 
+    void binarize_with_threshold(floatarray &out, floatarray &in, float threshold) {
+        makelike(out,in);
+        for(int i=0;i<in.length1d();i++)
+            out.at1d(i) = in.at1d(i)<threshold ? 0.0 : 1.0;
+    }
+
+    void binarize_with_threshold(bytearray &out, floatarray &in, float threshold) {
+        makelike(out,in);
+        for(int i=0;i<in.length1d();i++)
+            out.at1d(i) = in.at1d(i)<threshold ? 0 : 255;
+    }
+
     void binarize_with_threshold(bytearray &out, bytearray &in, int threshold) {
         makelike(out,in);
         for(int i=0;i<in.length1d();i++)
             out.at1d(i) = in.at1d(i)<threshold ? 0 : 255;
     }
 
+    void binarize_with_threshold(floatarray &in, float threshold) {
+        floatarray out;
+        binarize_with_threshold(out, in, threshold);
+        in.move(out);
+    }
+
     void binarize_with_threshold(bytearray &in, int threshold) {
-        binarize_with_threshold(in, threshold);
+        bytearray out;
+        binarize_with_threshold(out, in, threshold);
+        in.move(out);
     }
 
     void runlength_histogram(floatarray &hist,

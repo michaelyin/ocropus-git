@@ -122,6 +122,9 @@ namespace ocropus {
                       const char *delimiters);
     int binarize_simple(bytearray &result, bytearray &image);
     int binarize_simple(bytearray &image);
+    void binarize_with_threshold(floatarray &out, floatarray &in, float threshold);
+    void binarize_with_threshold(bytearray &out, floatarray &in, float threshold);
+    void binarize_with_threshold(floatarray &in, float threshold);
     void binarize_with_threshold(bytearray &out, bytearray &in, int threshold);
     void binarize_with_threshold(bytearray &in, int threshold);
 

@@ -1736,6 +1736,91 @@ namespace glinerec {
         }
     };
 
+    struct BiggestCcExtractor : virtual IExtractor {
+        virtual const char *name() { return "biggestcc"; }
+        BiggestCcExtractor() {
+            pdef("csize",30,"taget image size");
+            pdef("aa",0,"anti-aliasing");
+            pdef("noupscale",1,"no upscaling");
+            pdef("threshold",0.25,"threshold for finding the largest cc");
+            pdef("pad",1,"amount to pad bounding rectangle by");
+        }
+        void rescale(floatarray &v,floatarray &input) {
+            dsection("biggestcc");
+            CHECK_ARG(input.rank()==2);
+
+            floatarray sub;
+
+            // find the largest connected component
+            // and crop to its bounding box
+            // (use a binary version of the character
+            // to compute the bounding box)
+            intarray components;
+            float threshold = pgetf("threshold")*max(input);
+            debugf("biggestcc","threshold %g\n",threshold);
+            makelike(components,input);
+            components = 0;
+            for(int i=0;i<components.length();i++)
+                components[i] = (input[i]>threshold);
+            int n = label_components(components);
+            dshowr(components,"d");
+            intarray totals(n+1);
+            totals = 0;
+            for(int i=0;i<components.length();i++)
+                totals[components[i]]++;
+            totals[0] = 0;
+            rectarray boxes;
+            bounding_boxes(boxes,components);
+            int biggest = argmax(totals);
+            rectangle r = boxes[biggest];
+            int pad = int(pgetf("pad")+0.5);
+            r.pad_by(pad,pad);
+            debugf("biggestcc","(%d) %d[%d] :: %d %d %d %d\n",
+                   n,biggest,totals[biggest],
+                   r.x0,r.y0,r.x1,r.y1);
+
+            // now perform normal feature extraction
+            // (use the original grayscale input)
+            sub = input;
+            crop(sub,r);
+            int csize = int(pgetf("csize"));
+            float s = max(sub.dim(0),sub.dim(1))/float(csize);
+            if(pgetf("noupscale") && s<1.0) s = 1.0;
+            float sig = s * pgetf("aa");
+            float dx = (csize*s-sub.dim(0))/2;
+            float dy = (csize*s-sub.dim(1))/2;
+            if(sig>1e-3) gauss2d(sub,sig,sig);
+            v.resize(csize,csize);
+            v = 0;
+            for(int i=0;i<csize;i++) {
+                for(int j=0;j<csize;j++) {
+                    float x = i*s-dx;
+                    float y = j*s-dy;
+                    if(x<0||x>=sub.dim(0)) continue;
+                    if(y<0||y>=sub.dim(1)) continue;
+                    float value = bilin(sub,x,y);
+                    v(i,j) = value;
+                }
+            }
+            debugf("biggestcc","%d %d (%g) -> %d %d (%g)\n",
+                   sub.dim(0),sub.dim(1),max(sub),
+                   v.dim(0),v.dim(1),max(v));
+            if(dactive()) {
+                dshown(input,"c");
+                dshown(sub,"a");
+                dshown(v,"b");
+                dwait();
+                fprintf(stderr,"ok\n");
+            }
+        }
+        void extract(narray<floatarray> &out,floatarray &in) {
+            out.clear();
+            floatarray &image = out.push();
+            rescale(image,in);
+            image /= max(1.0,max(image));
+        }
+    };
+
 #ifdef HAVE_SQLITE3
 #include <sqlite3.h>
 
@@ -2007,6 +2092,7 @@ namespace glinerec {
         // feature extractors
         component_register<RaveledExtractor>("raveledfe");
         component_register<ScaledImageExtractor>("scaledfe");
+        component_register<BiggestCcExtractor>("biggestcc");
 
         // distance components
         component_register<EuclideanDistances>("edist");
