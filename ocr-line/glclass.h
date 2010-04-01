@@ -116,6 +116,12 @@ namespace glinerec {
             extract(fout,fin);
             out = fout;
         }
+        // convenience methods
+        void extract(floatarray &v) {
+            floatarray temp;
+            extract(temp,v);
+            v.move(temp);
+        }
     };
 
     struct ExtractedDataset : virtual IDataset {
@@ -373,7 +379,17 @@ namespace glinerec {
         virtual void distances(floatarray &ds,floatarray &obj) {
             throw Unimplemented();
         }
+        virtual int find(floatarray &obj,float eps) {
+            floatarray ds;
+            distances(ds,obj);
+            int index = argmin(ds);
+            if(ds[index]<eps) return index;
+            return -1;
+        }
         virtual void merge(int i,floatarray &obj,float weight) {
+            throw Unimplemented();
+        }
+        virtual int length() {
             throw Unimplemented();
         }
         virtual int counts(int i) {

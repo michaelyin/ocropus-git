@@ -2028,16 +2028,46 @@ namespace glinerec {
     inline float sqr(float x) { return x*x; }
 
     struct EuclideanDistances : IDistComp {
+        intarray order;
         intarray counts_;
         narray<floatarray> vectors;
+        EuclideanDistances() {
+            persist(vectors,"vectors");
+            persist(counts_,"counts_");
+        }
         virtual const char *name() { return "edist"; }
         virtual void add(floatarray &obj) {
             vectors.push() = obj;
             counts_.push() = 1;
         }
+        virtual int find(floatarray &obj,float eps) {
+            if(order.length()!=counts_.length()) argsort(order,counts_);
+            int result = -1;
+            int n = obj.length();
+#pragma omp parallel for
+            for(int k=order.length()-1;k>=0;k--) {
+                int i = order[k];
+                double total = 0.0;
+                floatarray &v = vectors[i];
+                if(v.length()!=n) continue;
+                float *p = &obj[0];
+                float *q = &v[0];
+                // we can't break out of OMP loops,
+                // but we just skip the inner loop
+                // after we have found a solution
+                if(result<0) {
+                    for(int j=0;j<n;j++) {
+                        total += sqr(p[j]-q[j]);
+                        if(total>=eps) break;
+                    }
+                    if(total<eps) result = i;
+                }
+            }
+            return result;
+        }
         virtual void distances(floatarray &ds,floatarray &obj) {
             int n = obj.length();
-            ds.resize(n);
+            ds.resize(counts_.length());
             ds = 1e38;
 #pragma omp parallel for
             for(int i=0;i<vectors.length();i++) {
@@ -2056,8 +2086,11 @@ namespace glinerec {
             int n = obj.length();
             float cweight = 1.0-weight;
             floatarray &v = vectors(i);
-            for(int j=0;j<n;j++) v(i) = cweight*v(i) + weight*obj(i);
+            for(int j=0;j<n;j++) v(j) = cweight*v(j) + weight*obj(j);
             counts_(i)++;
+        }
+        virtual int length() {
+            return counts_.length();
         }
         virtual int counts(int i) {
             return counts_(i);
