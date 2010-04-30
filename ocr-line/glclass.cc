@@ -1215,7 +1215,7 @@ namespace glinerec {
     ////////////////////////////////////////////////////////////////
 
     void least_square(floatarray &xf,floatarray &Af,floatarray &bf) {
-#ifdef GSL
+#ifdef HAVE_GSL
         int N = Af.dim(1);
         gsl::vector x(N),b,S(N),work(N);
         gsl::matrix A,X(N,N),V(N,N);

@@ -79,6 +79,8 @@ scriptsdir = datadir + '/scripts'
 
 env = Environment(options=opts)
 env.Append(CXXFLAGS=["-DDATADIR='\""+datadir+"\"'"])
+env.Append(CXXFLAGS=["-DDEFAULT_DATA_DIR='\""+datadir+"/models"+"\"'"])
+env.Append(CXXFLAGS=["-DDEFAULT_EXT_DIR='\""+datadir+"/extensions"+"\"'"])
 env.Append(CXXFLAGS=["-g","-fPIC"])
 env.Append(CXXFLAGS=env["opt"])
 env.Append(CXXFLAGS=env["warn"])
@@ -149,6 +151,7 @@ else:
     sources = [s for s in sources if not "leptonica" in s]
 
 if env["sqlite3"]:
+    assert conf.CheckLibWithHeader("sqlite3","sqlite3.h","C");
     env.Append(CPPDEFINES=['HAVE_SQLITE3'])
     env.Append(LIBS=["sqlite3"])
 
@@ -170,11 +173,8 @@ conf.Finish()
 ### main targets
 ################################################################
 
-env.Append(CPPPATH=glob("ocr-*"))
-
-#env.Append(CPPPATH=glob("ocr-*"))
-env.Append(LIBPATH=['.'])
-
+env.Prepend(CPPPATH=glob("ocr-*"))
+env.Prepend(LIBPATH=['.'])
 # libocropus = env.StaticLibrary('libocropus.a',sources)
 libocropus = env.SharedLibrary('libocropus',sources)
 # env.Prepend(LIBS=[File("libocropus.so")])
@@ -205,6 +205,8 @@ env.Alias('install',destdir+datadir)
 
 penv = env.Clone()
 penv.Append(LIBS=[File("libocropus.so")])
+penv.Append(CCFLAGS=["-Xlinker","-rpath=${iulib}/lib"])
+penv.Append(LINKFLAGS=["-Xlinker","-rpath=${iulib}/lib"])
 
 for cmd in glob("commands/*.cc"): 
     penv.Program(cmd,LIBS=File("libocropus.so"))

@@ -19,6 +19,7 @@ namespace glinerec {
         floatarray values;
         floatarray *result;
         OutputVector() {
+	    len = 0;
             result = 0;
         }
         OutputVector(int n) {
