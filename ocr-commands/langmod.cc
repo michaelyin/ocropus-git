@@ -82,7 +82,7 @@ namespace ocropus {
     int main_fsts2text(int argc,char **argv) {
         param_bool abort_on_error("abort_on_error",0,"abort recognition if there is an unexpected error");
         param_float langmod_scale("langmod_scale",0.3,"scale factor for language model");
-        param_string lmodel("lmodel",DEFAULT_DATA_DIR "default.fst","language model used for recognition");
+        param_string lmodel("lmodel",DEFAULT_DATA_DIR "/default.fst","language model used for recognition");
         param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
         param_int beam_width("beam_width", 100, "number of nodes in a beam generation");
         if(argc!=2) throw "usage: lmodel=... ocropus fsts2text dir";

@@ -49,7 +49,7 @@ namespace ocropus {
     int main_lines2fsts(int argc,char **argv) {
         param_bool abort_on_error("abort_on_error",0,"abort recognition if there is an unexpected error");
         param_string cbookstore("bookstore","SmartBookStore","storage abstraction for book");
-        param_string cmodel("cmodel",DEFAULT_DATA_DIR "default.model","character model used for recognition");
+        param_string cmodel("cmodel",DEFAULT_DATA_DIR "/default.model","character model used for recognition");
         param_bool save_fsts("save_fsts",1,"save the fsts (set to 0 for eval-only in lines2fsts)");
         param_bool continue_partial("continue_partial",0,"don't compute outputs that already exist");
         param_float maxheight("max_line_height",300,"maximum line height");

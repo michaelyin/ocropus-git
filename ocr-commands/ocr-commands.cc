@@ -269,8 +269,8 @@ namespace ocropus {
     int main_page(int argc,char **argv) {
         param_int beam_width("beam_width", 100, "number of nodes in a beam generation");
         param_string csegmenter("csegmenter","SegmentPageByRAST","page segmentation component");
-        param_string cmodel("cmodel",DEFAULT_DATA_DIR "default.model","character model used for recognition");
-        param_string lmodel("lmodel",DEFAULT_DATA_DIR "default.fst","language model used for recognition");
+        param_string cmodel("cmodel",DEFAULT_DATA_DIR "/default.model","character model used for recognition");
+        param_string lmodel("lmodel",DEFAULT_DATA_DIR "/default.fst","language model used for recognition");
         // create the segmenter
         autodel<ISegmentPage> segmenter;
         make_component(segmenter,csegmenter);
