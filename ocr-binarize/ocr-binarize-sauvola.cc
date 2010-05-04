@@ -187,7 +187,7 @@ binarization algorithm based on integral images.\n";
         p_int max_n;
 
         BinarizeByHT() {
-            max_n.bind(this,"max_n",5000,"maximum number of connected components");
+            max_n.bind(this,"max_n",50000,"maximum number of connected components");
             k0.bind(this,"k0",0.2,"low threshold");
             k1.bind(this,"k1",0.6,"high threshold");
             width.bind(this,"width",40.0,"width of region");
@@ -228,7 +228,7 @@ binarization algorithm based on integral images.\n";
             intarray blobs;
             blobs = image0;
             int n = label_components(blobs);
-            if(n>max_n) throw "too many connected components";
+            if(n>max_n) throw "too many connected components in binarize";
             intarray flags(n+1);
             flags = 0;
             for(int i=0;i<blobs.length();i++) {

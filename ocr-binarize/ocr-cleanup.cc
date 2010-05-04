@@ -53,15 +53,15 @@ namespace ocropus {
     }
 #endif
 
-    static int max_n = 10000;
 
     static void count_noise_boxes(intarray &counts,bytearray &image,int mw,int mh){
+        static int max_n = 50000;
         intarray segmentation;
         segmentation = image;
         using namespace narray_ops;
         sub(255,segmentation);
         int n = label_components(segmentation);
-        if(n>max_n) throw "too many connected components";
+        if(n>max_n) throw "too many connected components in count_noise_boxes";
         narray<rectangle> bboxes;
         bounding_boxes(bboxes,segmentation);
         counts.resize(2);
@@ -80,7 +80,7 @@ namespace ocropus {
         p_int threshold;
         p_int max_n_;
         RmHalftone() {
-            max_n_.bind(this,"max_n",10000,"maximum number of connected components");
+            max_n_.bind(this,"max_n",20000,"maximum number of connected components");
             factor.bind(this,"factor",3.0,"trigger removal if # small components > factor * # large components");
             threshold.bind(this,"threshold",4,"small components fit into this size box");
         }
@@ -100,7 +100,6 @@ namespace ocropus {
                 if(in[i]>128) in[i] = 255;
             out = in;
             intarray counts;
-            max_n = max_n_;
             count_noise_boxes(counts,in,threshold,threshold);
             if(counts(0)>factor*counts(1)) {
                 debugf("info","removing halftoning\n");
@@ -143,7 +142,7 @@ namespace ocropus {
 
     struct RmBig: ICleanupBinary {
         RmBig() {
-            pdef("max_n",10000,"maximum number of components");
+            pdef("max_n",50000,"maximum number of components");
             pdef("mw",300,"maximum width");
             pdef("mh",100,"maximum height");
             pdef("minaspect",0.03,"minimum aspect ratio");
@@ -169,7 +168,7 @@ namespace ocropus {
             using namespace narray_ops;
             sub(255,segmentation);
             int n = label_components(segmentation);
-            if(n>pgetf("max_n")) throw "too many connected components";
+            if(n>pgetf("max_n")) throw "too many connected components in RmBig";
             narray<rectangle> bboxes;
             bounding_boxes(bboxes,segmentation);
             debugf("info","got %d bboxes\n",bboxes.length());
