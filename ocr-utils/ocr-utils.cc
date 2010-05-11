@@ -876,6 +876,49 @@ namespace ocropus {
         njunctions = max(temp);
     }
 
+    int endpoints_counts(bytearray &image,float presmooth,float skelsmooth) {
+        int nendpoints,njunctions;
+        skeletal_feature_counts(nendpoints,njunctions,image,presmooth,skelsmooth);
+        return nendpoints;
+    }
+
+    int junction_counts(bytearray &image,float presmooth,float skelsmooth) {
+        int nendpoints,njunctions;
+        skeletal_feature_counts(nendpoints,njunctions,image,presmooth,skelsmooth);
+        return njunctions;
+    }
+
+    int component_counts(bytearray &image,float presmooth) {
+        using namespace narray_ops;
+        bytearray temp;
+        temp.copy(image);
+        greater(temp,128,0,255);
+        if(presmooth>0) {
+            gauss2d(temp,presmooth,presmooth);
+            greater(temp,128,0,255);
+        }
+        intarray blobs;
+        blobs.copy(temp);
+        label_components(blobs);
+        return max(blobs);
+    }
+
+    int hole_counts(bytearray &image,float presmooth) {
+        using namespace narray_ops;
+        bytearray temp;
+        temp.copy(image);
+        greater(temp,128,0,255);
+        if(presmooth>0) {
+            gauss2d(temp,presmooth,presmooth);
+            greater(temp,128,0,255);
+        }
+        sub(255,temp);
+        intarray blobs;
+        blobs.copy(temp);
+        label_components(blobs);
+        return max(blobs)-1;
+    }
+
     template <class T>
     void copy_rect(narray<T> &dst,int x,int y,narray<T> &src,int x0,int y0,int x1,int y1) {
         CHECK_ARG(dst.rank()==src.rank());

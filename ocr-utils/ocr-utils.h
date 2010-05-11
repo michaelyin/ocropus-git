@@ -56,5 +56,9 @@ namespace ocropus {
                                  bytearray &image,
                                  float presmooth=0.0,
                                  float skelsmooth=0.0);
+    int endpoints_counts(bytearray &image,float presmooth=0.0,float skelsmooth=0.0);
+    int junction_counts(bytearray &image,float presmooth=0.0,float skelsmooth=0.0);
+    int component_counts(bytearray &image,float presmooth=0.0);
+    int hole_counts(bytearray &image,float presmooth=0.0);
 }
 #endif
