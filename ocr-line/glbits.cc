@@ -327,6 +327,9 @@ namespace glinerec {
     };
 
     void init_glbits() {
+        component_register<BitNN>("BitNN");
+        component_register<BitDataset>("BitDataset");
+        // FIXME obsolete
         component_register<BitNN>("bitnn");
         component_register<BitDataset>("bitdataset");
     }

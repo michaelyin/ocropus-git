@@ -943,4 +943,155 @@ namespace ocropus {
     template void copy_rect<byte>(narray<byte> &,int,int,narray<byte> &,int,int,int,int);
     template void copy_rect<int>(narray<int> &,int,int,narray<int> &,int,int,int,int);
     template void copy_rect<float>(narray<float> &,int,int,narray<float> &,int,int,int,int);
+
+    inline float normorient(float x) {
+        while(x>=M_PI/2) x -= M_PI;
+        while(x<-M_PI/2) x += M_PI;
+        return x;
+    }
+    inline float normadiff(float x) {
+        while(x>=M_PI) x -= 2*M_PI;
+        while(x<-M_PI) x += 2*M_PI;
+        return x;
+    }
+    inline float normorientplus(float x) {
+        while(x>=M_PI) x -= M_PI;
+        while(x<0) x += M_PI;
+        return x;
+    }
+
+    inline void checknan(floatarray &v) {
+        int n = v.length1d();
+        for(int i=0;i<n;i++)
+            CHECK(!isnan(v.unsafe_at1d(i)));
+    }
+
+    inline float floordiv(float x,float y) {
+        float n = floor(x/y);
+        return x - n*y;
+    }
+
+    void ridgemap(narray<floatarray> &maps,bytearray &binarized,
+                  float rsmooth=1.0,float asigma=0.7,float mpower=0.5,
+                  float rpsmooth=1.0) {
+        using namespace narray_ops;
+        floatarray smoothed;
+        smoothed = binarized;
+        sub(max(smoothed),smoothed);
+        brushfire_2(smoothed);
+        gauss2d(smoothed,rsmooth,rsmooth);
+        floatarray zero;
+        zero = smoothed;
+        floatarray strength;
+        floatarray angle;
+        horn_riley_ridges(smoothed,zero,strength,angle);
+        // dshown(smoothed,"yyY");
+        // dshown(zero,"yYy");
+        for(int i=0;i<zero.length();i++) {
+            if(zero[i]) continue;
+            strength[i] = 0;
+            angle[i] = 0;
+            smoothed[i] = 0;
+        }
+        dshown(smoothed,"yYY");
+        dshown(angle,"Yyy");
+
+        for(int m=0;m<maps.length();m++) {
+            float center = m*M_PI/maps.length();
+            maps(m) = smoothed;
+            for(int i=0;i<smoothed.length();i++) {
+                if(!smoothed[i]) continue;
+                float a = angle[i];
+                float d = a-center;
+                float dn = normorient(d);
+                float v = exp(-sqr(dn/(2*asigma)));
+                maps(m)[i] = pow(maps(m)[i],mpower)*v;
+            }
+            gauss2d(maps(m),rpsmooth,rpsmooth);
+        }
+    }
+
+    void compute_troughs(floatarray &troughs,bytearray &binarized,
+                         float rsmooth=1.0) {
+        using namespace narray_ops;
+        floatarray smoothed;
+        smoothed = binarized;
+        brushfire_2(smoothed);
+        gauss2d(smoothed,rsmooth,rsmooth);
+        floatarray zero;
+        zero = smoothed;
+        floatarray strength;
+        floatarray angle;
+        horn_riley_ridges(smoothed,zero,strength,angle);
+        // dshown(smoothed,"yyY");
+        // dshown(zero,"yYy");
+        for(int i=0;i<zero.length();i++) {
+            if(zero[i]) continue;
+            strength[i] = 0;
+            angle[i] = 0;
+            smoothed[i] = 0;
+        }
+        abs(strength);
+        troughs = strength;
+        troughs /= max(troughs);
+    }
+
+    void extract_holes(bytearray &holes,bytearray &binarized) {
+        dsection("extract_holes");
+        using namespace narray_ops;
+
+        intarray temp;
+        temp.copy(binarized);
+
+        // check whether the image is all black or all white; in that
+        // case, there are no holes
+        if(max(temp)==min(temp)) {
+            holes.makelike(temp,0);
+            return;
+        }
+
+        // clear the border so that we don't get spurious holes along
+        // the border
+        int w = temp.dim(0), h = temp.dim(1);
+        for(int i=0;i<w;i++) temp(i,0) = 0;
+        for(int i=0;i<w;i++) temp(i,h-1) = 0;
+        for(int j=0;j<h;j++) temp(0,j) = 0;
+        for(int j=0;j<h;j++) temp(w-1,j) = 0;
+
+        // now invert it (since we're looking for holes)
+        greater(temp,0,1,0);
+        dshown(temp,"a");
+
+        // we're assuming that the image is white characters
+        // on black background; we want to label the background blobs
+        // so we invert
+        label_components(temp);
+        dshowr(temp,"b");
+
+        // now try to find what label has been assigned to the background
+        // blob (that involves a little bit of guessing)
+        int background = -1;
+        for(int i=0;i<temp.dim(0);i++) {
+            if(temp(i,0)!=0) {
+                background = temp(i,0);
+                break;
+            }
+        }
+        CHECK(background>0);
+
+        // finally, extract the holes--all the regions that have a label
+        // different from the background
+        makelike(holes,temp);
+        holes = 0;
+        for(int i=0;i<temp.dim(0);i++) {
+            for(int j=0;j<temp.dim(1);j++) {
+                if(temp(i,j)>0 && temp(i,j)!=background)
+                    holes(i,j) = 255;
+            }
+        }
+
+        //dshowr(temp,"Yyy");
+        dshown(holes,"d");
+        dwait();
+    }
 }

@@ -1324,10 +1324,18 @@ namespace glinerec {
         static bool init = false;
         if(init) return;
         init = true;
+        component_register<CenterFeatureMap>("CenterFeatureMap");
+        component_register<LinerecExtracted>("LinerecExtracted");
+        component_register<Linerec>("Linerec");
+        component_register<NullLinerec>("NullLinerec");
+        component_register<MetaLinerec>("MetaLinerec");
+
+#ifndef OBSOLETE
         component_register<CenterFeatureMap>("cfmap");
         component_register<LinerecExtracted>("linerec_extracted");
         component_register<Linerec>("linerec");
         component_register<NullLinerec>("nulllinerec");
         component_register<MetaLinerec>("metalinerec");
+#endif
     }
 }

@@ -496,7 +496,9 @@ namespace glinerec {
         if(init) return;
         init = true;
 
-        // base classifiers
+        component_register<DpSegmenter>("DpSegmenter");
+#ifndef OBSOLETE
         component_register<DpSegmenter>("dpseg");
+#endif
     }
 }

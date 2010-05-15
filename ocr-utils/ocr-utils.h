@@ -60,5 +60,10 @@ namespace ocropus {
     int junction_counts(bytearray &image,float presmooth=0.0,float skelsmooth=0.0);
     int component_counts(bytearray &image,float presmooth=0.0);
     int hole_counts(bytearray &image,float presmooth=0.0);
+    void extract_holes(bytearray &holes,bytearray &binarized);
+    void compute_troughs(floatarray &troughs,bytearray &binarized,float rsmooth=1.0);
+    void ridgemap(narray<floatarray> &maps,bytearray &binarized,
+                  float rsmooth=1.0,float asigma=0.7,float mpower=0.5,
+                  float rpsmooth=1.0);
 }
 #endif

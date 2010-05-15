@@ -28,23 +28,23 @@ namespace {
         return exp(drand48()*(log(hi)-log(lo))+log(lo));
     }
 
-    float normorient(float x) {
+    inline float normorient(float x) {
         while(x>=M_PI/2) x -= M_PI;
         while(x<-M_PI/2) x += M_PI;
         return x;
     }
-    float normadiff(float x) {
+    inline float normadiff(float x) {
         while(x>=M_PI) x -= 2*M_PI;
         while(x<-M_PI) x += 2*M_PI;
         return x;
     }
-    float normorientplus(float x) {
+    inline float normorientplus(float x) {
         while(x>=M_PI) x -= M_PI;
         while(x<0) x += M_PI;
         return x;
     }
 
-    void checknan(floatarray &v) {
+    inline void checknan(floatarray &v) {
         int n = v.length1d();
         for(int i=0;i<n;i++)
             CHECK(!isnan(v.unsafe_at1d(i)));
@@ -53,94 +53,6 @@ namespace {
     inline float floordiv(float x,float y) {
         float n = floor(x/y);
         return x - n*y;
-    }
-
-    void ridgemap(narray<floatarray> &maps,bytearray &binarized,
-                  float rsmooth=1.0,float asigma=0.7,float mpower=0.5,
-                  float rpsmooth=1.0) {
-        floatarray smoothed;
-        smoothed = binarized;
-        sub(max(smoothed),smoothed);
-        brushfire_2(smoothed);
-        gauss2d(smoothed,rsmooth,rsmooth);
-        floatarray zero;
-        zero = smoothed;
-        floatarray strength;
-        floatarray angle;
-        horn_riley_ridges(smoothed,zero,strength,angle);
-        // dshown(smoothed,"yyY");
-        // dshown(zero,"yYy");
-        for(int i=0;i<zero.length();i++) {
-            if(zero[i]) continue;
-            strength[i] = 0;
-            angle[i] = 0;
-            smoothed[i] = 0;
-        }
-        dshown(smoothed,"yYY");
-        dshown(angle,"Yyy");
-
-        for(int m=0;m<maps.length();m++) {
-            float center = m*M_PI/maps.length();
-            maps(m) = smoothed;
-            for(int i=0;i<smoothed.length();i++) {
-                if(!smoothed[i]) continue;
-                float a = angle[i];
-                float d = a-center;
-                float dn = normorient(d);
-                float v = exp(-sqr(dn/(2*asigma)));
-                maps(m)[i] = pow(maps(m)[i],mpower)*v;
-            }
-            gauss2d(maps(m),rpsmooth,rpsmooth);
-        }
-    }
-
-    void compute_troughs(floatarray &troughs,bytearray &binarized,
-                         float rsmooth=1.0) {
-        floatarray smoothed;
-        smoothed = binarized;
-        brushfire_2(smoothed);
-        gauss2d(smoothed,rsmooth,rsmooth);
-        floatarray zero;
-        zero = smoothed;
-        floatarray strength;
-        floatarray angle;
-        horn_riley_ridges(smoothed,zero,strength,angle);
-        // dshown(smoothed,"yyY");
-        // dshown(zero,"yYy");
-        for(int i=0;i<zero.length();i++) {
-            if(zero[i]) continue;
-            strength[i] = 0;
-            angle[i] = 0;
-            smoothed[i] = 0;
-        }
-        abs(strength);
-        troughs = strength;
-        troughs /= max(troughs);
-    }
-
-    void extract_holes(bytearray &holes,bytearray &binarized) {
-        intarray temp;
-        temp.copy(binarized);
-        sub(255,temp);
-        label_components(temp);
-        int background = -1;
-        for(int i=0;i<temp.dim(0);i++) {
-            if(temp(i,0)!=0) {
-                background = temp(i,0);
-                break;
-            }
-        }
-        makelike(holes,temp);
-        holes = 0;
-        CHECK(background>0);
-        for(int i=0;i<temp.dim(0);i++) {
-            for(int j=0;j<temp.dim(1);j++) {
-                if(temp(i,j)>0 && temp(i,j)!=background)
-                    holes(i,j) = 255;
-            }
-        }
-        //dshowr(temp,"Yyy");
-        dshow(holes,"YyY");
     }
 
     template <class T>
@@ -557,6 +469,9 @@ namespace glinerec {
         static bool init = false;
         if(init) return;
         init = true;
+        component_register<SimpleFeatureMap>("SimpleFeatureMap");
+#ifndef OBSOLETE
         component_register<SimpleFeatureMap>("sfmap");
+#endif
     }
 }

@@ -3,6 +3,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include "glinerec.h"
+#include <ocropus/ocr-utils.h>
 #ifdef HAVE_GSL
 #include "gsl.h"
 #endif
@@ -1821,6 +1822,187 @@ namespace glinerec {
         }
     };
 
+    static void erase_small_components(floatarray &input,float mins=0.2,float thresh=0.25) {
+            // compute a thresholded image for component labeling
+            float threshold = thresh*max(input);
+            intarray components;
+            makelike(components,input);
+            components = 0;
+            for(int i=0;i<components.length();i++) components[i] = (input[i]>threshold);
+
+            // compute the number of pixels in each component
+            int n = label_components(components);
+            intarray totals(n+1);
+            totals = 0;
+            for(int i=0;i<components.length();i++) totals[components[i]]++;
+            totals[0] = 0;
+            int biggest = argmax(totals);
+
+            // erase small components
+            float minsize = mins*totals[biggest];
+            bytearray keep(n+1);
+            float background = min(input);
+            for(int i=0;i<keep.length();i++)
+                keep[i] = (totals[i]>minsize);
+            for(int i=0;i<input.length();i++)
+                if(!keep(components[i])) input[i] = background;
+    }
+
+    static void scale_to(floatarray &v,floatarray &sub,int csize,float noupscale=1,float aa=1.0) {
+        // compute the scale factor
+        float s = max(sub.dim(0),sub.dim(1))/float(csize);
+
+        // don't upscale if that's prohibited
+        if(s<noupscale) s = 1.0;
+
+        // compute the offset to keep the input centered in the output
+        float dx = (csize*s-sub.dim(0))/2;
+        float dy = (csize*s-sub.dim(1))/2;
+
+        // antialiasing via Gaussian convolution
+        float sig = s * aa;
+        if(sig>1e-3) gauss2d(sub,sig,sig);
+
+        // now compute the output image via bilinear interpolation
+        v.resize(csize,csize);
+        v = 0;
+        for(int i=0;i<csize;i++) {
+            for(int j=0;j<csize;j++) {
+                float x = i*s-dx;
+                float y = j*s-dy;
+                if(x<0||x>=sub.dim(0)) continue;
+                if(y<0||y>=sub.dim(1)) continue;
+                float value = bilin(sub,x,y);
+                v(i,j) = value;
+            }
+        }
+    }
+
+    void threshold_frac(bytearray &thresholded,floatarray &input,float frac) {
+        float theta = frac*(max(input)-min(input))+min(input);
+        binarize_with_threshold(thresholded,input,theta);
+    }
+
+    void binsmooth(bytearray &binary,floatarray &input,float sigma) {
+        floatarray smoothed;
+        smoothed = input;
+        smoothed -= min(smoothed);
+        smoothed /= max(smoothed);
+        if(sigma>0) gauss2d(smoothed,sigma,sigma);
+        binarize_with_threshold(binary,smoothed,0.5);
+    }
+
+    struct StandardExtractor : virtual IExtractor {
+        virtual const char *name() { return "StandardExtractor"; }
+        StandardExtractor() {
+            pdef("csize",30,"taget image size");
+            pdef("aa",0,"anti-aliasing");
+            pdef("noupscale",0.5,"no upscaling for scales smaller than this");
+            pdef("threshold",0.25,"threshold for finding the largest cc");
+            pdef("minsize",0.2,"minimum size of connected components to be kept, in terms of largest");
+            pdef("gradsigma",1.0,"gaussian convolution prior to gradient computation");
+            pdef("n",10,"number of smoothing steps");
+            pdef("step",0.3,"amount of smoothing");
+            pdef("pad",1,"amount to pad bounding rectangle by");
+            pdef("binsmooth",1,"use smoothing instead of morphology");
+        }
+        void extract(narray<floatarray> &out,floatarray &in) {
+            dsection("StandardExtractor");
+            out.clear();
+            floatarray input;
+            input = in;
+            int w = input.dim(0), h = input.dim(1);
+            floatarray a;            // working array
+            int csize = pgetf("csize");
+
+            // get rid of small components
+            erase_small_components(input,pgetf("minsize"),pgetf("threshold"));
+
+            // compute a thresholded version for morphological operations
+            bytearray thresholded;
+            threshold_frac(thresholded,input,pgetf("threshold"));
+
+            // compute a smoothed version of the input for gradient computations
+            float sigma = pgetf("gradsigma");
+            floatarray smoothed;
+            smoothed = input;
+            gauss2d(smoothed,sigma,sigma);
+
+            // x gradient
+            a.resize(w,h);
+            for(int j=0;j<h;j++) {
+                for(int i=0;i<w;i++) {
+                    float delta;
+                    if(i==0) delta = 0;
+                    else delta = smoothed(i,j)-smoothed(i-1,j);
+                    a(i,j) = delta;
+                }
+            }
+            floatarray &xgrad = out.push();
+            scale_to(xgrad,a,csize,pgetf("noupscale"),pgetf("aa"));
+            for(int j=0;j<csize;j++) {
+                for(int i=0;i<csize;i++) {
+                    if(j%2==0) xgrad(i,j) = max(xgrad(i,j),0);
+                    else xgrad(i,j) = min(xgrad(i,j),0);
+                }
+            }
+
+            // y gradient
+            a.resize(w,h);
+            for(int i=0;i<w;i++) {
+                for(int j=0;j<h;j++) {
+                    float delta;
+                    if(j==0) delta = 0;
+                    else delta = smoothed(i,j)-smoothed(i,j-1);
+                    a(i,j) = delta;
+                }
+            }
+            floatarray &ygrad = out.push();
+            scale_to(ygrad,a,csize,pgetf("noupscale"),pgetf("aa"));
+            for(int i=0;i<csize;i++) {
+                for(int j=0;j<csize;j++) {
+                    if(i%2==0) ygrad(i,j) = max(ygrad(i,j),0);
+                    else ygrad(i,j) = min(ygrad(i,j),0);
+                }
+            }
+
+            // junctions, endpoints, and holes
+            floatarray junctions;
+            floatarray endpoints;
+            floatarray holes;
+            bytearray junctions1,endpoints1,holes1,dilated,binary;
+            junctions.makelike(input,0);
+            endpoints.makelike(input,0);
+            holes.makelike(input,0);
+            int n = pgetf("n");
+            float step = pgetf("step");
+            bool bs = pgetf("binsmooth");
+            for(int i=0;i<n;i++) {
+                float sigma = step*i;
+                if(bs) binsmooth(binary,input,sigma);
+                else {
+                    binary = thresholded;
+                    binary_dilate_circle(binary,int(sigma));
+                }
+                skeletal_features(endpoints1,junctions1,binary,0.0,0.0);
+                greater(junctions1,0,0,1);
+                junctions += junctions1;
+                greater(endpoints1,0,0,1);
+                endpoints += endpoints1;
+                extract_holes(holes1,binary);
+                greater(holes1,0,0,1);
+                holes += holes1;
+            }
+            junctions *= 1.0/n;
+            endpoints *= 1.0/n;
+            holes *= 1.0/n;
+
+            scale_to(out.push(),junctions,csize,pgetf("noupscale"),pgetf("aa"));
+            scale_to(out.push(),endpoints,csize,pgetf("noupscale"),pgetf("aa"));
+            scale_to(out.push(),holes,csize,pgetf("noupscale"),pgetf("aa"));
+        }
+    };
+
 #ifdef HAVE_SQLITE3
 #include <sqlite3.h>
 
@@ -2112,31 +2294,60 @@ namespace glinerec {
         init = true;
 
         // base classifiers
+        component_register<KnnClassifier>("KnnClassifier");
+        component_register<EnetClassifier>("EnetClassifier");
+        component_register<AutoMlpClassifier>("AutoMlpClassifier");
+
+#ifndef OBSOLETE
         component_register<KnnClassifier>("knn");
         component_register<EnetClassifier>("enet");
         component_register<AutoMlpClassifier>("mlp");
         component_register<AutoMlpClassifier>("mappedmlp");
+#endif
 
         // classifier combination
+        component_register<CascadedMLP>("CascadedMLP");
+        component_register<AdaBoost>("AdaBoost");
+        component_register<LatinClassifier>("LatinClassifier");
+
+#ifndef OBSOLETE
         component_register<CascadedMLP>("cmlp");
         component_register<AdaBoost>("adaboost");
         component_register<LatinClassifier>("latin");
+#endif
 
         // feature extractors
+        component_register<RaveledExtractor>("RaveledExtractor");
+        component_register<ScaledImageExtractor>("ScaledImageExtractor");
+        component_register<BiggestCcExtractor>("BiggestCcExtractor");
+        component_register<StandardExtractor>("StandardExtractor");
+
+#ifndef OBSOLETE
         component_register<RaveledExtractor>("raveledfe");
         component_register<ScaledImageExtractor>("scaledfe");
         component_register<BiggestCcExtractor>("biggestcc");
+#endif
 
         // distance components
+        component_register<EuclideanDistances>("EuclideanDistances");
+#ifndef OBSOLETE
         component_register<EuclideanDistances>("edist");
+#endif
 
         // other components
         typedef RowDataset<float8> RowDataset8;
         typedef RaggedDataset<float8> RaggedDataset8;
+        component_register<RowDataset8>("RowDataset8");
+        component_register<RaggedDataset8>("RaggedDataset8");
+        component_register<SqliteDataset>("SqliteDataset");
+        component_register<SqliteBuffer>("SqliteBuffer");
+
+#ifndef OBSOLETE
         component_register<RowDataset8>("rowdataset8");
         component_register<RaggedDataset8>("raggeddataset8");
         component_register<SqliteDataset>("sqliteds");
         component_register<SqliteBuffer>("sqlitebuffer");
+#endif
 
         extern void init_glbits(),init_glcuts();
         init_glbits();
