@@ -448,11 +448,11 @@ namespace ocropus {
                             last = states.length()-1;
                         } else {
                             // for the last character, handle the spaces as well
-                            if(no<INFINITY) {
+                            if(no<1000.0) {
                                 // add the last character as a direct transition with no space
                                 fst.addTransition(states[last],states[end+1],c,cost+no, id);
                             }
-                            if(yes<INFINITY) {
+                            if(yes<1000.0) {
                                 // insert another state to handle spaces
                                 states.push() = fst.newState();
                                 int space_state = states.last();
