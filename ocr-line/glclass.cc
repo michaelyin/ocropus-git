@@ -1606,11 +1606,11 @@ namespace glinerec {
         }
         void info(int depth,FILE *stream) {
             iprintf(stream,depth+1,"CHARCLASS MODEL\n");
-            charclass->info(depth+1,stream);
+            if(charclass) charclass->info(depth+1,stream);
             iprintf(stream,depth+1,"JUNKCLASS MODEL\n");
-            junkclass->info(depth+1,stream);
+            if(junkclass) junkclass->info(depth+1,stream);
             iprintf(stream,depth+1,"ULCLASS MODEL\n");
-            ulclass->info(depth+1,stream);
+            if(ulclass) ulclass->info(depth+1,stream);
         }
         int nmodels() {
             return 2;
@@ -1645,10 +1645,19 @@ namespace glinerec {
             if(pgetf("junk") && junkclass) {
                 debugf("info","training junk classifier\n");
                 intarray isjunk;
-                for(int i=0;i<ds.nsamples();i++)
-                    isjunk.push((ds.cls(i)==jc()));
-                MappedDataset junkds(ds,isjunk);
-                junkclass->xtrain(junkds);
+                int njunk = 0;
+                for(int i=0;i<ds.nsamples();i++) {
+                    bool j = (ds.cls(i)==jc());
+                    isjunk.push(j);
+                    if(j) njunk++;
+                }
+                if(njunk>0) {
+                    MappedDataset junkds(ds,isjunk);
+                    junkclass->xtrain(junkds);
+                } else {
+                    debugf("[warn]","you are training a junk class but there are no samples to train on");
+                    junkclass = 0;
+                }
             }
 
             if(pgetf("ul") && ulclass) {
