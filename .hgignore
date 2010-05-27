@@ -1,0 +1,11 @@
+syntax: glob
+
+.*
+*~
+*.o
+*.so
+*.a
+*.err
+*.log
+*.os
+TAGS
