@@ -25,8 +25,8 @@
 # Web Sites: www.iupr.org, www.dfki.de
 
 import os
-if os.system("uname -a | egrep 'Ubuntu.*2009' > /dev/null")!=0:
-    print "WARNING: scons not supported on platforms other than Ubuntu 9.10"
+
+print "Currently supported OS version: Ubuntu 10.04"
 
 EnsureSConsVersion(0,97)
 from SCons.Script import *

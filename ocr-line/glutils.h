@@ -9,12 +9,12 @@
 #include "glinerec.h"
 
 #ifndef _OPENMP
-#define THREAD 0
-#define NTHREADS 1
+#define OCRO_THREAD 0
+#define OCRO_NTHREADS 1
 #else
 #include <omp.h>
-#define THREAD omp_get_thread_num()
-#define NTHREADS omp_get_num_threads()
+#define OCRO_THREAD omp_get_thread_num()
+#define OCRO_NTHREADS omp_get_num_threads()
 #endif
 
 namespace {

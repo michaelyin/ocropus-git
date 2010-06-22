@@ -1183,7 +1183,7 @@ namespace glinerec {
                     nets(i).pset("eta",etas(i));
                     nets(i).train(ds);
                     errs(i) = estimate_errors(nets(i),ts);
-                    debugf("detail","net %d (%d/%d) %g %g %g\n",i,THREAD,NTHREADS,
+                    debugf("detail","net %d (%d/%d) %g %g %g\n",i,OCRO_THREAD,OCRO_NTHREADS,
                            errs(i),nets(i).complexity(),etas(i));
                 }
                 quicksort(index,errs);
