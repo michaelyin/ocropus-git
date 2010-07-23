@@ -1,0 +1,62 @@
+# download everything
+
+export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib
+
+hg clone $release https://iulib.googlecode.com/hg/ iulib
+hg clone $release https://ocropus.googlecode.com/hg/ ocropus
+hg clone $release https://ocroswig.ocropus.googlecode.com/hg/ ocroswig
+hg clone $release https://ocropy.ocropus.googlecode.com/hg/ ocropy
+wget -nd http://mohri-lt.cs.nyu.edu/twiki/pub/FST/FstDownload/openfst-1.1.tar.gz
+hg clone $release https://pyopenfst.googlecode.com/hg/ pyopenfst
+date;
+
+# compile iulib
+
+cd iulib
+sudo sh uninstall
+sudo sh ubuntu-packages 
+scons -j 4 sdl=1
+sudo scons -j 4 sdl=1 install
+cd ..
+date;
+
+# compile ocropus
+
+cd ocropus
+sudo sh uninstall
+sudo sh ubuntu-packages 
+scons -j 4 omp=1
+sudo scons -j 4 omp=1 install
+cd ..
+date;
+
+# compile openfst 
+
+tar -zxvf openfst-1.1.tar.gz 
+cd openfst-1.1
+./configure
+make -j 4
+sudo make install
+cd ..
+date;
+
+# compile ocroswig
+
+cd ocroswig
+make
+cd ..
+date;
+
+# compile ocropy
+
+cd ocropy
+sudo python setup.py install
+cd ..
+date;
+
+# compile Python bindings for openfst
+
+cd pyopenfst
+make
+cd ..
+date;
