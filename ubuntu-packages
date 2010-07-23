@@ -12,5 +12,6 @@ apt-get install \
     tesseract-ocr-dev libleptonica-dev \
     libgsl0-dev libblas-dev \
     libsqlite3-dev\
+    liblapack-dev libatlas-base-dev \
     python-dev swig1.3 zlib1g-dev \
-    liblapack-dev libatlas-base-dev
+    python-scipy python-matplotlib python-matplotlib-data
