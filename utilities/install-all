@@ -63,3 +63,9 @@ cd pyopenfst
 make
 cd ..
 date;
+
+# test it all on the simple test images
+
+export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib
+ocropus page ocropus/data/testimages/simple.png
+ocropus-pages ocropus/data/testimages/simple.png
