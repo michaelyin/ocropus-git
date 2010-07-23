@@ -2,6 +2,9 @@
 
 export LD_LIBRARY_PATH=/usr/local/lib:/usr/lib:/lib
 
+curl http://ocropus.googlecode.com/hg/ubuntu-packages > packages.sh
+sudo sh -x packages.sh
+
 hg clone $release https://iulib.googlecode.com/hg/ iulib
 hg clone $release https://ocropus.googlecode.com/hg/ ocropus
 hg clone $release https://ocroswig.ocropus.googlecode.com/hg/ ocroswig
