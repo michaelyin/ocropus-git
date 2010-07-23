@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include "glinerec.h"
-#include <ocropus/ocr-utils.h>
+#include "ocr-utils.h"
 #ifdef HAVE_GSL
 #include "gsl.h"
 #endif
