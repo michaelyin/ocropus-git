@@ -346,9 +346,11 @@ namespace {
 
     inline float norm(floatarray &v) {
         double total = 0.0;
-        for(int i=0;i<v.length1d();i++)
-            total += v.at1d(i);
-        return total;
+        for(int i=0;i<v.length1d();i++) {
+	    float value = v.at1d(i); 
+            total += value*value;
+	}
+        return sqrt(total);
     }
 
     void rowmean(floatarray &mean,floatarray &data) {
