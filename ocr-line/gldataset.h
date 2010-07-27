@@ -10,6 +10,10 @@ namespace glinerec {
     using namespace narray_io;
 
     struct IDataset : IComponent {
+        float limit;
+        IDataset() {
+            limit = 0.0;
+        }
         virtual int nsamples() = 0;
         virtual int nclasses() = 0;
         virtual int nfeatures() = 0;
@@ -18,8 +22,8 @@ namespace glinerec {
         virtual int id(int i) = 0;
         virtual void output(floatarray &v,int i) {
             v.resize(nclasses());
-            v = 0;
-            v(cls(i)) = 1;
+            v = limit;
+            v(cls(i)) = 1-limit;
         }
         void input1d(floatarray &v,int i) {
             input(v,i);
