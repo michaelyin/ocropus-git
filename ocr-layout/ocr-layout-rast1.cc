@@ -37,6 +37,7 @@ namespace ocropus {
             max_results.bind(this,"max_results",1000,"maximum number of results");
             debug_segm.bind(this,"debug_segm","","output segmentation file");
             debug_layout.bind(this,"debug_layout",0,"print the intermediate results to stdout");
+            max_descender.bind(this,"max_descender",20,"maximum descender");
         }
 
         ~SegmentPageByRAST1() {}
@@ -44,6 +45,7 @@ namespace ocropus {
         p_int max_results;
         p_string debug_segm;
         p_int debug_layout;
+        p_float max_descender;
 
         const char *name() {
             return "segrast1";
@@ -94,6 +96,7 @@ namespace ocropus {
             ctextline->max_results = max_results;
             ctextline->min_gap = 20000;
             ctextline->use_whitespace = 0;
+            ctextline->all_params[2] = interval(0,max_descender);
             rectarray textline_obstacles;
             ctextline->extract(textlines,textline_obstacles,charstats);
 

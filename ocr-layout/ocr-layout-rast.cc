@@ -40,6 +40,7 @@ namespace ocropus {
         gap_factor.bind(this,"gap_factor",10,"size of gap in xheights");
         use_four_line_model.bind(this,"use_four_line_model",0,"use four line text model");
         all_pixels.bind(this,"all_pixels",0,"label all pixels in the segmentation");
+        max_descender.bind(this,"max_descender",20,"maximum descender");
     }
 
     // FIXME/faisal refactor this
@@ -134,6 +135,7 @@ namespace ocropus {
             ctextline->min_q     = 2.0; // Minimum acceptable quality of a textline
             ctextline->min_count = 2;   // ---- number of characters in a textline
             ctextline->min_length= 30;  // ---- length in pixels of a textline
+            ctextline->all_params[2] = interval(0,max_descender);
 
             ctextline->max_results = max_results;
             ctextline->min_gap = gap_factor*charstats->xheight;

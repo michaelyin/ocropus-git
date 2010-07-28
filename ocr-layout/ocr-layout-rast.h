@@ -49,6 +49,7 @@ namespace ocropus {
         p_int gap_factor;
         p_int use_four_line_model;
         p_int all_pixels;
+        p_float max_descender;
 
         const char *description() {
             return "Segment page by RAST";
