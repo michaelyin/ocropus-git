@@ -229,16 +229,30 @@ namespace glinerec {
 
     struct OmpClassifier {
         autodel<IModel> model;
+        bool owned;
         narray<floatarray> inputs;
         narray<OutputVector> outputs;
-        void clear() {
-            inputs.clear();
-            outputs.clear();
+        OmpClassifier() {
+            model = 0;
+        }
+        ~OmpClassifier() {
+            if(!owned) model.move();
+        }
+        void load(const char *file) {
+            model = dynamic_cast<IModel*>(load_component(stdio(file,"r")));
+            CHECK(model!=0);
+            owned = 1;
+        }
+        void setClassifier(IModel *model) {
+            this->model = model;
+            owned = 0;
         }
         void classify() {
+            if(!model) throw "no model set";
             int total = inputs.length();
 #pragma omp parallel for
             for(int i=0;i<inputs.length();i++) {
+                if(inputs[i].length()<1) continue;
                 model->xoutputs(outputs[i],inputs[i]);
 #pragma omp critical
                 if(total--%1000==0) {
@@ -246,18 +260,19 @@ namespace glinerec {
                 }
             }
         }
-        int input(floatarray &a) {
-            int result = inputs.length();
-            inputs.push() = a;
-            outputs.push();
-            return result;
+        void resize(int n) {
+            inputs.resize(n);
+            outputs.resize(n);
+            for(int i=0;i<n;i++) {
+                inputs[i].clear();
+                outputs[i].clear();
+            }
+        }
+        void input(floatarray &a,int i) {
+            inputs(i) = a;
         }
         void output(OutputVector &ov,int i) {
             ov = outputs[i];
-        }
-        void load(const char *file) {
-            model = dynamic_cast<IModel*>(load_component(stdio(file,"r")));
-            CHECK(model!=0);
         }
     };
 
