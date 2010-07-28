@@ -58,8 +58,10 @@ namespace {
         intarray assignments(bboxes.length());
         for(int i=0;i<assignments.length();i++)
             assignments(i) = i;
-        for(int i=0;i<bboxes.length();i++) {
-            for(int j=0;j<bboxes.length();j++) {
+        for(int j=0;j<bboxes.length();j++) {
+            float dist = 1e38;
+            int closest = -1;
+            for(int i=0;i<bboxes.length();i++) {
                 // j should overlap i in the x direction
                 if(bboxes[j].x1<bboxes[i].x0) continue;
                 if(bboxes[j].x0>bboxes[i].x1) continue;
@@ -69,9 +71,13 @@ namespace {
                 // j should be smaller than i
                 if(!(bboxes[j].area()<bboxes[i].area())) continue;
 #endif
-                // merge them
-                assignments(j) = i;
+                float d = fabs(bboxes[j].xcenter()-bboxes[i].xcenter());
+                if(d>=dist) continue;
+                dist = d;
+                closest = i;
             }
+            if(closest<0) continue;
+            assignments(j) = closest;
         }
         for(int i=0;i<segmentation.length();i++)
             segmentation[i] = assignments(segmentation[i]);
@@ -224,7 +230,7 @@ namespace {
 namespace glinerec {
     struct DpSegmenter : IDpSegmenter {
         // input
-        intarray wimage;
+        floatarray wimage;
         int where;
 
         // output
@@ -242,7 +248,8 @@ namespace glinerec {
 
         DpSegmenter() {
             pdef("down_cost",0,"cost of down step");
-            pdef("outside_diagonal_cost",1,"cost of outside diagonal step");
+            pdef("outside_diagonal_cost",1,"cost of outside diagonal step to the left");
+            pdef("outside_diagonal_cost_r",1,"cost of outside diagonal step to the right");
             pdef("inside_diagonal_cost",4,"cost of inside diagonal step");
             pdef("outside_weight",0,"cost of outside pixel");
             pdef("inside_weight",8,"cost of inside pixel");
@@ -252,6 +259,7 @@ namespace glinerec {
             pdef("component_segmentation",1,"also perform connected component segmentation");
             pdef("fix_diacritics",1,"group dots above characters back with those characters");
             pdef("fill_holes",1,"fill holes prior to dp segmentation (for cases like oo)");
+            pdef("debug","none","debug output file");
         }
         const char *name() {
             return "dpseg";
@@ -261,10 +269,12 @@ namespace glinerec {
             outside_weight = pgetf("outside_weight");
             inside_weight = pgetf("inside_weight");
             outside_diagonal_cost = pgetf("outside_diagonal_cost");
+            outside_diagonal_cost_r = pgetf("outside_diagonal_cost_r");
             inside_diagonal_cost = pgetf("inside_diagonal_cost");
             cost_smooth = pgetf("cost_smooth");
             min_range = pgetf("min_range");
             min_thresh = pgetf("min_thresh");
+            if(strcmp(pget("debug"),"none")) debug = pget("debug");
         }
 
         // this function calculates the actual costs
@@ -298,7 +308,7 @@ namespace glinerec {
                 }
                 if(i<high) {
                     if(wimage(i,j)==0)
-                        ncost = cost+wimage(i,j)+outside_diagonal_cost;
+                        ncost = cost+wimage(i,j)+outside_diagonal_cost_r;
                     else
                         ncost = cost+wimage(i,j)+inside_diagonal_cost;
                     if(costs(i+1,j+direction)>ncost) {
