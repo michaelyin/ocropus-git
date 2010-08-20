@@ -19,7 +19,7 @@ namespace glinerec {
         floatarray values;
         floatarray *result;
         OutputVector() {
-	    len = 0;
+            len = 0;
             result = 0;
         }
         OutputVector(int n) {
@@ -123,7 +123,7 @@ namespace glinerec {
             values /= value;
         }
         float sum() {
-            double total;
+            double total = 0.0;
             for(int i=0;i<values.length();i++)
                 total += values[i];
             return total;
@@ -142,7 +142,7 @@ namespace glinerec {
     };
 
     inline float sum(OutputVector &v) {
-        return iulib::sum(v.values);
+        return v.sum();
     }
 
     inline void ctranslate_vec(OutputVector &v,intarray &translation) {

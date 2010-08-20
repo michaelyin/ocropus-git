@@ -367,15 +367,18 @@ namespace ocropus {
             extractSlicedWithBackground(out,source,dflt,index,grow);
         }
 
+        void clearLattice() {
+            class_costs.dealloc();
+            class_costs.resize(boxes.length());
+            class_outputs.dealloc();
+            class_outputs.resize(boxes.length());
+            spaces.resize(boxes.length(),2);
+            spaces.fill(INFINITY);
+        }
+
         void maybeInit() {
-            if(class_costs.length1d()==0) {
-                class_costs.dealloc();
-                class_costs.resize(boxes.length());
-                class_outputs.dealloc();
-                class_outputs.resize(boxes.length());
-                spaces.resize(boxes.length(),2);
-                spaces.fill(INFINITY);
-            }
+            if(class_costs.length1d()==0)
+                clearLattice();
         }
 
         // After classification, set the class for the given character.

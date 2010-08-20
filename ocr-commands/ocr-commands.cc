@@ -334,17 +334,15 @@ namespace ocropus {
             throwf("please set ocrologdir to the target directory for the log");
         Logger logger("glr");
         dinit(512,512);
-        autodel<IRecognizeLine> linerecp(make_Linerec());
-        IRecognizeLine &linerec = *linerecp;
-        stdio model(argv[1],"r");
-        linerec.load(model);
+        autodel<IRecognizeLine> linerec;
+        linerec_load(linerec,argv[1]);
         for(int i=2;i<argc;i++) {
             logger.html("<hr><br>");
             logger.format("Recognizing %s",argv[i]);
             bytearray image;
             read_image_gray(image,argv[i]);
             autodel<IGenericFst> result(make_OcroFST());
-            linerec.recognizeLine(*result,image);
+            linerec->recognizeLine(*result,image);
 
             // dump the corresponding FST for display
             // print_fst_simple(*result);

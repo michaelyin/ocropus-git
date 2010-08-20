@@ -382,7 +382,9 @@ namespace ocropus {
         CHECK(L_EPSILON<1);
         fst1.sortByOutput();
         fst2.sortByInput();
+        //fprintf(stderr,"starting bestpath\n");
         b.bestpath(vertices1, vertices2, inputs, outputs, costs);
+        //fprintf(stderr,"finished bestpath\n");
     }
 
     double beam_search(ustrg &result, OcroFST &fst1, OcroFST &fst2,
@@ -392,7 +394,9 @@ namespace ocropus {
         intarray i;
         intarray o;
         floatarray c;
+        //fprintf(stderr,"starting beam search\n");
         beam_search(v1, v2, i, o, c, fst1, fst2, beam_width);
+        //fprintf(stderr,"finished beam search\n");
         remove_epsilons(result, o);
         return sum(c);
     }

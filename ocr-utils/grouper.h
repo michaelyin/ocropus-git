@@ -122,6 +122,10 @@ namespace ocropus {
 
         virtual void getLattice(IGenericFst &fst) = 0;
 
+        // Clear the lattice to allow constructing a new lattice.
+
+        virtual void clearLattice() = 0;
+
         // Set the grouper for iterating over the elements of the segmentation;
         // This also computes the ground truth alignment.
 
