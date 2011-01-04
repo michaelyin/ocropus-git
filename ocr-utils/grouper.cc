@@ -106,6 +106,7 @@ namespace ocropus {
     struct SimpleGrouper : IGrouper {
         int maxrange;
         int maxdist;
+        float maxaspect;
         intarray labels;
         narray<rectangle> boxes;
         objlist<intarray> segments;
@@ -118,6 +119,8 @@ namespace ocropus {
         SimpleGrouper() {
             pdef("maxrange",4,"maximum range");
             pdef("maxdist",2,"maximum dist");
+            pdef("maxaspect",2.5,"maximum aspect ratio (w/h) for grouped components");
+            pdef("maxwidth",2.5,"maximum width in terms of mean height for grouped components");
             pdef("fullheight",0,"fullheight");
         }
 
@@ -134,6 +137,7 @@ namespace ocropus {
         void setSegmentation(intarray &segmentation) {
             maxrange = pgetf("maxrange");
             maxdist = pgetf("maxdist");
+            maxaspect = pgetf("maxaspect");
             fullheight = pgetf("fullheight");
             copy(labels,segmentation);
             make_line_segmentation_black(labels);
@@ -168,6 +172,10 @@ namespace ocropus {
             rboxes.clear();
             bounding_boxes(rboxes,labels);
             int n = rboxes.length();
+            float mean_height = 0.0;
+            for(int i=1;i<n;i++) mean_height += rboxes[i].height();
+            mean_height /= max(1.0,n-1);
+            float maxwidth = mean_height * pgetf("maxwidth");
             // NB: we start with i=1 because i=0 is the background
             for(int i=1;i<n;i++) {
                 for(int range=1;range<=maxrange;range++) {
@@ -184,6 +192,8 @@ namespace ocropus {
                         seg.push(j);
                     }
                     if(bad) continue;
+                    if(range>1 && box.width()*1.0/box.height()>maxaspect) continue;
+                    if(range>1 && box.width()>maxwidth) continue;
                     boxes.push(box);
                     move(segments.push(),seg);
                 }
