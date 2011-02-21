@@ -87,7 +87,7 @@ namespace {
             int i2 = node % l2->nStates();
             double cost1;
             if(override_finish >= 0)
-                cost1 = i1 == override_finish ? 0 : 1e38;
+                cost1 = i1 == override_finish ? 0 : INFINITY;
             else
                 cost1 = l1->getAcceptCost(i1);
             return cost1 + l2->getAcceptCost(i2);

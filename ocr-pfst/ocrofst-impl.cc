@@ -95,7 +95,7 @@ namespace ocropus {
 
         // writing
         virtual int newState() {
-            accept_costs.push() = 1e38;
+            accept_costs.push() = INFINITY;
             m_targets.push();
             m_inputs.push();
             m_outputs.push();
