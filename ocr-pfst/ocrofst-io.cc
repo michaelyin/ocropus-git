@@ -184,7 +184,14 @@ static void write_node(FILE *stream, IGenericFst &fst, int index) {
     fst.arcs(inputs, targets, outputs, costs, index);
     int narcs = targets.length();
 
-    write_float(stream, fst.getAcceptCost(index));
+    // By convention, anything larger than 1e37 is treated
+    // as infinite accept cost (=no final state) in OCRopus.
+    // This makes such files look right in the OpenFST tools.
+
+    float cost = fst.getAcceptCost(index);
+    if(cost>1e37) cost = INFINITY;
+    write_float(stream,cost);
+
     write_int64_LE(stream, narcs);
     for(int i = 0; i < narcs; i++) {
         write_int32_LE(stream, inputs[i]);
@@ -195,6 +202,10 @@ static void write_node(FILE *stream, IGenericFst &fst, int index) {
 }
 
 static void read_node(FILE *stream, IGenericFst &fst, int index) {
+
+    // We don't bother undoing the "inf" from the binary FST files;
+    // the OCRopus search algorithms should deal fine with them.
+
     fst.setAccept(index, read_float(stream));
     int narcs = read_int64_LE(stream);
     for(int i = 0; i < narcs; i++) {

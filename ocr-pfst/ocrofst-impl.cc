@@ -48,11 +48,11 @@ namespace ocropus {
         virtual floatarray &costs(int vertex) {
             return m_costs[vertex];
         }
-        
+
         virtual float acceptCost(int vertex) {
             return accept_costs[vertex];
         }
-        
+
         virtual void setAcceptCost(int vertex, float new_value) {
             accept_costs[vertex] = new_value;
         }
@@ -108,7 +108,7 @@ namespace ocropus {
             m_inputs[from].push(input);
             m_costs[from].push(cost);
         }
-        
+
         virtual void rescore(int from,int to,int output,float cost,int input) {
             intarray &t = m_targets[from];
             intarray &i = m_inputs[from];
@@ -182,17 +182,17 @@ namespace ocropus {
         virtual bool hasFlag(int flag) {
             return flags & flag;
         }
-        
+
 
         virtual floatarray &heuristics() {
             return m_heuristics;
         }
-        
+
         virtual void calculateHeuristics() {
             achieve(HAS_HEURISTICS);
         }
 
-        OcroFSTImpl(int max_size=0) : 
+        OcroFSTImpl(int max_size=0) :
             m_targets(max_size),
             m_inputs(max_size),
             m_outputs(max_size),
@@ -200,7 +200,7 @@ namespace ocropus {
             accept_costs(max_size),
             start(0), flags(0) {
         }
-        
+
         virtual void clearFlags() {
             flags = 0;
         }
@@ -219,6 +219,32 @@ namespace ocropus {
             float accept = fst.acceptCost(i);
             if(accept>=0 && accept<1e37)
                 fst.setAcceptCost(i,accept*scale);
+        }
+    }
+
+    static void make_neg(intarray &a) {
+        for(int i=0;i<a.length();i++)
+            if(a[i]>0&&a[i]<=4) a[i] = -a[i];
+    }
+
+    static void make_pos(intarray &a) {
+        for(int i=0;i<a.length();i++)
+            if(a[i]>=-40&&a[i]<0) a[i] = -a[i];
+    }
+
+    void make_specials_neg(OcroFST &fst,bool input,bool output) {
+        using namespace narray_ops;
+        for(int i=0;i<fst.nStates();i++) {
+            if(input) make_neg(fst.inputs(i));
+            if(output) make_neg(fst.outputs(i));
+        }
+    }
+
+    void make_specials_pos(OcroFST &fst,bool input,bool output) {
+        using namespace narray_ops;
+        for(int i=0;i<fst.nStates();i++) {
+            if(input) make_pos(fst.inputs(i));
+            if(output) make_pos(fst.outputs(i));
         }
     }
 }

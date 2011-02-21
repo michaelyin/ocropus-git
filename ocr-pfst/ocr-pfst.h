@@ -189,6 +189,8 @@ namespace ocropus {
                        int beam_width=1000);
 
     void scale_fst(OcroFST &fst,float scale);
+    void make_specials_neg(OcroFST &fst,bool input,bool output);
+    void make_specials_pos(OcroFST &fst,bool input,bool output);
 };
 
 #endif

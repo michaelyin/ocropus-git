@@ -185,7 +185,7 @@ namespace ocropus {
         autodel<ColorEncodeLayout> color_encoding(make_ColorEncodeLayout());
         color_encoding->all = all_pixels;
         copy(color_encoding->inputImage,in);
-        debugf("info","all = %d\n",color_encoding->all);
+        // debugf("info","rast layout all = %d\n",color_encoding->all);
         for(int i=0, l=textlines.length(); i<l; i++)
             color_encoding->textlines.push(textlines[i].bbox);
         for(int i=0, l=textcolumns.length(); i<l; i++)
