@@ -454,24 +454,24 @@ namespace ocropus {
                     int last = start;
                     for(int k=0;k<n;k++) {
                         int c = str[k].ord();
+                        int next = -1;
                         if(k<n-1) {
-                            // add intermediate states/transitions for all but the last character
-                            states.push() = fst.newState();
-                            fst.addTransition(states[last],states.last(),c,0.0,0);
-                            last = states.length()-1;
+                            next = fst.newState();
+                            states.push(next);
                         } else {
-                            // for the last character, handle the spaces as well
-                            if(no<1000.0) {
-                                // add the last character as a direct transition with no space
-                                fst.addTransition(states[last],states[end+1],c,cost+no, id);
-                            }
-                            if(yes<1000.0) {
-                                // insert another state to handle spaces
-                                states.push() = fst.newState();
-                                int space_state = states.last();
-                                fst.addTransition(states[start],space_state,c,cost,id);
-                                fst.addTransition(space_state,states[end+1],' ',yes,0);
-                            }
+                            next = states[end+1];
+                        }
+                        // for the last character, handle the spaces as well
+                        if(no<1000.0) {
+                            // add the last character as a direct transition with no space
+                            fst.addTransition(states[last],next,c,cost+no, id);
+                        }
+                        if(yes<1000.0) {
+                            // insert another state to handle spaces
+                            states.push() = fst.newState();
+                            int space_state = states.last();
+                            fst.addTransition(states[start],space_state,c,cost,id);
+                            fst.addTransition(space_state,next,' ',yes,0);
                         }
                     }
                 }
