@@ -430,7 +430,7 @@ namespace ocropus {
             intarray states(final+1);
 
             states.fill(-1);
-            for(int i=1;i<states.length();i++)
+            for(int i=1;i<states.length();i++) 
                 states[i] = fst.newState();
             fst.setStart(states[1]);
             fst.setAccept(states[final]);
@@ -439,8 +439,7 @@ namespace ocropus {
                 int start = min(segments[i]);
                 int end = max(segments[i]);
                 int id = (start << 16) + end;
-                if(!segments[i].length())
-                    id = 0;
+                if(!segments[i].length()) id = 0;
 
                 float yes = spaces(i,0);
                 float no =  spaces(i,1);
@@ -451,7 +450,7 @@ namespace ocropus {
                     float cost = class_costs(i)(j);
                     ustrg &str = class_outputs(i)(j);
                     int n = str.length();
-                    int last = start;
+                    int state = states[start];
                     for(int k=0;k<n;k++) {
                         int c = str[k].ord();
                         int next = -1;
@@ -461,18 +460,19 @@ namespace ocropus {
                         } else {
                             next = states[end+1];
                         }
-                        // for the last character, handle the spaces as well
-                        if(no<1000.0) {
-                            // add the last character as a direct transition with no space
-                            fst.addTransition(states[last],next,c,cost+no, id);
-                        }
-                        if(yes<1000.0) {
+                        float ccost = 0.0;
+                        if(k==0) ccost += cost;
+                        if(k==n-1) ccost += no;
+                        if(ccost<1000.0) fst.addTransition(state,next,c,ccost, id);
+                        if(k==n-1 && yes<1000.0) {
                             // insert another state to handle spaces
+                            ccost = (k==0)?cost:0.0;
                             states.push() = fst.newState();
                             int space_state = states.last();
-                            fst.addTransition(states[start],space_state,c,cost,id);
+                            fst.addTransition(state,space_state,c,ccost,id);
                             fst.addTransition(space_state,next,' ',yes,0);
                         }
+                        state = next;
                     }
                 }
             }
