@@ -1,3 +1,10 @@
+##Version 0.4
+## compile on ubuntu 14.04
+scons
+sudo scons install
+ocropus
+
+
 OCRopus - open source document analysis and OCR system (www.ocropus.org)
 
 Version 0.3 (2008-10-15)
