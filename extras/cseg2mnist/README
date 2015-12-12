@@ -1,0 +1,2 @@
+##install gnu scientific lib
+sudo apt-get install libgsl0-dev
