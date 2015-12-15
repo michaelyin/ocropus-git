@@ -29,7 +29,7 @@ namespace ocropus {
     using namespace iulib;
 
     // FIXME/mezhirov add comments --tmb
-
+/*
     void check_page_segmentation(intarray &pseg) {
         bool allow_zero = true;
         narray<bool> used(5000);
@@ -56,7 +56,7 @@ namespace ocropus {
         if(!(nused==mused || nused==mused+1))
             debugf("warn","check_page_segmentation found non-sequentially numbered segments\n");
     }
-
+*/
     // FIXME/mezhirov add comments --tmb
 
     void make_page_segmentation_black(intarray &a) {
@@ -65,11 +65,11 @@ namespace ocropus {
     }
 
     // FIXME/mezhirov add comments --tmb
-
+/*
     void make_page_segmentation_white(intarray &a) {
         replace_values(a, 0, 0xFFFFFF);
         check_page_segmentation(a);
     }
-
+*/
 
 }

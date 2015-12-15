@@ -33,9 +33,9 @@ namespace ocropus {
     using namespace colib;
     using namespace iulib;
 
-    void check_page_segmentation(intarray &cseg);
+    //void check_page_segmentation(intarray &cseg);
     void make_page_segmentation_black(intarray &a);
-    void make_page_segmentation_white(intarray &a);
+   // void make_page_segmentation_white(intarray &a);
 
     inline int pseg_pixel(int column,int paragraph,int line) {
         ASSERT((column > 0 && column < 32) || column == 254 || column == 255);
