@@ -40,6 +40,9 @@ inline void memswap(T &a,T &b) {
     memcpy((char *)&a,buf,sizeof (T));
 }
 
+inline int Hash_hash(int x) {
+    return x;
+}
 
 template <class K,class V>
 struct EnumHash {
@@ -102,9 +105,9 @@ struct EnumHash {
     }
 };
 
-inline int Hash_hash(int x) {
-    return x;
-}
+//inline int Hash_hash(int x) {
+ //   return x;
+//}
 
 struct Enumerator {
     int n;
