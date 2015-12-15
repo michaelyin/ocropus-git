@@ -42,7 +42,7 @@ void draw_line(ImageData *imgd, int is, int js, int ie, int je,
     else{			/* type 4 左下から右上への線分 */
       d=-1;
     }
-    for(x=xs;x<=xe;x=x++){
+    for(x=xs;x<=xe;x++){
       y=ys+d*(int)((float)h*(float)(x-xs)/(float)w+0.5);
       for(dx=from;dx<=to;dx++){
 	for(dy=from;dy<=to;dy++){
