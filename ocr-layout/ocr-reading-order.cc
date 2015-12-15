@@ -210,7 +210,7 @@ namespace ocropus {
 
         // Make dummy text-lines from horizontal rulings to use them as
         // separating elements for reading order.
-        for(int i=0,l=hor_rulings.length(); i<l; i++){
+        for(int i=0,l_r=hor_rulings.length(); i<l_r; i++){
             line l;
             rectangle r = hor_rulings[i];
             l.c = r.ycenter();
