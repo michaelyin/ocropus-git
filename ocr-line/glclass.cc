@@ -98,7 +98,7 @@ namespace glinerec {
     double nearest_neighbor_error(IDataset &data,int ntrials=1000) {
         int total = 0;
         ntrials = min(data.nsamples(),ntrials);
-        for(int i=0;i<data.nsamples();i++) {
+        for(int i_i=0;i_i<data.nsamples();i_i++) {
             // FIXME use sampling without replacement
             int i = lrand48()%data.nsamples();
             floatarray u;
