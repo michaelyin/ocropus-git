@@ -24,11 +24,13 @@
 // Web Sites: www.iupr.org, www.dfki.de
 
 #include <time.h>
+#include <iostream>
 #include "ocropus.h"
 #include "ocr-layout-internal.h"
 
 using namespace iulib;
 using namespace colib;
+using namespace std;
 
 namespace ocropus {
 
@@ -57,13 +59,17 @@ namespace ocropus {
                                             rectarray &extra_obstacles) {
 
         // FIXME/faisal remove this dead code --tmb
-        //float startTime = clock()/float(CLOCKS_PER_SEC);
+        float startTime = clock()/float(CLOCKS_PER_SEC);
         const int zero   = 0;
-        const int yellow = 0x00ffff00;
+        const int yellow = ocropus::IMAGE_COLOR; /* 0x00ff0000;*/ //0x00ffff00;
         bytearray in;
         copy(in, in_not_inverted);
         make_page_binary_and_black(in);
-        //fprintf(stderr,"Time elapsed (autoinvert): %.3f \n",(clock()/float(CLOCKS_PER_SEC)) - startTime);
+        fprintf(stdout,"Time elapsed (autoinvert): %.3f \n",(clock()/float(CLOCKS_PER_SEC)) - startTime);
+        float timeUsed = (clock()/float(CLOCKS_PER_SEC)) - startTime;
+        cout << "Time elapsed " << timeUsed << endl;
+
+        debugf("info","Time elapsed = %.3f \n",timeUsed);
 
         // Do connected component analysis
         intarray charimage;
@@ -86,13 +92,13 @@ namespace ocropus {
         if(debug_layout>=2){
             charstats->print();
         }
-        //fprintf(stderr,"Time elapsed (charstats): %.3f \n",(clock()/float(CLOCKS_PER_SEC)) - startTime);
+        fprintf(stderr,"Time elapsed (charstats): %.3f \n",(clock()/float(CLOCKS_PER_SEC)) - startTime);
 
         // Compute Whitespace Cover
         autodel<WhitespaceCover> whitespaces(make_WhitespaceCover(0,0,in.dim(0),in.dim(1)));
         rectarray whitespaceboxes;
         whitespaces->compute(whitespaceboxes,charstats->char_boxes);
-        //fprintf(stderr,"Time elapsed (whitespaces): %.3f \n",(clock()/float(CLOCKS_PER_SEC)) - startTime);
+        fprintf(stderr,"Time elapsed (whitespaces): %.3f \n",(clock()/float(CLOCKS_PER_SEC)) - startTime);
 
         // Find whitespace column separators (gutters)
         autodel<ColSeparators> whitespace_obstacles(make_ColSeparators());
@@ -124,12 +130,13 @@ namespace ocropus {
             textline_obstacles.push(extra_obstacles[i]);
         for(int i=0;i<vert_rulings.length();i++)
             textline_obstacles.push(vert_rulings[i]);
-        //fprintf(stderr,"Time elapsed (gutters): %.3f \n",(clock()/float(CLOCKS_PER_SEC)) - startTime);
+        fprintf(stderr,"Time elapsed (gutters): %.3f \n",(clock()/float(CLOCKS_PER_SEC)) - startTime);
 
         // Extract textlines
         narray<TextLine> textlines;
 
         if(use_four_line_model){
+        	 cout << "use four line model" << endl;
             narray<TextLineExtended> textlines_extended;
             autodel<CTextlineRASTExtended> ctextline(make_CTextlineRASTExtended());
             ctextline->min_q     = 2.0; // Minimum acceptable quality of a textline
@@ -144,6 +151,7 @@ namespace ocropus {
             for(int i=0,l=textlines_extended.length();i<l;i++)
                 textlines.push(textlines_extended[i].getTextLine());
         }else{
+        	 cout << "not use four line model" << endl;
             autodel<CTextlineRAST> ctextline(make_CTextlineRAST());
             ctextline->min_q     = 2.0; // Minimum acceptable quality of a textline
             ctextline->min_count = 2;   // ---- number of characters in a textline
@@ -185,7 +193,7 @@ namespace ocropus {
         autodel<ColorEncodeLayout> color_encoding(make_ColorEncodeLayout());
         color_encoding->all = all_pixels;
         copy(color_encoding->inputImage,in);
-        // debugf("info","rast layout all = %d\n",color_encoding->all);
+        debugf("info","all = %d\n",color_encoding->all);
         for(int i=0, l=textlines.length(); i<l; i++)
             color_encoding->textlines.push(textlines[i].bbox);
         for(int i=0, l=textcolumns.length(); i<l; i++)
