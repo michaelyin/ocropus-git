@@ -31,7 +31,7 @@ namespace ocropus {
     // (0x80xxxx) and segmented foreground pixels (0x00xxxx).  The
     // segmented foreground pixels should constitute a usable
     // binarization of the original image.
-
+/*
     void check_line_segmentation(intarray &cseg) {
         if(cseg.length1d()==0) return;
         CHECK_ARG(cseg.rank()==2);
@@ -45,23 +45,23 @@ namespace ocropus {
                 CHECK_ARG(value<100000);
         }
     }
-
+*/
     // FIXME/mezhirov add comments --tmb
-
+/*
     void make_line_segmentation_black(intarray &a) {
         check_line_segmentation(a);
         replace_values(a, 0xFFFFFF, 0);
         for(int i = 0; i < a.length1d(); i++)
             a.at1d(i) &= 0xFFF;
     }
-
+*/
     // FIXME/mezhirov add comments --tmb
-
+/*
     void make_line_segmentation_white(intarray &a) {
         replace_values(a, 0, 0xFFFFFF);
         //for(int i = 0; i < a.length1d(); i++)
         //    a.at1d(i) = (a.at1d(i) & 0xFFF) | 0x1000;
         check_line_segmentation(a);
     }
-
+*/
 }

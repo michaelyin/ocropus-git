@@ -28,9 +28,9 @@
 #include "ocropus.h"
 
 namespace ocropus {
-    void check_line_segmentation(intarray &cseg);
-    void make_line_segmentation_black(intarray &a);
-    void make_line_segmentation_white(intarray &a);
+    //void check_line_segmentation(intarray &cseg);
+    //void make_line_segmentation_black(intarray &a);
+    //void make_line_segmentation_white(intarray &a);
     inline void write_line_segmentation(FILE *stream,intarray &a) {
         check_line_segmentation(a);
         make_line_segmentation_white(a);
